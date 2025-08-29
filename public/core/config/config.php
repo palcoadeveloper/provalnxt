@@ -54,7 +54,7 @@ if (!defined('BASE_URL')) {
         // Detect current protocol
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
     }
-    define('BASE_URL', $protocol.'localhost/proval4/public/');
+    define('BASE_URL', $protocol.'localhost/provalnxt/public/');
 }
 
 // Other configurations
