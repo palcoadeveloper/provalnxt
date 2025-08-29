@@ -1,0 +1,30 @@
+# ProVal4 Configuration
+# File upload configuration for 5MB limit
+
+# Set upload limits to support large file uploads (matching php.ini)
+php_value upload_max_filesize 120M
+php_value post_max_size 124M
+php_value memory_limit 128M
+php_value max_execution_time 300
+php_value max_input_time 300
+
+# Security headers
+Header always set X-Content-Type-Options nosniff
+Header always set X-Frame-Options DENY
+Header always set X-XSS-Protection "1; mode=block"
+
+# Prevent access to sensitive files
+<Files "*.md">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files ".env*">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "*.log">
+    Order allow,deny
+    Deny from all
+</Files>

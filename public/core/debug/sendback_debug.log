@@ -1,0 +1,2277 @@
+2025-03-29 15:26:29 - Request received
+2025-03-29 15:26:29 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [user_password] => palcoa123
+    [approver_remark] => sending back
+    [csrf_token] => 255e53648ae18f9abbe33429177e0c8260c8c8dec14b935a7dee61971bf6ab40
+    [wf_id] => V-2-8-1755282600-2Y
+)
+
+2025-03-29 15:26:29 - CSRF validation failed
+2025-03-29 16:38:57 - Request received
+2025-03-29 16:38:57 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [user_password] => palcoa123
+    [approver_remark] => ok
+    [csrf_token] => f19f7023ee500ac6436bcbe197d91314c4d143c8c4a010b0f49b9c0ae6822634
+    [wf_id] => V-2-8-1755282600-2Y
+)
+
+2025-03-29 22:08:57 - Processing workflow ID: V-2-8-1755282600-2Y
+2025-03-29 17:39:34 - Request received
+2025-03-29 17:39:34 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [user_password] => palcoa123
+    [approver_remark] => ok
+    [csrf_token] => b83cdbad48e498d56fa3470e264666e5d893ebfeb5863dce441f6457d3c8674c
+    [wf_id] => V-2-8-1755282600-2Y
+    [val_wf_approval_tracking_id] => 695
+)
+
+2025-03-29 17:39:34 - CSRF validation failed
+2025-03-29 17:39:47 - Request received
+2025-03-29 17:39:47 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [user_password] => palcoa123
+    [approver_remark] => ok
+    [csrf_token] => 46a2d9e59ce32afc2b6c078f3a475e11d829ab0f7f51aa67146b2b6c08d46f6e
+    [wf_id] => V-2-8-1755282600-2Y
+    [val_wf_approval_tracking_id] => 695
+)
+
+2025-03-29 23:09:47 - ERROR: Error in sendbackreport.php: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''iteration_status' = 'Inactive',
+                          'iteration_completion' at line 5
+2025-03-29 17:39:59 - Request received
+2025-03-29 17:39:59 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [user_password] => palcoa123
+    [approver_remark] => ok
+    [csrf_token] => 46a2d9e59ce32afc2b6c078f3a475e11d829ab0f7f51aa67146b2b6c08d46f6e
+    [wf_id] => V-2-8-1755282600-2Y
+    [val_wf_approval_tracking_id] => 695
+)
+
+2025-03-29 17:39:59 - CSRF validation failed
+2025-03-29 17:42:28 - Request received
+2025-03-29 17:42:28 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [user_password] => palcoa123
+    [approver_remark] => ok
+    [csrf_token] => 2a83c284e071116b7a5ffb5c874e89c83b4a516c49646fc391892dafc9221074
+    [wf_id] => V-2-8-1755282600-2Y
+    [val_wf_approval_tracking_id] => 695
+)
+
+2025-03-29 23:12:28 - ERROR: Error in sendbackreport.php: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''iteration_status' = 'Inactive',
+                          'iteration_completion' at line 5
+2025-03-29 17:48:41 - Request received
+2025-03-29 17:48:41 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [user_password] => palcoa123
+    [approver_remark] => ok
+    [csrf_token] => 89cd32a60c7296d711d3f9981e9d86db4fff45a70cd2edc1cdfc1736b18f6f06
+    [wf_id] => V-2-8-1755282600-2Y
+    [val_wf_approval_tracking_id] => 695
+)
+
+2025-03-29 23:18:41 - ERROR: Error in sendbackreport.php: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''iteration_status' = 'Inactive',
+                          'iteration_completion' at line 5
+2025-03-29 17:53:39 - Request received
+2025-03-29 17:53:39 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [user_password] => palcoa123
+    [approver_remark] => ok
+    [csrf_token] => 8c825c1f42902bca94dd9b744bf602b63cd42778ebbba70c82440583346c3a65
+    [wf_id] => V-2-8-1755282600-2Y
+    [val_wf_approval_tracking_id] => 695
+)
+
+2025-03-29 23:23:39 - ERROR: Error in sendbackreport.php: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''iteration_status' = 'Inactive',
+                          'iteration_completion' at line 5
+2025-03-29 18:01:52 - Request received
+2025-03-29 18:01:52 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [user_password] => palcoa123
+    [approver_remark] => ok
+    [csrf_token] => b6528b16663e06cab64b08a6393c8bdd63ef7a2010e7e442e02fd453c4d164cf
+    [wf_id] => V-2-8-1755282600-2Y
+    [val_wf_approval_tracking_id] => 695
+)
+
+2025-03-29 18:01:52 - SESSION data: Array
+(
+    [csrf_token] => b6528b16663e06cab64b08a6393c8bdd63ef7a2010e7e442e02fd453c4d164cf
+    [failed_attempts] => 0
+    [login_failed] => No
+    [login_time] => 1743269956
+    [logged_in_user] => employee
+    [account_name] => engg_user_one
+    [user_id] => 42
+    [user_name] => Engg User One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 1
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 111838
+    [user_domain_id] => engg_user_one
+)
+
+2025-03-29 23:31:52 - About to execute update query for department: 1
+2025-03-29 23:31:52 - Error in update query: Unknown column 'iteration_rejeceted_by' in 'field list'
+2025-03-29 23:31:52 - ERROR: Error in sendbackreport.php: Unknown column 'iteration_rejeceted_by' in 'field list'
+2025-03-29 18:15:29 - Request received
+2025-03-29 18:15:29 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [user_password] => palcoa123
+    [approver_remark] => ok
+    [csrf_token] => 8a40a88636fc3882b6c21685d2488d5ac329eb0f42630cb28177a2868d549799
+    [wf_id] => V-2-8-1755282600-2Y
+    [val_wf_approval_tracking_id] => 695
+)
+
+2025-03-29 18:15:29 - SESSION data: Array
+(
+    [csrf_token] => 8a40a88636fc3882b6c21685d2488d5ac329eb0f42630cb28177a2868d549799
+    [failed_attempts] => 0
+    [login_failed] => No
+    [login_time] => 1743269956
+    [logged_in_user] => employee
+    [account_name] => engg_user_one
+    [user_id] => 42
+    [user_name] => Engg User One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 1
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 111838
+    [user_domain_id] => engg_user_one
+)
+
+2025-03-29 23:45:29 - About to execute update query for department: 1
+2025-03-29 23:45:29 - Update query executed successfully
+2025-03-29 23:45:29 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-03-29 23:45:29 - Transaction committed successfully
+2025-03-29 20:07:40 - Request received
+2025-03-29 20:07:40 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [approver_remark] => ok
+    [csrf_token] => 38dfbe6c3f9f3c3d97c631b5432e44eac43ac31705e6609cee1c7b80023d21f1
+    [wf_id] => V-2-8-1755282600-2Y
+    [val_wf_approval_tracking_id] => 696
+)
+
+2025-03-29 20:07:40 - SESSION data: Array
+(
+    [csrf_token] => 38dfbe6c3f9f3c3d97c631b5432e44eac43ac31705e6609cee1c7b80023d21f1
+    [failed_attempts] => Array
+        (
+            [engg_user_one] => 0
+            [111838] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743278845
+    [logged_in_user] => employee
+    [account_name] => engg_user_one
+    [user_id] => 42
+    [user_name] => Engg User One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 1
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 111838
+    [user_domain_id] => engg_user_one
+)
+
+2025-03-29 20:07:40 - ERROR: Error in sendbackreport.php: Missing required parameters
+2025-03-29 20:08:30 - Request received
+2025-03-29 20:08:30 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [approver_remark] => ok
+    [csrf_token] => eadec44f281b1204628b886f0a34116281f912ad9876f259f3de4cbd16c66cfb
+    [wf_id] => V-2-8-1755282600-2Y
+    [val_wf_approval_tracking_id] => 696
+)
+
+2025-03-29 20:08:30 - SESSION data: Array
+(
+    [csrf_token] => eadec44f281b1204628b886f0a34116281f912ad9876f259f3de4cbd16c66cfb
+    [failed_attempts] => Array
+        (
+            [engg_user_one] => 0
+            [111838] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743278845
+    [logged_in_user] => employee
+    [account_name] => engg_user_one
+    [user_id] => 42
+    [user_name] => Engg User One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 1
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 111838
+    [user_domain_id] => engg_user_one
+)
+
+2025-03-29 20:08:30 - ERROR: Error in sendbackreport.php: Missing required parameters
+2025-03-29 20:12:45 - Request received
+2025-03-29 20:12:45 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [approver_remark] => ok
+    [csrf_token] => 0bc2dc947328f7f8ce8f8afdf32162243dfaf9648d8eef357a4998d85ae05a23
+    [wf_id] => V-2-8-1755282600-2Y
+    [val_wf_approval_tracking_id] => 696
+)
+
+2025-03-29 20:12:45 - SESSION data: Array
+(
+    [csrf_token] => 0bc2dc947328f7f8ce8f8afdf32162243dfaf9648d8eef357a4998d85ae05a23
+    [failed_attempts] => Array
+        (
+            [engg_user_one] => 0
+            [111838] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743278845
+    [logged_in_user] => employee
+    [account_name] => engg_user_one
+    [user_id] => 42
+    [user_name] => Engg User One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 1
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 111838
+    [user_domain_id] => engg_user_one
+)
+
+2025-03-30 01:42:45 - About to execute update query for department: 1
+2025-03-30 01:42:45 - Error in update query: Unknown column 'val_wf_current_status' in 'field list'
+2025-03-30 01:42:45 - ERROR: Error in sendbackreport.php: Unknown column 'val_wf_current_status' in 'field list'
+2025-03-29 20:14:25 - Request received
+2025-03-29 20:14:25 - POST data: Array
+(
+    [user_remark] => 0213
+    [approver_remark] => ok
+    [csrf_token] => 6ab72a5ba60fecffef3350021bd047eef1634c4681096621cd42c332d4f2a750
+    [wf_id] => V-2-8-1755282600-2Y
+    [val_wf_approval_tracking_id] => 696
+)
+
+2025-03-29 20:14:25 - SESSION data: Array
+(
+    [csrf_token] => 6ab72a5ba60fecffef3350021bd047eef1634c4681096621cd42c332d4f2a750
+    [failed_attempts] => Array
+        (
+            [engg_user_one] => 0
+            [111838] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743278845
+    [logged_in_user] => employee
+    [account_name] => engg_user_one
+    [user_id] => 42
+    [user_name] => Engg User One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 1
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 111838
+    [user_domain_id] => engg_user_one
+)
+
+2025-03-30 01:44:25 - About to execute update query for department: 1
+2025-03-30 01:44:25 - Update query executed successfully
+2025-03-30 01:44:25 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-03-30 01:44:25 - Transaction committed successfully
+2025-03-29 20:55:28 - Request received
+2025-03-29 20:55:28 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [approver_remark] => ok
+    [csrf_token] => 0cde56c21377e9f1e131ce8ee8681f4fa461fa219e4854ca5beff159b07ad4a0
+    [wf_id] => V-2-8-1755282600-2Y
+    [val_wf_approval_tracking_id] => 700
+)
+
+2025-03-29 20:55:28 - SESSION data: Array
+(
+    [csrf_token] => 0cde56c21377e9f1e131ce8ee8681f4fa461fa219e4854ca5beff159b07ad4a0
+    [failed_attempts] => Array
+        (
+            [engg_user_one] => 0
+            [111838] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743281714
+    [logged_in_user] => employee
+    [account_name] => engg_user_one
+    [user_id] => 42
+    [user_name] => Engg User One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 1
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 111838
+    [user_domain_id] => engg_user_one
+)
+
+2025-03-30 02:25:28 - About to execute update query for department: 1
+2025-03-30 02:25:28 - Update query executed successfully
+2025-03-30 02:25:28 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-03-30 02:25:28 - Transaction committed successfully
+2025-03-29 20:56:45 - Request received
+2025-03-29 20:56:45 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [approver_remark] => ok
+    [csrf_token] => a322911d54cc242c2b51cca714db241ac8bf20437141bf209d8ec9e779ff80da
+    [wf_id] => V-2-8-1755282600-2Y
+    [val_wf_approval_tracking_id] => 701
+)
+
+2025-03-29 20:56:45 - SESSION data: Array
+(
+    [csrf_token] => a322911d54cc242c2b51cca714db241ac8bf20437141bf209d8ec9e779ff80da
+    [failed_attempts] => Array
+        (
+            [engg_user_one] => 0
+            [111838] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743281714
+    [logged_in_user] => employee
+    [account_name] => engg_user_one
+    [user_id] => 42
+    [user_name] => Engg User One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 1
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 111838
+    [user_domain_id] => engg_user_one
+)
+
+2025-03-30 02:26:45 - About to execute update query for department: 1
+2025-03-30 02:26:45 - Update query executed successfully
+2025-03-30 02:26:45 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-03-30 02:26:45 - Transaction committed successfully
+2025-03-30 04:58:46 - Request received
+2025-03-30 04:58:46 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [approver_remark] => ok
+    [csrf_token] => fc8d2daec1c123af3fed12d4c7f626857b54f0477981fdae5aa00db345b1e4fb
+    [wf_id] => V-2-8-1755282600-2Y
+    [val_wf_approval_tracking_id] => 702
+)
+
+2025-03-30 04:58:46 - SESSION data: Array
+(
+    [csrf_token] => fc8d2daec1c123af3fed12d4c7f626857b54f0477981fdae5aa00db345b1e4fb
+    [failed_attempts] => Array
+        (
+            [engg_user_one] => 0
+            [111838] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743309733
+    [logged_in_user] => employee
+    [account_name] => engg_user_one
+    [user_id] => 42
+    [user_name] => Engg User One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 1
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 111838
+    [user_domain_id] => engg_user_one
+)
+
+2025-03-30 10:28:46 - About to execute update query for department: 1
+2025-03-30 10:28:46 - Update query executed successfully
+2025-03-30 10:28:46 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-03-30 10:28:46 - Transaction committed successfully
+2025-03-30 11:39:24 - Request received
+2025-03-30 11:39:24 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [user_password] => palcoa123
+    [csrf_token] => df00a72b2933725d21694c20094becc8bce325dbcd7fd02f7c83edae9016375f
+    [wf_id] => V-4-8-1756492200-Y
+    [test_wf_id] => 
+    [level1_approver_remark] => ok
+)
+
+2025-03-30 11:39:24 - SESSION data: Array
+(
+    [csrf_token] => df00a72b2933725d21694c20094becc8bce325dbcd7fd02f7c83edae9016375f
+    [failed_attempts] => Array
+        (
+            [engg_user_one] => 0
+            [111838] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743334289
+    [logged_in_user] => employee
+    [account_name] => engg_user_one
+    [user_id] => 42
+    [user_name] => Engg User One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 1
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 111838
+    [user_domain_id] => engg_user_one
+)
+
+2025-03-30 11:39:24 - ERROR: Error in sendbackreport.php: Missing required parameters
+2025-03-30 11:39:39 - Request received
+2025-03-30 11:39:39 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [user_password] => palcoa123
+    [csrf_token] => 110bda86026b5636c2e2fb994bdde3bc99114641e12b4c3c6a771cee95c479e1
+    [wf_id] => V-4-8-1756492200-Y
+    [test_wf_id] => 
+    [level1_approver_remark] => ok
+)
+
+2025-03-30 11:39:39 - SESSION data: Array
+(
+    [csrf_token] => 110bda86026b5636c2e2fb994bdde3bc99114641e12b4c3c6a771cee95c479e1
+    [failed_attempts] => Array
+        (
+            [engg_user_one] => 0
+            [111838] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743334289
+    [logged_in_user] => employee
+    [account_name] => engg_user_one
+    [user_id] => 42
+    [user_name] => Engg User One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 1
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 111838
+    [user_domain_id] => engg_user_one
+)
+
+2025-03-30 11:39:39 - ERROR: Error in sendbackreport.php: Missing required parameters
+2025-03-30 11:54:48 - Request received
+2025-03-30 11:54:48 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [user_password] => palcoa123
+    [csrf_token] => 3f782f3395947163ab7e4186278d80494ae4683f0e58bcee40b0be61571353e4
+    [wf_id] => V-4-8-1756492200-Y
+    [test_wf_id] => 
+    [level1_approver_remark] => not ok
+    [deviation_remark] =>  NA
+    [val_wf_approval_tracking_id] => 704
+)
+
+2025-03-30 11:54:48 - SESSION data: Array
+(
+    [csrf_token] => 3f782f3395947163ab7e4186278d80494ae4683f0e58bcee40b0be61571353e4
+    [failed_attempts] => Array
+        (
+            [engg_user_one] => 0
+            [111838] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743335654
+    [logged_in_user] => employee
+    [account_name] => engg_user_one
+    [user_id] => 42
+    [user_name] => Engg User One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 1
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 111838
+    [user_domain_id] => engg_user_one
+)
+
+2025-03-30 17:24:48 - About to execute update query for department: 1
+2025-03-30 17:24:48 - Update query executed successfully
+2025-03-30 17:24:48 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-03-30 17:24:48 - Transaction committed successfully
+2025-03-30 13:00:56 - Request received
+2025-03-30 13:00:56 - POST data: Array
+(
+    [user_remark] => qc_user_one
+    [user_password] => palcoa123
+    [csrf_token] => b6380905a93164fc9070c4eeee29566be6c341d20a182a91044b5d49811c19f4
+    [wf_id] => V-4-8-1756492200-Y
+    [test_wf_id] => 
+    [level1_approver_remark] => Rejected
+    [deviation_remark] =>  NA NA Iteration 2 NA Iteration 2 NA Iteration 2 NA Iteration 2 NA Iteration 2 NA Iteration 2 NA Iteration 2 NA Iteration 2 NA Iteration 2 NA Iteration 2 NA Itertion 1
+    [val_wf_approval_tracking_id] => 714
+)
+
+2025-03-30 13:00:56 - SESSION data: Array
+(
+    [csrf_token] => b6380905a93164fc9070c4eeee29566be6c341d20a182a91044b5d49811c19f4
+    [failed_attempts] => Array
+        (
+            [qc_user_one] => 0
+            [129387] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743339641
+    [logged_in_user] => employee
+    [account_name] => qc_user_one
+    [user_id] => 53
+    [user_name] => QC User One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 0
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 129387
+    [user_domain_id] => qc_user_one
+)
+
+2025-03-30 18:30:56 - About to execute update query for department: 0
+2025-03-30 18:30:56 - Update query executed successfully
+2025-03-30 18:30:56 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-03-30 18:30:56 - Transaction committed successfully
+2025-03-30 18:35:35 - Request received
+2025-03-30 18:35:35 - POST data: Array
+(
+    [user_remark] => ehs_user_two
+    [user_password] => palcoa123
+    [csrf_token] => bdb0fb1ef1e0bc4d2358eaf75e6844d13bade2c06512025c37b4bfc2f9932f93
+    [wf_id] => V-4-8-1756492200-Y
+    [test_wf_id] => 
+    [level1_approver_remark] => ok
+    [deviation_remark] =>  NA NA Iteration 2 NA Iteration 2 NA Iteration 2 NA Iteration 2 NA Iteration 2 NA Iteration 2 NA Iteration 2 NA Iteration 2 NA Iteration 2 NA Iteration 2 NA Itertion 1 NA Iteratio2
+    [val_wf_approval_tracking_id] => 715
+)
+
+2025-03-30 18:35:35 - SESSION data: Array
+(
+    [csrf_token] => bdb0fb1ef1e0bc4d2358eaf75e6844d13bade2c06512025c37b4bfc2f9932f93
+    [failed_attempts] => Array
+        (
+            [ehs_user_two] => 0
+            [110797] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743359721
+    [logged_in_user] => employee
+    [account_name] => ehs_user_two
+    [user_id] => 52
+    [user_name] => EHS User Two
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 7
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 110797
+    [user_domain_id] => ehs_user_two
+)
+
+2025-03-31 00:05:35 - About to execute update query for department: 7
+2025-03-31 00:05:35 - Update query executed successfully
+2025-03-31 00:05:35 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-03-31 00:05:35 - Transaction committed successfully
+2025-03-31 04:31:41 - Request received
+2025-03-31 04:31:41 - POST data: Array
+(
+    [user_remark] => unit_head_one
+    [user_password] => palcoa123
+    [csrf_token] => fe689313fd27d358922697dde54a66e421052e5eee32fe1eb4563a6c331253af
+    [wf_id] => V-5-8-1761157800-Y
+    [test_wf_id] => 
+    [level1_approver_remark] => send back
+    [deviation_remark] =>  NA it1
+    [val_wf_approval_tracking_id] => 717
+)
+
+2025-03-31 04:31:41 - SESSION data: Array
+(
+    [csrf_token] => fe689313fd27d358922697dde54a66e421052e5eee32fe1eb4563a6c331253af
+    [failed_attempts] => Array
+        (
+            [unit_head_one] => 0
+            [22648] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743394764
+    [logged_in_user] => employee
+    [account_name] => unit_head_one
+    [user_id] => 54
+    [user_name] => Unit Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 9
+    [is_qa_head] => No
+    [is_unit_head] => Yes
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 22648
+    [user_domain_id] => unit_head_one
+)
+
+2025-03-31 10:01:41 - About to execute update query for level: 1, department: 9
+2025-03-31 10:01:41 - Error in update query: Invalid department ID for level 1: 9
+2025-03-31 10:01:41 - ERROR: Error in sendbackreport.php: Invalid department ID for level 1: 9
+2025-03-31 04:39:22 - Request received
+2025-03-31 04:39:22 - POST data: Array
+(
+    [user_remark] => unit_head_one
+    [user_password] => palcoa123
+    [csrf_token] => 94ec1d8c18f4bd3b595068bf0fa487795eb5e926f34f42b3018039d255f7e529
+    [wf_id] => V-5-8-1761157800-Y
+    [test_wf_id] => 
+    [level1_approver_remark] => send back
+    [deviation_remark] =>  NA it1
+    [val_wf_approval_tracking_id] => 717
+)
+
+2025-03-31 04:39:22 - SESSION data: Array
+(
+    [csrf_token] => 94ec1d8c18f4bd3b595068bf0fa487795eb5e926f34f42b3018039d255f7e529
+    [failed_attempts] => Array
+        (
+            [unit_head_one] => 0
+            [22648] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743394764
+    [logged_in_user] => employee
+    [account_name] => unit_head_one
+    [user_id] => 54
+    [user_name] => Unit Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 9
+    [is_qa_head] => No
+    [is_unit_head] => Yes
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 22648
+    [user_domain_id] => unit_head_one
+)
+
+2025-03-31 10:09:22 - About to execute update query for level: 1, department: 9
+2025-03-31 10:09:22 - Error in update query: Invalid department ID for level 1: 9
+2025-03-31 10:09:22 - ERROR: Error in sendbackreport.php: Invalid department ID for level 1: 9
+2025-03-31 04:41:45 - Request received
+2025-03-31 04:41:45 - POST data: Array
+(
+    [user_remark] => unit_head_one
+    [user_password] => palcoa123
+    [csrf_token] => c84853ab53c3122660d4edb2577d511e525790db8e254a27466b9fcaab072615
+    [wf_id] => V-5-8-1761157800-Y
+    [test_wf_id] => 
+    [level2_approver_remark] => ok
+    [level1_approver_remark] => ok
+    [deviation_remark] =>  NA it1
+    [val_wf_approval_tracking_id] => 717
+    [approval_level] => 2
+)
+
+2025-03-31 04:41:45 - SESSION data: Array
+(
+    [csrf_token] => c84853ab53c3122660d4edb2577d511e525790db8e254a27466b9fcaab072615
+    [failed_attempts] => Array
+        (
+            [unit_head_one] => 0
+            [22648] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743394764
+    [logged_in_user] => employee
+    [account_name] => unit_head_one
+    [user_id] => 54
+    [user_name] => Unit Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 9
+    [is_qa_head] => No
+    [is_unit_head] => Yes
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 22648
+    [user_domain_id] => unit_head_one
+)
+
+2025-03-31 10:11:45 - About to execute update query for level: 2, department: 9
+2025-03-31 10:11:45 - Update query executed successfully
+2025-03-31 10:11:45 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-03-31 10:11:45 - Transaction committed successfully
+2025-04-06 13:53:23 - Request received
+2025-04-06 13:53:23 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [user_password] => palcoa123
+    [csrf_token] => 190d26fb0321dc9ebac9427ab4d25f91d7d2c5656b6dc6e9a52f79eb74ae6b9c
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level1_approver_remark] => Sending back
+    [deviation_remark] =>  NA NA
+    [val_wf_approval_tracking_id] => 718
+    [approval_level] => 1
+)
+
+2025-04-06 13:53:23 - SESSION data: Array
+(
+    [csrf_token] => 190d26fb0321dc9ebac9427ab4d25f91d7d2c5656b6dc6e9a52f79eb74ae6b9c
+    [failed_attempts] => Array
+        (
+            [engg_user_one] => 0
+            [111838] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743947220
+    [logged_in_user] => employee
+    [account_name] => engg_user_one
+    [user_id] => 42
+    [user_name] => Engg User One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 1
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 111838
+    [user_domain_id] => engg_user_one
+)
+
+2025-04-06 19:23:23 - About to execute update query for level: 1, department: 1
+2025-04-06 19:23:23 - Update query executed successfully
+2025-04-06 19:23:23 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-04-06 19:23:23 - Transaction committed successfully
+2025-04-06 13:55:14 - Request received
+2025-04-06 13:55:14 - POST data: Array
+(
+    [user_remark] => qc_user_one
+    [user_password] => palcoa123
+    [csrf_token] => 4aaeb923d13b926813da3295fba712d64fdb6eb92815a009a27fa0454e3a5b4d
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level1_approver_remark] => Sed back
+    [deviation_remark] =>  NA NA NA
+    [val_wf_approval_tracking_id] => 719
+    [approval_level] => 1
+)
+
+2025-04-06 13:55:14 - SESSION data: Array
+(
+    [csrf_token] => 4aaeb923d13b926813da3295fba712d64fdb6eb92815a009a27fa0454e3a5b4d
+    [failed_attempts] => Array
+        (
+            [qc_user_one] => 0
+            [129387] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743947699
+    [logged_in_user] => employee
+    [account_name] => qc_user_one
+    [user_id] => 53
+    [user_name] => QC User One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 0
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 129387
+    [user_domain_id] => qc_user_one
+)
+
+2025-04-06 19:25:14 - About to execute update query for level: 1, department: 0
+2025-04-06 19:25:14 - Update query executed successfully
+2025-04-06 19:25:14 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-04-06 19:25:14 - Transaction committed successfully
+2025-04-06 13:59:21 - Request received
+2025-04-06 13:59:21 - POST data: Array
+(
+    [user_remark] => unit_head_one
+    [user_password] => palcoa123
+    [csrf_token] => 6dc52dc48c279918da9d9e6f8ed6f82efa41ab16c8906a6e7114974e44f93f7b
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level2_approver_remark] => ok
+    [level1_approver_remark] => ok
+    [deviation_remark] =>  NA NA NA NA
+    [val_wf_approval_tracking_id] => 720
+    [approval_level] => 2
+)
+
+2025-04-06 13:59:21 - SESSION data: Array
+(
+    [csrf_token] => 6dc52dc48c279918da9d9e6f8ed6f82efa41ab16c8906a6e7114974e44f93f7b
+    [failed_attempts] => Array
+        (
+            [unit_head_one] => 0
+            [22648] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743947768
+    [logged_in_user] => employee
+    [account_name] => unit_head_one
+    [user_id] => 54
+    [user_name] => Unit Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 9
+    [is_qa_head] => No
+    [is_unit_head] => Yes
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 22648
+    [user_domain_id] => unit_head_one
+)
+
+2025-04-06 19:29:21 - About to execute update query for level: 2, department: 9
+2025-04-06 19:29:21 - Update query executed successfully
+2025-04-06 19:29:21 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-04-06 19:29:21 - Transaction committed successfully
+2025-04-06 14:01:42 - Request received
+2025-04-06 14:01:42 - POST data: Array
+(
+    [user_remark] => unit_head_one
+    [user_password] => palcoa123
+    [csrf_token] => 6dc52dc48c279918da9d9e6f8ed6f82efa41ab16c8906a6e7114974e44f93f7b
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level2_approver_remark] => ok
+    [level1_approver_remark] => ok
+    [deviation_remark] =>  NA NA NA NA
+    [val_wf_approval_tracking_id] => 720
+    [approval_level] => 2
+)
+
+2025-04-06 14:01:42 - SESSION data: Array
+(
+    [csrf_token] => 2931fb836fad458bf53bd1923d6d022a938477923984c257e02dbb047c0f1194
+    [failed_attempts] => Array
+        (
+            [unit_head_one] => 0
+            [22648] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743947768
+    [logged_in_user] => employee
+    [account_name] => unit_head_one
+    [user_id] => 54
+    [user_name] => Unit Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 9
+    [is_qa_head] => No
+    [is_unit_head] => Yes
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 22648
+    [user_domain_id] => unit_head_one
+)
+
+2025-04-06 14:01:42 - ERROR: Error in sendbackreport.php: CSRF token validation failed
+2025-04-06 14:01:50 - Request received
+2025-04-06 14:01:50 - POST data: Array
+(
+    [user_remark] => unit_head_one
+    [user_password] => palcoa123
+    [csrf_token] => 6551887800ad9b887927bf507b7a113e3503e8f64867b31d8525420b95fb0cde
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level2_approver_remark] => ok
+    [level1_approver_remark] => ok
+    [deviation_remark] =>  NA NA NA NA
+    [val_wf_approval_tracking_id] => 720
+    [approval_level] => 2
+)
+
+2025-04-06 14:01:50 - SESSION data: Array
+(
+    [csrf_token] => a7f311b3735db151bc4f19f813a0031227e9d4896948619e8b3dd9d6b0b3ed9e
+    [failed_attempts] => Array
+        (
+            [unit_head_one] => 0
+            [22648] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743947768
+    [logged_in_user] => employee
+    [account_name] => unit_head_one
+    [user_id] => 54
+    [user_name] => Unit Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 9
+    [is_qa_head] => No
+    [is_unit_head] => Yes
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 22648
+    [user_domain_id] => unit_head_one
+)
+
+2025-04-06 14:01:50 - ERROR: Error in sendbackreport.php: CSRF token validation failed
+2025-04-06 14:13:21 - Request received
+2025-04-06 14:13:21 - POST data: Array
+(
+    [user_remark] => unit_head_one
+    [user_password] => palcoa123
+    [csrf_token] => 31e7cc7b2b138ebd5e3e90916cdf0b35584c68c8cb53fe0fd3b4c7172abf6667
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level2_approver_remark] => ok
+    [level1_approver_remark] => ok
+    [deviation_remark] =>  NA NA NA NA NA
+    [val_wf_approval_tracking_id] => 721
+    [approval_level] => 2
+)
+
+2025-04-06 14:13:21 - SESSION data: Array
+(
+    [csrf_token] => 31e7cc7b2b138ebd5e3e90916cdf0b35584c68c8cb53fe0fd3b4c7172abf6667
+    [failed_attempts] => Array
+        (
+            [unit_head_one] => 0
+            [22648] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743948737
+    [logged_in_user] => employee
+    [account_name] => unit_head_one
+    [user_id] => 54
+    [user_name] => Unit Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 9
+    [is_qa_head] => No
+    [is_unit_head] => Yes
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 22648
+    [user_domain_id] => unit_head_one
+)
+
+2025-04-06 19:43:21 - About to execute update query for level: 2, department: 9
+2025-04-06 19:43:21 - Update query executed successfully
+2025-04-06 19:43:21 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-04-06 19:43:21 - Transaction committed successfully
+2025-04-06 14:29:24 - Request received
+2025-04-06 14:29:24 - POST data: Array
+(
+    [user_remark] => unit_head_one
+    [user_password] => palcoa123
+    [csrf_token] => 12967cee5c1442beeed4db73f72f3c2192dcd1c0a6234d82516f37053b0b0fea
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level2_approver_remark] => send back
+    [level1_approver_remark] => send back
+    [deviation_remark] =>  NA NA NA NA NA NA
+    [val_wf_approval_tracking_id] => 722
+    [approval_level] => 2
+)
+
+2025-04-06 14:29:24 - SESSION data: Array
+(
+    [csrf_token] => 12967cee5c1442beeed4db73f72f3c2192dcd1c0a6234d82516f37053b0b0fea
+    [failed_attempts] => Array
+        (
+            [unit_head_one] => 0
+            [22648] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743949747
+    [logged_in_user] => employee
+    [account_name] => unit_head_one
+    [user_id] => 54
+    [user_name] => Unit Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 9
+    [is_qa_head] => No
+    [is_unit_head] => Yes
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 22648
+    [user_domain_id] => unit_head_one
+)
+
+2025-04-06 19:59:24 - About to execute update query for level: 2, department: 9
+2025-04-06 19:59:24 - Update query executed successfully
+2025-04-06 19:59:24 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-04-06 19:59:24 - Transaction committed successfully
+2025-04-06 14:31:04 - Request received
+2025-04-06 14:31:04 - POST data: Array
+(
+    [user_remark] => unit_head_one
+    [user_password] => palcoa123
+    [csrf_token] => 83eb186b95f693bf9d3a2ac6e4d4763402515e1180e6c34cdbc14e42d6684517
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level2_approver_remark] => send back
+    [level1_approver_remark] => send back
+    [deviation_remark] =>  NA NA NA NA NA NA NA
+    [val_wf_approval_tracking_id] => 723
+    [approval_level] => 2
+)
+
+2025-04-06 14:31:04 - SESSION data: Array
+(
+    [csrf_token] => 83eb186b95f693bf9d3a2ac6e4d4763402515e1180e6c34cdbc14e42d6684517
+    [failed_attempts] => Array
+        (
+            [unit_head_one] => 0
+            [22648] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743949850
+    [logged_in_user] => employee
+    [account_name] => unit_head_one
+    [user_id] => 54
+    [user_name] => Unit Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 9
+    [is_qa_head] => No
+    [is_unit_head] => Yes
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 22648
+    [user_domain_id] => unit_head_one
+)
+
+2025-04-06 20:01:04 - About to execute update query for level: 2, department: 9
+2025-04-06 20:01:04 - Update query executed successfully
+2025-04-06 20:01:04 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-04-06 20:01:04 - Transaction committed successfully
+2025-04-06 15:38:36 - Request received
+2025-04-06 15:38:36 - POST data: Array
+(
+    [user_remark] => qa_head_one
+    [user_password] => palcoa123
+    [csrf_token] => ea0de365a78ae99e81a986697ef5474b0d62472bd77d73e760b5746d65a46be1
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level3_approver_remark] => Send back
+    [level1_approver_remark] => Send back
+    [deviation_remark] =>  NA NA NA NA NA NA NA NA
+    [val_wf_approval_tracking_id] => 724
+    [approval_level] => 3
+)
+
+2025-04-06 15:38:36 - SESSION data: Array
+(
+    [csrf_token] => ea0de365a78ae99e81a986697ef5474b0d62472bd77d73e760b5746d65a46be1
+    [failed_attempts] => Array
+        (
+            [qa_head_one] => 0
+            [23188] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743953898
+    [logged_in_user] => employee
+    [account_name] => qa_head_one
+    [user_id] => 41
+    [user_name] => QA Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 8
+    [is_qa_head] => Yes
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 23188
+    [user_domain_id] => qa_head_one
+)
+
+2025-04-06 21:08:36 - About to execute update query for level: 3, department: 8
+2025-04-06 21:08:36 - Error in update query: Unknown column 'level3_qa_head_approval_datetime' in 'field list'
+2025-04-06 21:08:36 - ERROR: Error in sendbackreport.php: Unknown column 'level3_qa_head_approval_datetime' in 'field list'
+2025-04-06 15:59:43 - Request received
+2025-04-06 15:59:43 - POST data: Array
+(
+    [user_remark] => qa_head_one
+    [user_password] => palcoa123
+    [csrf_token] => dbac63f339ff851b4d0031093892cdd866b7834a3179de74d3da14cc6082a0f6
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level3_approver_remark] => Send back
+    [level1_approver_remark] => Send back
+    [deviation_remark] =>  NA NA NA NA NA NA NA NA
+    [val_wf_approval_tracking_id] => 724
+    [approval_level] => 3
+)
+
+2025-04-06 15:59:43 - SESSION data: Array
+(
+    [csrf_token] => dbac63f339ff851b4d0031093892cdd866b7834a3179de74d3da14cc6082a0f6
+    [failed_attempts] => Array
+        (
+            [qa_head_one] => 0
+            [23188] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743953898
+    [logged_in_user] => employee
+    [account_name] => qa_head_one
+    [user_id] => 41
+    [user_name] => QA Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 8
+    [is_qa_head] => Yes
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 23188
+    [user_domain_id] => qa_head_one
+)
+
+2025-04-06 21:29:43 - About to execute update query for level: 3, department: 8
+2025-04-06 21:29:43 - Update query executed successfully
+2025-04-06 21:29:43 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-04-06 21:29:43 - Transaction committed successfully
+2025-04-06 16:00:01 - Request received
+2025-04-06 16:00:01 - POST data: Array
+(
+    [user_remark] => qa_head_one
+    [user_password] => palcoa123
+    [csrf_token] => dbac63f339ff851b4d0031093892cdd866b7834a3179de74d3da14cc6082a0f6
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level3_approver_remark] => Send back
+    [level1_approver_remark] => Send back
+    [deviation_remark] =>  NA NA NA NA NA NA NA NA
+    [val_wf_approval_tracking_id] => 724
+    [approval_level] => 3
+)
+
+2025-04-06 16:00:01 - SESSION data: Array
+(
+    [csrf_token] => d1633aa9f3fe4ac53d750759c2fa605dad22c04df319274cdb00d88fd0a201a0
+    [failed_attempts] => Array
+        (
+            [qa_head_one] => 0
+            [23188] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743953898
+    [logged_in_user] => employee
+    [account_name] => qa_head_one
+    [user_id] => 41
+    [user_name] => QA Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 8
+    [is_qa_head] => Yes
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 23188
+    [user_domain_id] => qa_head_one
+)
+
+2025-04-06 16:00:01 - ERROR: Error in sendbackreport.php: CSRF token validation failed
+2025-04-06 16:02:38 - Request received
+2025-04-06 16:02:38 - POST data: Array
+(
+    [user_remark] => qa_head_one
+    [user_password] => palcoa123
+    [csrf_token] => 635940c7444aad0a93ee38160c134fad4bc37d6351d0a16137b842862ac3d4b9
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level3_approver_remark] => ok
+    [level1_approver_remark] => ok
+    [deviation_remark] =>  NA NA NA NA NA NA NA NA NA
+    [val_wf_approval_tracking_id] => 
+    [approval_level] => 3
+)
+
+2025-04-06 16:02:38 - SESSION data: Array
+(
+    [csrf_token] => 635940c7444aad0a93ee38160c134fad4bc37d6351d0a16137b842862ac3d4b9
+    [failed_attempts] => Array
+        (
+            [qa_head_one] => 0
+            [23188] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743955335
+    [logged_in_user] => employee
+    [account_name] => qa_head_one
+    [user_id] => 41
+    [user_name] => QA Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 8
+    [is_qa_head] => Yes
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 23188
+    [user_domain_id] => qa_head_one
+)
+
+2025-04-06 16:02:38 - ERROR: Error in sendbackreport.php: Missing val_wf_approval_tracking_id parameter
+2025-04-06 16:15:48 - Request received
+2025-04-06 16:15:48 - POST data: Array
+(
+    [user_remark] => unit_head_one
+    [user_password] => palcoa123
+    [csrf_token] => 1a9d558ad5ae65666c0e0842e9099bb7e0d9d605fea7fe9e6cdca9ab75070b0e
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level2_approver_remark] => ok
+    [level1_approver_remark] => ok
+    [deviation_remark] =>  NA NA NA NA NA NA NA NA NA NA
+    [val_wf_approval_tracking_id] => 
+    [approval_level] => 2
+)
+
+2025-04-06 16:15:48 - SESSION data: Array
+(
+    [csrf_token] => 1a9d558ad5ae65666c0e0842e9099bb7e0d9d605fea7fe9e6cdca9ab75070b0e
+    [failed_attempts] => Array
+        (
+            [unit_head_one] => 0
+            [22648] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743956138
+    [logged_in_user] => employee
+    [account_name] => unit_head_one
+    [user_id] => 54
+    [user_name] => Unit Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 9
+    [is_qa_head] => No
+    [is_unit_head] => Yes
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 22648
+    [user_domain_id] => unit_head_one
+)
+
+2025-04-06 16:15:48 - ERROR: Error in sendbackreport.php: Missing val_wf_approval_tracking_id parameter
+2025-04-06 16:17:05 - Request received
+2025-04-06 16:17:05 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [user_password] => palcoa123
+    [csrf_token] => 2209ba7b9c12a2799a912b6755f10a66ddb6beed6c6d9619f42bfcf46270116f
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level1_approver_remark] => ok
+    [deviation_remark] =>  NA NA NA NA NA NA NA NA NA NA NA
+    [val_wf_approval_tracking_id] => 728
+    [approval_level] => 1
+)
+
+2025-04-06 16:17:05 - SESSION data: Array
+(
+    [csrf_token] => 2209ba7b9c12a2799a912b6755f10a66ddb6beed6c6d9619f42bfcf46270116f
+    [failed_attempts] => Array
+        (
+            [engg_user_one] => 0
+            [111838] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743956178
+    [logged_in_user] => employee
+    [account_name] => engg_user_one
+    [user_id] => 42
+    [user_name] => Engg User One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 1
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 111838
+    [user_domain_id] => engg_user_one
+)
+
+2025-04-06 21:47:05 - About to execute update query for level: 1, department: 1
+2025-04-06 21:47:05 - Update query executed successfully
+2025-04-06 21:47:05 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-04-06 21:47:05 - Transaction committed successfully
+2025-04-06 16:17:36 - Request received
+2025-04-06 16:17:36 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [user_password] => palcoa123
+    [csrf_token] => 78c4ae8784b838a50102def70b271643bb1677ee527cf20c6ce6987f0d0dccce
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level1_approver_remark] => ok
+    [deviation_remark] =>  NA NA NA NA NA NA NA NA NA NA NA NA
+    [val_wf_approval_tracking_id] => 729
+    [approval_level] => 1
+)
+
+2025-04-06 16:17:36 - SESSION data: Array
+(
+    [csrf_token] => 78c4ae8784b838a50102def70b271643bb1677ee527cf20c6ce6987f0d0dccce
+    [failed_attempts] => Array
+        (
+            [engg_user_one] => 0
+            [111838] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743956178
+    [logged_in_user] => employee
+    [account_name] => engg_user_one
+    [user_id] => 42
+    [user_name] => Engg User One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 1
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 111838
+    [user_domain_id] => engg_user_one
+)
+
+2025-04-06 21:47:36 - About to execute update query for level: 1, department: 1
+2025-04-06 21:47:36 - Update query executed successfully
+2025-04-06 21:47:36 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-04-06 21:47:36 - Transaction committed successfully
+2025-04-06 17:26:38 - Request received
+2025-04-06 17:26:38 - POST data: Array
+(
+    [user_remark] => unit_head_one
+    [user_password] => palcoa123
+    [csrf_token] => c7c6f527d7c167e8da5f6ff85ee822da73ae6beb368429a8eecf415a1bcb8d9c
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level2_approver_remark] => Sent back
+    [level1_approver_remark] => Sent back
+    [deviation_remark] =>  NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA
+    [val_wf_approval_tracking_id] => 736
+    [approval_level] => 2
+)
+
+2025-04-06 17:26:38 - SESSION data: Array
+(
+    [csrf_token] => c7c6f527d7c167e8da5f6ff85ee822da73ae6beb368429a8eecf415a1bcb8d9c
+    [failed_attempts] => Array
+        (
+            [engg_user_one] => 0
+            [111838] => 0
+            [unit_head_one] => 0
+            [22648] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743960381
+    [logged_in_user] => employee
+    [account_name] => unit_head_one
+    [user_id] => 54
+    [user_name] => Unit Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 9
+    [is_qa_head] => No
+    [is_unit_head] => Yes
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 22648
+    [user_domain_id] => unit_head_one
+)
+
+2025-04-06 22:56:38 - About to execute update query for level: 2, department: 9
+2025-04-06 22:56:38 - Update query executed successfully
+2025-04-06 22:56:38 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-04-06 22:56:38 - Transaction committed successfully
+2025-04-06 17:26:42 - Request received
+2025-04-06 17:26:42 - POST data: Array
+(
+    [user_remark] => unit_head_one
+    [user_password] => palcoa123
+    [csrf_token] => c7c6f527d7c167e8da5f6ff85ee822da73ae6beb368429a8eecf415a1bcb8d9c
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level2_approver_remark] => Sent back
+    [level1_approver_remark] => Sent back
+    [deviation_remark] =>  NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA
+    [val_wf_approval_tracking_id] => 736
+    [approval_level] => 2
+)
+
+2025-04-06 17:26:42 - SESSION data: Array
+(
+    [csrf_token] => bc17202b0e53ab01a5fc535100f141be4d2a96427a38fd65917635d4575ee17f
+    [failed_attempts] => Array
+        (
+            [engg_user_one] => 0
+            [111838] => 0
+            [unit_head_one] => 0
+            [22648] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743960381
+    [logged_in_user] => employee
+    [account_name] => unit_head_one
+    [user_id] => 54
+    [user_name] => Unit Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 9
+    [is_qa_head] => No
+    [is_unit_head] => Yes
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 22648
+    [user_domain_id] => unit_head_one
+)
+
+2025-04-06 17:26:42 - ERROR: Error in sendbackreport.php: CSRF token validation failed
+2025-04-06 17:27:02 - Request received
+2025-04-06 17:27:02 - POST data: Array
+(
+    [user_remark] => unit_head_one
+    [user_password] => palcoa123
+    [csrf_token] => ac73e82d1b243a9eca51e68bca9eb5b4ae5c5334efa6dbce64c582fe7bcd6067
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level2_approver_remark] => sent back
+    [level1_approver_remark] => sent back
+    [deviation_remark] =>  NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA
+    [val_wf_approval_tracking_id] => 736
+    [approval_level] => 2
+)
+
+2025-04-06 17:27:02 - SESSION data: Array
+(
+    [csrf_token] => ac73e82d1b243a9eca51e68bca9eb5b4ae5c5334efa6dbce64c582fe7bcd6067
+    [failed_attempts] => Array
+        (
+            [engg_user_one] => 0
+            [111838] => 0
+            [unit_head_one] => 0
+            [22648] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743960381
+    [logged_in_user] => employee
+    [account_name] => unit_head_one
+    [user_id] => 54
+    [user_name] => Unit Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 9
+    [is_qa_head] => No
+    [is_unit_head] => Yes
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 22648
+    [user_domain_id] => unit_head_one
+)
+
+2025-04-06 17:28:57 - Request received
+2025-04-06 17:28:57 - POST data: Array
+(
+    [user_remark] => unit_head_one
+    [user_password] => palcoa123
+    [csrf_token] => a64b3652677de13ff371bfb4d25d6af70080aeb3e4bc27cf00ac89b7ac5bc3ca
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level2_approver_remark] => Send back
+    [level1_approver_remark] => Send back
+    [deviation_remark] =>  NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA
+    [val_wf_approval_tracking_id] => 737
+    [approval_level] => 2
+)
+
+2025-04-06 17:28:57 - SESSION data: Array
+(
+    [csrf_token] => a64b3652677de13ff371bfb4d25d6af70080aeb3e4bc27cf00ac89b7ac5bc3ca
+    [failed_attempts] => Array
+        (
+            [unit_head_one] => 0
+            [22648] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743960517
+    [logged_in_user] => employee
+    [account_name] => unit_head_one
+    [user_id] => 54
+    [user_name] => Unit Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 9
+    [is_qa_head] => No
+    [is_unit_head] => Yes
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 22648
+    [user_domain_id] => unit_head_one
+)
+
+2025-04-06 22:58:57 - About to execute update query for level: 2, department: 9
+2025-04-06 22:58:57 - Update query executed successfully
+2025-04-06 22:58:57 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-04-06 22:58:57 - Transaction committed successfully
+2025-04-06 17:30:30 - Request received
+2025-04-06 17:30:30 - POST data: Array
+(
+    [user_remark] => unit_head_one
+    [user_password] => palcoa123
+    [csrf_token] => a64b3652677de13ff371bfb4d25d6af70080aeb3e4bc27cf00ac89b7ac5bc3ca
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level2_approver_remark] => Send back
+    [level1_approver_remark] => Send back
+    [deviation_remark] =>  NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA
+    [val_wf_approval_tracking_id] => 737
+    [approval_level] => 2
+)
+
+2025-04-06 17:30:30 - SESSION data: Array
+(
+    [csrf_token] => 163772c74f16e29e1a67de615cbc645b85c6eed890505a0f2d1e3d29e9ef78b3
+    [failed_attempts] => Array
+        (
+            [unit_head_one] => 0
+            [22648] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743960517
+    [logged_in_user] => employee
+    [account_name] => unit_head_one
+    [user_id] => 54
+    [user_name] => Unit Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 9
+    [is_qa_head] => No
+    [is_unit_head] => Yes
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 22648
+    [user_domain_id] => unit_head_one
+)
+
+2025-04-06 17:30:30 - ERROR: Error in sendbackreport.php: CSRF token validation failed
+2025-04-06 17:31:29 - Request received
+2025-04-06 17:31:29 - POST data: Array
+(
+    [user_remark] => unit_head_one
+    [user_password] => palcoa123
+    [csrf_token] => 66fd6e8f1b10ee2b62866d9a02f40c2f2887db0fa1d424b3644c67629a2b3a7a
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level2_approver_remark] => Send back
+    [level1_approver_remark] => Send back
+    [deviation_remark] =>  NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA
+    [val_wf_approval_tracking_id] => 738
+    [approval_level] => 2
+)
+
+2025-04-06 17:31:29 - SESSION data: Array
+(
+    [csrf_token] => 66fd6e8f1b10ee2b62866d9a02f40c2f2887db0fa1d424b3644c67629a2b3a7a
+    [failed_attempts] => Array
+        (
+            [unit_head_one] => 0
+            [22648] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743960675
+    [logged_in_user] => employee
+    [account_name] => unit_head_one
+    [user_id] => 54
+    [user_name] => Unit Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 9
+    [is_qa_head] => No
+    [is_unit_head] => Yes
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 22648
+    [user_domain_id] => unit_head_one
+)
+
+2025-04-06 23:01:29 - About to execute update query for level: 2, department: 9
+2025-04-06 23:01:29 - Update query executed successfully
+2025-04-06 23:01:29 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-04-06 23:01:29 - Transaction committed successfully
+2025-04-06 17:33:37 - Request received
+2025-04-06 17:33:37 - POST data: Array
+(
+    [user_remark] => qa_head_one
+    [user_password] => palcoa123
+    [csrf_token] => 2c74b7bb71b9f065888277cb899e6117d23b143e94c524a9cf99ea894b0ab843
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level3_approver_remark] => send back
+    [level1_approver_remark] => send back
+    [deviation_remark] =>  NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA
+    [val_wf_approval_tracking_id] => 739
+    [approval_level] => 3
+)
+
+2025-04-06 17:33:37 - SESSION data: Array
+(
+    [csrf_token] => 2c74b7bb71b9f065888277cb899e6117d23b143e94c524a9cf99ea894b0ab843
+    [failed_attempts] => Array
+        (
+            [qa_head_one] => 0
+            [23188] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743960789
+    [logged_in_user] => employee
+    [account_name] => qa_head_one
+    [user_id] => 41
+    [user_name] => QA Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 8
+    [is_qa_head] => Yes
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 23188
+    [user_domain_id] => qa_head_one
+)
+
+2025-04-06 23:03:37 - About to execute update query for level: 3, department: 8
+2025-04-06 23:03:37 - Update query executed successfully
+2025-04-06 23:03:37 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-04-06 23:03:37 - Transaction committed successfully
+2025-04-06 19:01:13 - Request received
+2025-04-06 19:01:13 - POST data: Array
+(
+    [user_remark] => unit_head_one
+    [user_password] => palcoa123
+    [csrf_token] => 105275e72ec3c400c1cd7d589ce49b3bbcfc651a30136f797ee66fe20ead3d61
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level2_approver_remark] => send back
+    [level1_approver_remark] => send back
+    [deviation_remark] =>  NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA 1
+    [val_wf_approval_tracking_id] => 740
+    [approval_level] => 2
+)
+
+2025-04-06 19:01:13 - SESSION data: Array
+(
+    [csrf_token] => 105275e72ec3c400c1cd7d589ce49b3bbcfc651a30136f797ee66fe20ead3d61
+    [failed_attempts] => Array
+        (
+            [unit_head_one] => 0
+            [22648] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743965850
+    [logged_in_user] => employee
+    [account_name] => unit_head_one
+    [user_id] => 54
+    [user_name] => Unit Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 9
+    [is_qa_head] => No
+    [is_unit_head] => Yes
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 22648
+    [user_domain_id] => unit_head_one
+)
+
+2025-04-07 00:31:13 - About to execute update query for level: 2, department: 9
+2025-04-07 00:31:13 - Update query executed successfully
+2025-04-07 00:31:13 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-04-07 00:31:13 - Transaction committed successfully
+2025-04-06 19:16:21 - Request received
+2025-04-06 19:16:21 - POST data: Array
+(
+    [user_remark] => qa_head_one
+    [user_password] => palcoa123
+    [csrf_token] => 39054cc7eb7713e26006a655099c79e385b93817dda3d2fb9dc926d57bb32414
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level3_approver_remark] => reject
+    [level1_approver_remark] => reject
+    [deviation_remark] =>  NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA 1 ok ok
+    [val_wf_approval_tracking_id] => 742
+    [approval_level] => 3
+)
+
+2025-04-06 19:16:21 - SESSION data: Array
+(
+    [csrf_token] => 39054cc7eb7713e26006a655099c79e385b93817dda3d2fb9dc926d57bb32414
+    [failed_attempts] => Array
+        (
+            [qa_head_one] => 0
+            [23188] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743966647
+    [logged_in_user] => employee
+    [account_name] => qa_head_one
+    [user_id] => 41
+    [user_name] => QA Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 8
+    [is_qa_head] => Yes
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 23188
+    [user_domain_id] => qa_head_one
+)
+
+2025-04-07 00:46:21 - About to execute update query for level: 3, department: 8
+2025-04-07 00:46:21 - Update query executed successfully
+2025-04-07 00:46:21 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-04-07 00:46:21 - Transaction committed successfully
+2025-04-06 19:22:53 - Request received
+2025-04-06 19:22:53 - POST data: Array
+(
+    [user_remark] => qa_head_one
+    [user_password] => palcoa123
+    [csrf_token] => e4482e529525ddab373affc49df6d27777a32355575020c24bcfb283b1cec7d6
+    [wf_id] => V-3-8-1736533800-Y
+    [test_wf_id] => 
+    [level3_approver_remark] => Reject
+    [level1_approver_remark] => Reject
+    [deviation_remark] =>  NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA 1 ok ok NA
+    [val_wf_approval_tracking_id] => 743
+    [approval_level] => 3
+)
+
+2025-04-06 19:22:53 - SESSION data: Array
+(
+    [csrf_token] => e4482e529525ddab373affc49df6d27777a32355575020c24bcfb283b1cec7d6
+    [failed_attempts] => Array
+        (
+            [qa_head_one] => 0
+            [23188] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1743967332
+    [logged_in_user] => employee
+    [account_name] => qa_head_one
+    [user_id] => 41
+    [user_name] => QA Head One
+    [unit_id] => 8
+    [unit_name] => Unit VIII
+    [unit_site] => Goa
+    [department_id] => 8
+    [is_qa_head] => Yes
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 23188
+    [user_domain_id] => qa_head_one
+)
+
+2025-04-07 00:52:53 - About to execute update query for level: 3, department: 8
+2025-04-07 00:52:53 - Update query executed successfully
+2025-04-07 00:52:53 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-04-07 00:52:53 - Transaction committed successfully
+2025-04-10 02:38:39 - Request received
+2025-04-10 02:38:39 - POST data: Array
+(
+    [user_remark] => qc_user_one
+    [user_password] => palcoa123
+    [csrf_token] => 4af7fe49fd2f22a13210a4ee3c2e16aba796ee1634710e6d5ac5d1889735aaf7
+    [wf_id] => V-2-72-1755282600-2Y
+    [test_wf_id] => 
+    [level1_approver_remark] => Send back QC Iteration 1
+    [deviation_remark] =>  NA
+    [val_wf_approval_tracking_id] => 745
+    [approval_level] => 1
+)
+
+2025-04-10 02:38:39 - SESSION data: Array
+(
+    [csrf_token] => 4af7fe49fd2f22a13210a4ee3c2e16aba796ee1634710e6d5ac5d1889735aaf7
+    [failed_attempts] => Array
+        (
+            [qc_user_one] => 0
+            [129387] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1744252679
+    [logged_in_user] => employee
+    [account_name] => qc_user_one
+    [user_id] => 53
+    [user_name] => QC User One
+    [unit_id] => 72
+    [unit_name] => Unit VIIPDII
+    [unit_site] => Goa
+    [department_id] => 0
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 129387
+    [user_domain_id] => qc_user_one
+)
+
+2025-04-10 08:08:39 - About to execute update query for level: 1, department: 0
+2025-04-10 08:08:39 - Update query executed successfully
+2025-04-10 08:08:39 - Warning: Could not add audit trail: Unknown column 'remark' in 'field list'
+2025-04-10 08:08:39 - Transaction committed successfully
+2025-04-10 03:00:59 - Request received
+2025-04-10 03:00:59 - POST data: Array
+(
+    [user_remark] => ehs_user_one
+    [user_password] => palcoa123
+    [csrf_token] => b710e9c93b1ffd70827e26cee7f33ce03ff9d6c8ec3de17a3c98a2d24db33f1f
+    [wf_id] => V-2-72-1755282600-2Y
+    [test_wf_id] => 
+    [level1_approver_remark] => send back EHS Iteration 2
+    [deviation_remark] =>  NA NA
+    [val_wf_approval_tracking_id] => 746
+    [approval_level] => 1
+)
+
+2025-04-10 03:00:59 - SESSION data: Array
+(
+    [csrf_token] => b710e9c93b1ffd70827e26cee7f33ce03ff9d6c8ec3de17a3c98a2d24db33f1f
+    [failed_attempts] => Array
+        (
+            [ehs_user_one] => 0
+            [146266] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1744254024
+    [logged_in_user] => employee
+    [account_name] => ehs_user_one
+    [user_id] => 50
+    [user_name] => EHS User One
+    [unit_id] => 72
+    [unit_name] => Unit VIIPDII
+    [unit_site] => Goa
+    [department_id] => 7
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 146266
+    [user_domain_id] => ehs_user_one
+)
+
+2025-04-10 08:30:59 - About to execute update query for level: 1, department: 7
+2025-04-10 08:30:59 - Update query executed successfully
+2025-04-10 08:30:59 - Transaction committed successfully
+2025-04-10 03:34:10 - Request received
+2025-04-10 03:34:10 - POST data: Array
+(
+    [user_remark] => ehs_user_one
+    [user_password] => palcoa123
+    [csrf_token] => 58f705a249e6bb77c39b2e447604f14d9a6cc6e9226aba655221758ae4f958df
+    [wf_id] => V-2-72-1755282600-2Y
+    [test_wf_id] => 
+    [level1_approver_remark] => Rejected Iteration 2
+    [deviation_remark] =>  NA NA Iteration Deviation 2 									
+    [val_wf_approval_tracking_id] => 747
+    [approval_level] => 1
+)
+
+2025-04-10 03:34:10 - SESSION data: Array
+(
+    [csrf_token] => 58f705a249e6bb77c39b2e447604f14d9a6cc6e9226aba655221758ae4f958df
+    [failed_attempts] => Array
+        (
+            [ehs_user_one] => 0
+            [146266] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1744256020
+    [logged_in_user] => employee
+    [account_name] => ehs_user_one
+    [user_id] => 50
+    [user_name] => EHS User One
+    [unit_id] => 72
+    [unit_name] => Unit VIIPDII
+    [unit_site] => Goa
+    [department_id] => 7
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 146266
+    [user_domain_id] => ehs_user_one
+)
+
+2025-04-10 09:04:10 - About to execute update query for level: 1, department: 7
+2025-04-10 09:04:10 - Update query executed successfully
+2025-04-10 09:04:10 - Transaction committed successfully
+2025-04-10 03:44:34 - Request received
+2025-04-10 03:44:34 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [user_password] => palcoa123
+    [csrf_token] => f61983c624ad9e20bb5a995a60362bc807f9faafc954cd289c7936900c7968dd
+    [wf_id] => V-2-72-1755282600-2Y
+    [test_wf_id] => 
+    [level1_approver_remark] => Rejected iteration 3
+    [deviation_remark] =>  NA NA Iteration Deviation 2 									 
+    [val_wf_approval_tracking_id] => 748
+    [approval_level] => 1
+)
+
+2025-04-10 03:44:34 - SESSION data: Array
+(
+    [csrf_token] => f61983c624ad9e20bb5a995a60362bc807f9faafc954cd289c7936900c7968dd
+    [failed_attempts] => Array
+        (
+            [engg_user_one] => 0
+            [111838] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1744256104
+    [logged_in_user] => employee
+    [account_name] => engg_user_one
+    [user_id] => 42
+    [user_name] => Engg User One
+    [unit_id] => 72
+    [unit_name] => Unit VIIPDII
+    [unit_site] => Goa
+    [department_id] => 1
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 111838
+    [user_domain_id] => engg_user_one
+)
+
+2025-04-10 09:14:34 - About to execute update query for level: 1, department: 1
+2025-04-10 09:14:34 - Update query executed successfully
+2025-04-10 09:14:34 - Transaction committed successfully
+2025-04-10 04:40:29 - Request received
+2025-04-10 04:40:29 - POST data: Array
+(
+    [user_remark] => qc_user_one
+    [user_password] => palcoa123
+    [csrf_token] => c075b6162fb2fa34113a81bd6a0db50733d2c8a0d8a94a9c22ab73540cd6cbf9
+    [wf_id] => V-1-72-1744396200-Y
+    [test_wf_id] => 
+    [level1_approver_remark] => Rejeceted
+    [deviation_remark] =>  
+    [val_wf_approval_tracking_id] => 750
+    [approval_level] => 1
+)
+
+2025-04-10 04:40:29 - SESSION data: Array
+(
+    [csrf_token] => c075b6162fb2fa34113a81bd6a0db50733d2c8a0d8a94a9c22ab73540cd6cbf9
+    [failed_attempts] => Array
+        (
+            [qc_user_one] => 0
+            [129387] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1744259905
+    [logged_in_user] => employee
+    [account_name] => qc_user_one
+    [user_id] => 53
+    [user_name] => QC User One
+    [unit_id] => 72
+    [unit_name] => Unit VIIPDII
+    [unit_site] => Goa
+    [department_id] => 0
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 129387
+    [user_domain_id] => qc_user_one
+)
+
+2025-04-10 10:10:29 - About to execute update query for level: 1, department: 0
+2025-04-10 10:10:29 - Update query executed successfully
+2025-04-10 10:10:29 - Transaction committed successfully
+2025-06-06 04:07:02 - Request received
+2025-06-06 04:07:02 - POST data: Array
+(
+    [user_remark] => engg_user_one
+    [user_password] => palcoa123
+    [csrf_token] => d23d1cf91841043dfb4867fed382419f28bb8d20e48caf12fa8c91f21b8a86f6
+    [wf_id] => V-1-72-1744396200-Y
+    [test_wf_id] => 
+    [level1_approver_remark] => Send back
+    [deviation_remark] =>  Dev Remark NA
+    [val_wf_approval_tracking_id] => 755
+    [approval_level] => 1
+)
+
+2025-06-06 04:07:02 - SESSION data: Array
+(
+    [csrf_token] => d23d1cf91841043dfb4867fed382419f28bb8d20e48caf12fa8c91f21b8a86f6
+    [failed_attempts] => Array
+        (
+            [engg_user_one] => 0
+            [111838] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1749182782
+    [logged_in_user] => employee
+    [account_name] => engg_user_one
+    [user_id] => 42
+    [user_name] => Engg User One
+    [unit_id] => 72
+    [unit_name] => Unit VIIPDII
+    [unit_site] => Goa
+    [department_id] => 1
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 111838
+    [user_domain_id] => engg_user_one
+)
+
+2025-06-06 09:37:02 - About to execute update query for level: 1, department: 1
+2025-06-06 09:37:02 - Update query executed successfully
+2025-06-06 09:37:02 - Transaction committed successfully
+2025-06-06 06:58:34 - Request received
+2025-06-06 06:58:34 - POST data: Array
+(
+    [user_remark] => Send back
+    [user_password] => palcoa123
+    [csrf_token] => b2023e6cb72764e5434fb5408673916d091c37c014782e3511968503bcf9ae77
+    [wf_id] => V-2-72-1755282600-2Y
+    [test_wf_id] => 
+    [level1_approver_remark] => Sending back
+    [deviation_remark] =>  NA
+    [val_wf_approval_tracking_id] => 756
+    [approval_level] => 1
+)
+
+2025-06-06 06:58:34 - SESSION data: Array
+(
+    [csrf_token] => b2023e6cb72764e5434fb5408673916d091c37c014782e3511968503bcf9ae77
+    [failed_attempts] => Array
+        (
+            [engg_user_one] => 0
+            [111838] => 0
+        )
+
+    [login_failed] => No
+    [login_time] => 1749192973
+    [logged_in_user] => employee
+    [account_name] => engg_user_one
+    [user_id] => 42
+    [user_name] => Engg User One
+    [unit_id] => 72
+    [unit_name] => Unit VIIPDII
+    [unit_site] => Goa
+    [department_id] => 1
+    [is_qa_head] => No
+    [is_unit_head] => No
+    [is_admin] => No
+    [is_super_admin] => No
+    [is_dept_head] => No
+    [employee_id] => 111838
+    [user_domain_id] => engg_user_one
+)
+
+2025-06-06 12:28:34 - About to execute update query for level: 1, department: 1
+2025-06-06 12:28:34 - Update query executed successfully
+2025-06-06 12:28:34 - Transaction committed successfully

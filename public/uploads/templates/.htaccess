@@ -1,0 +1,21 @@
+# Deny direct access to template files
+# Only allow access through the application's download handler
+
+Order deny,allow
+Deny from all
+
+# Prevent directory listing
+Options -Indexes
+
+# Prevent access to any PHP files in this directory
+<Files "*.php">
+    Order deny,allow
+    Deny from all
+</Files>
+
+# Additional security headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "no-referrer"
+</IfModule>

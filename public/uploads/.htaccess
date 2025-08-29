@@ -1,0 +1,7 @@
+# Secure upload directory
+Options -Indexes
+Options -ExecCGI
+AddHandler cgi-script .php .pl .py .jsp .asp .sh .cgi
+<FilesMatch "\.(php|phtml|php3|php4|php5|pl|py|jsp|asp|sh|cgi)$">
+    Deny from all
+</FilesMatch>

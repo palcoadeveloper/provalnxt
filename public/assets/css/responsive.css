@@ -1,0 +1,586 @@
+/* ProVal HVAC - Responsive Design Enhancements */
+
+/* Fix for legacy styles conflicting with Bootstrap responsive classes */
+* {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+/* Ensure custom styles don't override Bootstrap responsive behavior */
+.form-control {
+    width: 100% !important;
+    max-width: 100%;
+}
+
+.btn {
+    max-width: 100%;
+    word-wrap: break-word;
+}
+
+/* Fix for custom card styles on mobile */
+.card {
+    overflow: hidden;
+    word-wrap: break-word;
+}
+
+.card-body {
+    overflow-x: auto;
+}
+
+/* Fix for any fixed-width elements that might break responsive layout */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Mobile-first responsive breakpoints */
+/* Extra small devices (portrait phones, less than 576px) */
+@media (max-width: 575.98px) {
+    /* Navigation adjustments */
+    .navbar-brand h1 {
+        font-size: 1.5rem !important;
+    }
+    
+    .navbar-brand-wrapper {
+        min-width: 200px;
+    }
+    
+    /* Main content adjustments */
+    .container-fluid {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+    
+    .content-wrapper {
+        padding: 1rem 0.5rem;
+    }
+    
+    /* Card adjustments */
+    .card {
+        margin-bottom: 1rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    /* Form improvements */
+    .form-control {
+        font-size: 16px; /* Prevents zoom on iOS */
+        padding: 0.75rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-group label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Button improvements */
+    .btn {
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .btn-sm {
+        width: auto;
+        margin-bottom: 0;
+    }
+    
+    /* Table improvements */
+    .table-responsive {
+        font-size: 0.85rem;
+    }
+    
+    .table td, .table th {
+        padding: 0.5rem;
+        white-space: nowrap;
+    }
+    
+    /* DataTables mobile improvements */
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate {
+        margin-bottom: 0.5rem;
+        text-align: center;
+    }
+    
+    .dataTables_wrapper .dataTables_length select,
+    .dataTables_wrapper .dataTables_filter input {
+        width: 100%;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .dataTables_wrapper .dataTables_length label,
+    .dataTables_wrapper .dataTables_filter label {
+        display: block;
+        margin-bottom: 0.25rem;
+        font-size: 0.9rem;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 0.375rem 0.5rem;
+        margin: 0 0.125rem;
+        font-size: 0.85rem;
+    }
+    
+    .dataTables_wrapper .dataTables_info {
+        font-size: 0.85rem;
+        text-align: center;
+        padding-top: 0.5rem;
+    }
+    
+    /* Stack DataTable controls vertically on mobile */
+    .dataTables_wrapper .row {
+        flex-direction: column;
+    }
+    
+    .dataTables_wrapper .col-sm-12 {
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Mobile table scrolling improvements */
+    .table-responsive {
+        border: none;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        -ms-overflow-style: -ms-autohiding-scrollbar;
+    }
+    
+    .table-responsive table {
+        min-width: 600px;
+        font-size: 0.8rem;
+    }
+    
+    .table-responsive .table td,
+    .table-responsive .table th {
+        white-space: nowrap;
+        padding: 0.5rem 0.25rem;
+        vertical-align: middle;
+    }
+    
+    /* Improve button groups in tables */
+    .btn-group-vertical .btn {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        margin-bottom: 0.125rem;
+    }
+    
+    .btn-sm {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    /* Page title adjustments */
+    .page-title {
+        font-size: 1.25rem;
+    }
+    
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .breadcrumb {
+        margin-top: 0.5rem;
+    }
+    
+    /* Dashboard cards */
+    .card-img-holder .display-1 {
+        font-size: 2rem;
+    }
+    
+    /* jQuery UI improvements */
+    .ui-datepicker {
+        font-size: 0.9rem;
+        width: 90vw;
+        max-width: 300px;
+    }
+    
+    .ui-datepicker td {
+        padding: 0.25rem;
+    }
+    
+    .ui-autocomplete {
+        max-width: 90vw;
+        font-size: 0.9rem;
+        z-index: 9999;
+    }
+    
+    /* Modal improvements */
+    .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+    }
+    
+    .modal-dialog-responsive {
+        margin: 0.25rem;
+        max-width: calc(100% - 0.5rem);
+    }
+    
+    .modal-body {
+        padding: 1rem;
+    }
+    
+    .modal-header {
+        padding: 0.75rem 1rem;
+    }
+    
+    .modal-footer {
+        padding: 0.5rem 1rem 0.75rem !important; /* Reduce top padding to minimize gap */
+        flex-direction: column;
+    }
+    
+    .modal-footer .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .modal-footer .btn:last-child {
+        margin-bottom: 0;
+    }
+    
+    .modal-title {
+        font-size: 1.1rem;
+    }
+    
+    /* Fix for modal form controls being cut off and spacing issues */
+    .modal-body {
+        padding: 1rem 1rem 0.5rem !important; /* Match header horizontal padding (1rem) */
+    }
+    
+    .modal .form-control {
+        font-size: 16px !important; /* Prevent zoom on iOS */
+        min-height: 44px; /* Ensure touch-friendly size */
+        padding: 0.75rem !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        border-radius: 0.375rem;
+        border: 1px solid #ced4da;
+    }
+    
+    .modal textarea.form-control {
+        min-height: 88px !important; /* At least 2 lines visible */
+        resize: vertical;
+        overflow-y: auto;
+    }
+    
+    .modal .form-group {
+        margin-bottom: 1rem !important; /* Reduce spacing between form groups */
+    }
+    
+    .modal .form-group:first-child {
+        margin-top: 0 !important; /* No space above first form group */
+    }
+    
+    .modal .form-group:last-child {
+        margin-bottom: 0 !important; /* No space below last form group */
+    }
+    
+    .modal .form-group label {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem !important;
+        display: block;
+        color: #495057;
+    }
+    
+    /* Ensure modal is properly sized on small screens */
+    .modal-dialog-responsive .modal-content {
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    /* Fix for modal appearing behind other elements */
+    .modal {
+        z-index: 1060 !important;
+    }
+    
+    .modal-backdrop {
+        z-index: 1050 !important;
+    }
+    
+    /* Specific improvements for password/remarks modal */
+    #enterPasswordRemark .modal-body {
+        padding: 1rem 1rem 0.5rem !important; /* Match header padding alignment */
+    }
+    
+    #enterPasswordRemark .modal-footer {
+        padding: 0.5rem 1rem 0.75rem !important; /* Match header padding alignment */
+    }
+    
+    #enterPasswordRemark .form-group {
+        margin-bottom: 1rem !important; /* Balanced spacing */
+    }
+    
+    #enterPasswordRemark .form-group:first-child {
+        margin-top: 0 !important; /* No space above Account Password */
+    }
+    
+    #enterPasswordRemark .form-group:last-child {
+        margin-bottom: 0 !important; /* No space below Remarks textarea */
+    }
+    
+    /* Sidebar improvements */
+    .sidebar {
+        width: 250px;
+        max-width: 80vw;
+    }
+    
+    .sidebar .nav .nav-item .nav-link {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .sidebar .nav .nav-item .nav-link .menu-title {
+        font-size: 0.9rem;
+    }
+    
+    .sidebar .nav .nav-item .nav-link .menu-icon {
+        font-size: 1.2rem;
+        margin-right: 0.5rem;
+    }
+    
+    /* Navigation bar mobile improvements */
+    .navbar-brand h1 {
+        font-size: 1.5rem !important;
+    }
+    
+    .navbar-brand-wrapper {
+        min-width: 180px !important;
+        padding: 0 0.5rem;
+    }
+    
+    .navbar-menu-wrapper {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+    
+    .nav-profile-text p {
+        font-size: 0.85rem;
+        margin-bottom: 0;
+    }
+    
+    /* Hide unit/site info on very small screens */
+    .nav-profile-text .text-secondary {
+        display: none !important;
+    }
+    
+    /* Improve dropdown menu spacing */
+    .dropdown-menu {
+        min-width: 200px;
+    }
+    
+    .dropdown-item {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Small devices (landscape phones, 576px and up) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+    .container-fluid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .content-wrapper {
+        padding: 1.5rem 1rem;
+    }
+    
+    .card-body {
+        padding: 1.25rem;
+    }
+    
+    .btn {
+        width: auto;
+    }
+    
+    .form-control {
+        font-size: 0.95rem;
+    }
+    
+    /* Modal improvements for small devices */
+    .modal-dialog-responsive {
+        margin: 1rem;
+        max-width: calc(100% - 2rem);
+    }
+    
+    .modal .form-control {
+        font-size: 0.95rem !important;
+    }
+    
+    .modal-body {
+        padding: 0.75rem 1rem 0.25rem !important; /* Match header horizontal padding */
+    }
+    
+    .modal-footer {
+        flex-direction: row;
+        justify-content: flex-end;
+        padding: 0.25rem 1rem 1rem !important; /* Match header horizontal padding */
+    }
+    
+    .modal-footer .btn {
+        width: auto;
+        margin-left: 0.5rem;
+        margin-bottom: 0;
+    }
+}
+
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .content-wrapper {
+        padding: 2rem 1.5rem;
+    }
+    
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    .form-control {
+        font-size: 0.95rem;
+    }
+    
+    /* Modal improvements for tablets */
+    .modal-body {
+        padding: 1.25rem 1rem 0.5rem !important; /* Match header horizontal padding */
+    }
+    
+    .modal-footer {
+        padding: 0.5rem 1rem 1rem !important; /* Match header horizontal padding */
+    }
+    
+    /* Dashboard adjustments for tablets */
+    .card-img-holder .display-1 {
+        font-size: 2.5rem;
+    }
+}
+
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) {
+    .content-wrapper {
+        padding: 2.5rem 2rem;
+    }
+    
+    .card-body {
+        padding: 2rem;
+    }
+    
+    /* Modal improvements for desktop */
+    .modal-body {
+        padding: 1.5rem 1rem 0.5rem !important; /* Match header horizontal padding */
+    }
+    
+    .modal-footer {
+        padding: 0.5rem 1rem 1.25rem !important; /* Match header horizontal padding */
+    }
+    
+    .modal .form-group {
+        margin-bottom: 1.25rem !important; /* Moderate spacing on desktop */
+    }
+}
+
+/* Common responsive utilities */
+.text-truncate-mobile {
+    @media (max-width: 575.98px) {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 150px;
+    }
+}
+
+.hide-mobile {
+    @media (max-width: 575.98px) {
+        display: none !important;
+    }
+}
+
+.show-mobile {
+    @media (min-width: 576px) {
+        display: none !important;
+    }
+}
+
+/* Improved touch targets for mobile */
+@media (max-width: 767.98px) {
+    .nav-link,
+    .btn,
+    .form-control {
+        min-height: 44px; /* Apple's recommended minimum touch target */
+    }
+    
+    .dropdown-item {
+        padding: 0.75rem 1rem;
+    }
+}
+
+/* Fix for horizontal scrolling issues */
+body {
+    overflow-x: hidden;
+}
+
+.container-scroller {
+    overflow-x: hidden;
+}
+
+/* Ensure tables don't break layout on small screens */
+@media (max-width: 767.98px) {
+    .table-responsive {
+        border: none;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        position: relative;
+    }
+    
+    .table-responsive table {
+        min-width: 600px;
+    }
+    
+    /* Scroll indicator for mobile tables */
+    .table-responsive.has-scroll::after {
+        content: '← Scroll to see more →';
+        position: sticky;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 123, 255, 0.1);
+        color: #007bff;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        text-align: center;
+        border-radius: 0.25rem;
+        margin: 0.25rem;
+        display: block;
+        z-index: 10;
+    }
+    
+    .table-responsive.scrolling::after {
+        opacity: 0.7;
+    }
+    
+    /* Enhanced mobile table styling */
+    .table-responsive-enhanced {
+        margin-bottom: 1rem;
+    }
+    
+    .table-responsive-enhanced.mobile-optimized .dataTables_wrapper {
+        font-size: 0.85rem;
+    }
+    
+    .table-responsive-enhanced.mobile-optimized .dataTables_filter input {
+        margin-top: 0.25rem;
+    }
+    
+    .table-responsive-enhanced.mobile-optimized .dataTables_length select {
+        margin-top: 0.25rem;
+    }
+}
