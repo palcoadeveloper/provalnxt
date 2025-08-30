@@ -221,6 +221,59 @@ $(document).ready(function(){
         $("#loginnotifications").addClass("alert-danger");
         $("#notify").text('Please fill in all required fields.');
       }
+      else if(param == "otp_send_failed") {
+        $("#loginnotifications").addClass("alert-danger");
+        $("#notify").text('Failed to send verification code. Please try again or contact IT support.');
+      }
+      else if(param == "otp_session_failed") {
+        $("#loginnotifications").addClass("alert-danger");
+        $("#notify").text('Failed to create verification session. Please try again.');
+      }
+      else if(param == "no_2fa_session") {
+        $("#loginnotifications").addClass("alert-warning");
+        $("#notify").text('No verification session found. Please login again.');
+      }
+      else if(param == "otp_expired") {
+        $("#loginnotifications").addClass("alert-warning");
+        $("#notify").text('Verification code has expired. Please login again.');
+      }
+      else if(param == "max_attempts") {
+        $("#loginnotifications").addClass("alert-danger");
+        $("#notify").text('Maximum verification attempts exceeded. Please login again.');
+      }
+      else if(param == "invalid_otp") {
+        $("#loginnotifications").addClass("alert-danger");
+        var attemptsLeft = getUrlVars()["attempts_left"] || "unknown";
+        $("#notify").text('Invalid verification code. ' + attemptsLeft + ' attempts remaining.');
+      }
+      else if(param == "otp_rate_limited") {
+        $("#loginnotifications").addClass("alert-warning");
+        var retryAfter = getUrlVars()["retry_after"] || "5";
+        $("#notify").text('Too many verification attempts. Please wait ' + Math.ceil(retryAfter / 60) + ' minutes before requesting a new code.');
+      }
+      else if(param == "session_required") {
+        $("#loginnotifications").addClass("alert-warning");
+        $("#notify").text('Please complete the login process to continue.');
+      }
+      else if(param == "session_cancelled") {
+        $("#loginnotifications").addClass("alert-info");
+        $("#notify").text('Two-factor authentication was cancelled. Please log in again.');
+      }
+      else if(param == "session_cancelled_error") {
+        $("#loginnotifications").addClass("alert-warning");
+        $("#notify").text('Session cancellation completed with warnings. Please log in again.');
+      }
+      else if(param == "security_error") {
+        $("#loginnotifications").addClass("alert-danger");
+        $("#notify").text('Security validation failed. Please log in again.');
+      }
+      else if(param == "system_error") {
+        $("#loginnotifications").addClass("alert-danger");
+        var errorRef = getUrlVars()["ref"] || "Unknown";
+        // Decode the error reference to remove + signs and URL encoding
+        errorRef = decodeURIComponent(errorRef.replace(/\+/g, ' '));
+        $("#notify").text("A system error occurred. Please contact IT support with reference: " + errorRef);
+      }
    
        else if(param == "security_error") {
         $("#loginnotifications").addClass("alert-danger");
@@ -303,7 +356,7 @@ $(document).ready(function(){
             <h4>Hello! let's get started</h4>
                 <h6 class="font-weight-light">Sign in to continue.</h6> 
                 
-                <form id="loginform" method="post" action="<?= htmlspecialchars(rtrim(BASE_URL, '/') . '/core/validation/checklogin.php', ENT_QUOTES, 'UTF-8') ?>" class="needs-validation pt-3" novalidate autocomplete="off">
+                <form id="loginform" method="post" action="core/validation/checklogin.php" class="needs-validation pt-3" novalidate autocomplete="off">
                     <input type="hidden" name="csrf_token" id="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
                     <input type="hidden" name="timestamp" value="<?= time() ?>">
                     <div class="form-group">

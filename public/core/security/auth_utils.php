@@ -2,6 +2,7 @@
 // auth_utils.php - Common authentication functions
 
 // Note: config.php is loaded by the main application
+require_once __DIR__ . '/../config/db.class.php';
 
 /**
  * Verify user credentials using the same logic as checklogin.php
@@ -18,12 +19,12 @@ function verifyUserCredentials($username, $password, $userType) {
         //$protocol = FORCE_HTTPS ? 'https://' : 'http://';
         //header('Location: ' . $protocol . $_SERVER['HTTP_HOST'] . '/proval4/public/login.php?msg=invld_acct');
         header('Location: ' . BASE_URL. 'login.php?msg=invld_acct');
-        logSecurityEvent($username, 'unknown_user_login_failed', $username, 99);
+        logSecurityEvent($username, 'unknown_user_login_failed', null, null);
         exit();
     }
     elseif($user['is_account_locked']=="Yes"){
          $unit_id = isset($user['unit_id']) && $user['unit_id'] !== null ? $user['unit_id'] : 0;
-        logSecurityEvent($username, 'account_locked_accessed', $username, $unit_id);
+        logSecurityEvent($username, 'account_locked_accessed', $user['user_id'], $unit_id);
         //$protocol = FORCE_HTTPS ? 'https://' : 'http://';
         //header('Location: ' . $protocol . $_SERVER['HTTP_HOST'] . '/proval4/public/login.php?msg=acct_lckd');
         header('Location: ' . BASE_URL. 'login.php?msg=acct_lckd');
@@ -32,7 +33,7 @@ function verifyUserCredentials($username, $password, $userType) {
         // Authentication failed
         elseif ($user['user_status']=="Inactive") {
             $unit_id = isset($user['unit_id']) && $user['unit_id'] !== null ? $user['unit_id'] : 0;
-            logSecurityEvent($username, 'account_inactive', $username, $unit_id);
+            logSecurityEvent($username, 'account_inactive', $user['user_id'], $unit_id);
         //  $protocol = FORCE_HTTPS ? 'https://' : 'http://';
            header('Location: ' . BASE_URL. 'login.php?msg=acct_inactive');
            exit();
@@ -91,7 +92,7 @@ function getUserDetails($userType, $username) {
     if ($userType === "E") { // Employee
         try{
         $user = DB::queryFirstRow(
-            "SELECT user_id, user_domain_id, user_name, u1.unit_id, unit_name, unit_site, 
+            "SELECT user_id, user_domain_id, user_name,user_email, u1.unit_id, unit_name, unit_site, 
                     department_id, is_qa_head, is_unit_head, is_admin, is_super_admin, 
                     is_account_locked, is_dept_head, user_status, user_password, employee_id
              FROM users u1 LEFT JOIN units u2 ON u1.unit_id = u2.unit_id
@@ -99,9 +100,9 @@ function getUserDetails($userType, $username) {
             $username
         );
         } catch (Exception $e) {
-    $errorMessage = handleDatabaseError($e, "User authentication");
+    $errorRef = handleDatabaseError($e, "User authentication");
 
-    header('Location:' . BASE_URL. 'login.php?msg=system_error&ref=' . urlencode($errorMessage));
+    header('Location:' . BASE_URL. 'login.php?msg=system_error&ref=' . $errorRef);
     exit();
 }
     } elseif ($userType === "V") { // Vendor
@@ -116,8 +117,8 @@ function getUserDetails($userType, $username) {
             $username
         );
         } catch (Exception $e) {
-    $errorMessage = handleDatabaseError($e, "User authentication");
-    header('Location:' . BASE_URL. 'login.php?msg=system_error&ref=' . urlencode($errorMessage));
+    $errorRef = handleDatabaseError($e, "User authentication");
+    header('Location:' . BASE_URL. 'login.php?msg=system_error&ref=' . $errorRef);
     exit();
 }
     }
@@ -280,12 +281,36 @@ function logSecurityEvent($username, $eventType, $userId = null, $unitId = null)
     $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
     $timestamp = date('Y-m-d H:i:s');
     
+    // Sanitize and validate input parameters
+    $username = trim($username);
+    if (strlen($username) > 40) {
+        $username = substr($username, 0, 40) . '...';
+    }
+    
+    // Ensure proper data types for database insertion
+    $changeBy = ($userId !== null) ? (int)$userId : 0;
+    $unitIdValue = ($unitId !== null) ? (int)$unitId : null;
+    
+    // Determine change_type based on event nature
+    $securityErrors = [
+        'csrf_failure',
+        'sql_injection_attempt', 
+        'account_locked_accessed',
+        'account_inactive',
+        'invalid_login',
+        'unknown_user_login_failed',
+        'otp_email_failed',
+        'otp_email_rate_limited'
+    ];
+    
+    $changeType = in_array($eventType, $securityErrors) ? 'security_error' : 'security_event';
+    
     // Create description based on event type
     switch ($eventType) {
         case 'unknown_user_login_failed':
             $description = "Unknown user login failed. Entered user name: {$username}";
-            $userId=null;
-            $unitId=null;
+            $changeBy = 0; // No valid user ID for unknown users
+            $unitIdValue = null;
             break;
         case 'csrf_failure':
             $description = "CSRF token validation failed for user: {$username}";
@@ -305,23 +330,46 @@ function logSecurityEvent($username, $eventType, $userId = null, $unitId = null)
         case 'invalid_login':
             $description = "Invalid login credentials for user: {$username}";
             break;
+        case 'otp_email_sent':
+            $description = "OTP email sent successfully for user: {$username}";
+            break;
+        case 'otp_email_failed':
+            $description = "OTP email failed for user: {$username}";
+            break;
+        case 'otp_email_rate_limited':
+            $description = "OTP email rate limited for user: {$username}";
+            break;
         default:
             $description = "Security event ({$eventType}) for user: {$username}";
     }
-    try{
-    // Insert into log table
-    DB::insert('log', [
-        'change_type' => 'security_error',
-        'table_name' => '',
-        'change_description' => $description." From IP: {$ip}",
-        'change_by' => $userId,
-        'unit_id' => $unitId
-    ]);
+    
+    // Limit description length for varchar(200) column
+    $fullDescription = $description . " From IP: {$ip}";
+    if (strlen($fullDescription) > 200) {
+        $fullDescription = substr($fullDescription, 0, 197) . '...';
+    }
+    
+    try {
+        // Insert into log table with properly categorized change_type
+        DB::insert('log', [
+            'change_type' => $changeType,
+            'table_name' => '',
+            'change_description' => $fullDescription,
+            'change_by' => $changeBy,
+            'unit_id' => $unitIdValue
+        ]);
     } catch (Exception $e) {
-    $errorMessage = handleDatabaseError($e, "User authentication");
-    header('Location:' . BASE_URL . ' login.php?msg=system_error&ref=' . urlencode($errorMessage));
-    exit();
-}
+        $errorRef = handleDatabaseError($e, "Security logging");
+        // Don't redirect during email testing or background processes
+        if (!headers_sent() && !defined('TESTING_MODE')) {
+            header('Location:' . BASE_URL . 'login.php?msg=system_error&ref=' . $errorRef);
+            exit();
+        } else {
+            // Log the error but continue execution for testing scenarios
+            error_log("[CRITICAL] Security logging failed with reference: $errorRef");
+        }
+    }
+    
     error_log("[SECURITY EVENT] {$eventType}: User {$username} from IP {$ip} - {$description}");
     
     return $ip;
@@ -333,7 +381,7 @@ function logSecurityEvent($username, $eventType, $userId = null, $unitId = null)
  * @param int $userId User ID
  * @param int $unitId Unit ID
  */
-function handleAccountLocking($username, $unitId) {
+function handleAccountLocking($userId,$username, $unitId) {
     if (!isset($_SESSION['failed_attempts'][$username])) {
         $_SESSION['failed_attempts'][$username] = 0;
     }
@@ -345,16 +393,16 @@ function handleAccountLocking($username, $unitId) {
         DB::update('users', ['is_account_locked' => 'Yes'], 'user_domain_id=%s', $username);
        
         } catch (Exception $e) {
-    $errorMessage = handleDatabaseError($e, "User authentication");
-    header('Location:' . BASE_URL. 'login.php?msg=system_error&ref=' . urlencode($errorMessage));
+    $errorRef = handleDatabaseError($e, "Account locking");
+    header('Location:' . BASE_URL. 'login.php?msg=system_error&ref=' . $errorRef);
     exit();
 }
-        logSecurityEvent($username, 'account_locked', $username, $unitId);
+        logSecurityEvent($username, 'account_locked', $userId, $unitId);
         header('Location:' . BASE_URL . 'login.php?msg=acct_lckd');
         exit();
         
     } else {
-        logSecurityEvent($username, 'invalid_login', $username, $unitId);
+        logSecurityEvent($username, 'invalid_login', $userId, $unitId);
         return false;
     }
 }
@@ -404,8 +452,8 @@ function handleSuccessfulLogin($user, $userType)
             'unit_id' => (int)$user['unit_id']
         ]);
         } catch (Exception $e) {
-            $errorMessage = handleDatabaseError($e, "User authentication");
-            header('Location:' . BASE_URL. 'login.php?msg=system_error&ref=' . urlencode($errorMessage));
+            $errorRef = handleDatabaseError($e, "Login logging");
+            header('Location:' . BASE_URL. 'login.php?msg=system_error&ref=' . $errorRef);
             exit();
         }
     } elseif ($userType === "V") { // Vendor
@@ -433,8 +481,8 @@ function handleSuccessfulLogin($user, $userType)
             'unit_id' => 0
         ]); 
         } catch (Exception $e) {
-            $errorMessage = handleDatabaseError($e, "User authentication");
-            header('Location:' . BASE_URL. 'login.php?msg=system_error&ref=' . urlencode($errorMessage));
+            $errorRef = handleDatabaseError($e, "Login logging");
+            header('Location:' . BASE_URL. 'login.php?msg=system_error&ref=' . $errorRef);
             exit();
         }
     }
@@ -466,8 +514,8 @@ function handleDatabaseError($e, $context = '') {
     // Log the actual error with the reference code
     error_log("[DB ERROR REF:{$errorRef}] {$context}: " . $e->getMessage());
     
-    // Return a generic message with the reference code
-    return "System error occurred (Ref: {$errorRef}). Please contact support.";
+    // Return just the reference code (no spaces or special characters to avoid URL encoding issues)
+    return $errorRef;
 }
 
 /**

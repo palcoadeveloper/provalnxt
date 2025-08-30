@@ -15,19 +15,12 @@ date_default_timezone_set("Asia/Kolkata");
 
 
 
-$query="select equipment_id,equipment_code 
-from equipments
-where unit_id=".$_GET['unit_id'];
-
-
-
-if ($_GET['unit_id']!='Select')
-
-{
-
-
-
-$equipment_details= DB::query($query);
+if ($_GET['unit_id'] != 'Select') {
+    
+    $equipment_details = DB::query("SELECT equipment_id, equipment_code 
+                                   FROM equipments 
+                                   WHERE unit_id = %i", 
+                                   intval($_GET['unit_id']));
 
 $result="";
 

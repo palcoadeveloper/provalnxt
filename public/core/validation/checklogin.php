@@ -25,6 +25,10 @@ require_once '../security/auth_utils.php';
 // Include rate limiting utilities
 require_once '../security/rate_limiting_utils.php';
 
+// Include two-factor authentication
+require_once '../security/two_factor_auth.php';
+require_once '../email/BasicOTPEmailService.php';
+
 // Only enable detailed errors in development
 if (ENVIRONMENT === 'dev') {
     ini_set('display_errors', 1);
@@ -153,8 +157,74 @@ try {
             // Record successful login for rate limiting (clears previous failures)
             RateLimiter::recordSuccess('login_attempts');
             
-            // Authentication successful
-            handleSuccessfulLogin($user, $userType);
+            // Check if 2FA is enabled for this unit
+            $twoFactorConfig = TwoFactorAuth::getUnitTwoFactorConfig($user['unit_id']);
+            
+            if ($twoFactorConfig && $twoFactorConfig['two_factor_enabled'] === 'Yes') {
+                error_log("2FA is enabled for unit: " . $user['unit_id']);
+                
+                // Store complete user data for 2FA process
+                $_SESSION['pending_2fa'] = $user;
+                $_SESSION['pending_2fa']['user_type'] = $userType; // Ensure user_type is included
+                
+                // Create OTP session
+                $otpSession = TwoFactorAuth::createOTPSession(
+                    $user['user_id'],
+                    $user['unit_id'],
+                    $user['employee_id'],
+                    getClientIP(),
+                    $_SERVER['HTTP_USER_AGENT'] ?? ''
+                );
+                
+                if ($otpSession) {
+                    // Store OTP session token
+                    $_SESSION['otp_session_token'] = $otpSession['session_token'];
+                    
+                    // Send OTP via email using smart sender (force async for login flow)
+                    require_once(__DIR__ . '/../email/SmartOTPEmailSender.php');
+                    $smartEmailSender = new SmartOTPEmailSender();
+                    $emailResult = $smartEmailSender->sendOTP(
+                        $user['user_email'],
+                        $user['user_name'],
+                        $otpSession['otp_code'],
+                        $otpSession['validity_minutes'],
+                        $user['employee_id'],
+                        $user['unit_id'],
+                        true // isLoginFlow = true for aggressive async sending
+                    );
+                    
+                    if ($emailResult['success']) {
+                        if (isset($emailResult['async']) && $emailResult['async']) {
+                            error_log("OTP being sent asynchronously to: " . $user['user_email']);
+                        } else {
+                            error_log("OTP sent successfully to: " . $user['user_email']);
+                        }
+                        // Redirect to OTP verification page immediately
+                        header('Location: ' . BASE_URL . 'verify_otp.php');
+                        exit();
+                    } else {
+                        error_log("Failed to send OTP: " . ($emailResult['error'] ?? 'Unknown error'));
+                        // Clear pending 2FA session
+                        unset($_SESSION['pending_2fa']);
+                        unset($_SESSION['otp_session_token']);
+                        
+                        $errorMsg = isset($emailResult['retry_after']) ? 'otp_rate_limited' : 'otp_send_failed';
+                        header('Location: ' . BASE_URL . 'login.php?msg=' . $errorMsg);
+                        exit();
+                    }
+                } else {
+                    error_log("Failed to create OTP session");
+                    // Clear pending 2FA session
+                    unset($_SESSION['pending_2fa']);
+                    
+                    header('Location: ' . BASE_URL . 'login.php?msg=otp_session_failed');
+                    exit();
+                }
+            } else {
+                error_log("2FA not enabled, proceeding with normal login");
+                // 2FA not enabled, proceed with normal login
+                handleSuccessfulLogin($user, $userType);
+            }
         } else {
             error_log("Login failed for user: " . $username);
             
@@ -162,7 +232,7 @@ try {
             RateLimiter::recordFailure('login_attempts', null, 'invalid_credentials');
             
             $unit_id = isset($user['unit_id']) && $user['unit_id'] !== null ? $user['unit_id'] : 0;
-            handleAccountLocking($username, $unit_id);
+            handleAccountLocking($user['user_id'],$username, $unit_id);
             
             $attemptsLeft = MAX_LOGIN_ATTEMPTS - $_SESSION['failed_attempts'][$username];
             header('Location: '.BASE_URL .'login.php?msg=invalid_login&attempts_left=' . urlencode($attemptsLeft));

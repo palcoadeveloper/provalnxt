@@ -41,6 +41,11 @@ function redirectToHttps() {
 
 // Function to set security headers
 function setSecurityHeaders() {
+    // Skip headers if running in CLI mode
+    if (php_sapi_name() === 'cli' || defined('CLI_MODE')) {
+        return;
+    }
+    
     if (ENABLE_SECURITY_HEADERS) {
         // HSTS header
         $hstsHeader = 'max-age=' . HSTS_MAX_AGE;
@@ -80,7 +85,7 @@ function setSecurityHeaders() {
 $currentScript = basename($_SERVER['SCRIPT_NAME']);
 
 // Check if HTTPS is required and enforce it
-if (FORCE_HTTPS) {
+if (FORCE_HTTPS && php_sapi_name() !== 'cli' && !defined('CLI_MODE')) {
     // For all requests, enforce HTTPS
     if (!isSecureRequest()) {
         // For API/AJAX requests, return JSON error

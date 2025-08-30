@@ -36,6 +36,7 @@
           <li class="nav-item"> <a class="nav-link" href="searchequipments.php"> Equipments </a></li>
           <li class="nav-item"> <a class="nav-link" href="searchtests.php"> Tests </a></li>
           <li class="nav-item"> <a class="nav-link" href="searchmapping.php"> ETV Mapping </a></li>
+          <li class="nav-item" <?php if (isset($_SESSION['is_super_admin']) && $_SESSION['is_super_admin'] === 'Yes') {echo 'style="display: block;"';}else{echo 'style="display: none;"';} ?>> <a class="nav-link" href="searchunits.php"> Units </a></li>
         </ul>
       </div>
     </li>

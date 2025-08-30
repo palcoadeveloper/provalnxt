@@ -19,103 +19,92 @@ error_reporting(E_ALL);
 
 
 
-$query="select user_id,employee_id,user_type,vendor_id,user_name,user_email from users ";
+// Build secure parameterized query
+$base_query = "SELECT user_id, employee_id, user_type, vendor_id, user_name, user_email FROM users";
+$user_details = [];
 
-if($_GET['usertype'] == 'IE')
-{
-   
-    if($_GET['searchinput']=='')
-{
-    //$query=$query." where unit_id=".$_GET['unitid'];
-    $query=$query." where unit_id=".$_GET['unitid']." or unit_id is null and user_type='employee'";
-    
-}
-else
-{
-    
-    if ($_GET['searchcriteria']=='0')
-    {
-        if($_GET['unitid']=='select')
-        {
-            $query=$query." where user_name like '%".$_GET['searchinput']."%' and user_type='employee'";
+if ($_GET['usertype'] == 'IE') {
+    // Employee search
+    if (empty($_GET['searchinput'])) {
+        // No search input - show all employees for unit
+        if ($_GET['unitid'] != 'select') {
+            $user_details = DB::query($base_query . " WHERE (unit_id = %i OR unit_id IS NULL) AND user_type = %s", 
+                                     intval($_GET['unitid']), 'employee');
+        } else {
+            $user_details = DB::query($base_query . " WHERE user_type = %s", 'employee');
         }
-        else {
-            $query=$query." where user_name like '%".$_GET['searchinput']."%' and unit_id=".$_GET['unitid']." and user_type='employee'";
-        }
+    } else {
+        // Search with input
+        $search_input = '%' . $_GET['searchinput'] . '%';
         
+        if ($_GET['searchcriteria'] == '0') {
+            // Search by user name
+            if ($_GET['unitid'] == 'select') {
+                $user_details = DB::query($base_query . " WHERE user_name LIKE %s AND user_type = %s", 
+                                         $search_input, 'employee');
+            } else {
+                $user_details = DB::query($base_query . " WHERE user_name LIKE %s AND unit_id = %i AND user_type = %s", 
+                                         $search_input, intval($_GET['unitid']), 'employee');
+            }
+        } else {
+            // Search by employee ID
+            if ($_GET['unitid'] == 'select') {
+                $user_details = DB::query($base_query . " WHERE employee_id LIKE %s AND user_type = %s", 
+                                         $search_input, 'employee');
+            } else {
+                $user_details = DB::query($base_query . " WHERE employee_id LIKE %s AND unit_id = %i AND user_type = %s", 
+                                         $search_input, intval($_GET['unitid']), 'employee');
+            }
+        }
     }
-    else  {
-        if($_GET['unitid']=='select')
-        {
-            $query=$query." where employee_id like '%".$_GET['searchinput']."%' and user_type='employee'";
-        }
-        else {
-            $query=$query." where employee_id like '%".$_GET['searchinput']."%' and unit_id=".$_GET['unitid']." and user_type='employee'";
+} else if ($_GET['usertype'] == 'VE') {
+    // Vendor employee search
+    if (empty($_GET['searchinput']) && $_GET['vendorid'] == 'select') {
+        // No filters - show all vendor employees
+        $user_details = DB::query($base_query . " WHERE user_type = %s", 'vendor');
+    } else {
+        // Search with filters
+        $search_input = empty($_GET['searchinput']) ? '' : '%' . $_GET['searchinput'] . '%';
+        
+        if ($_GET['searchcriteria'] == '0') {
+            // Search by user name
+            if ($_GET['vendorid'] == 'select') {
+                if (!empty($search_input)) {
+                    $user_details = DB::query($base_query . " WHERE user_name LIKE %s AND user_type = %s", 
+                                             $search_input, 'vendor');
+                } else {
+                    $user_details = DB::query($base_query . " WHERE user_type = %s", 'vendor');
+                }
+            } else {
+                if (!empty($search_input)) {
+                    $user_details = DB::query($base_query . " WHERE user_name LIKE %s AND vendor_id = %i AND user_type = %s", 
+                                             $search_input, intval($_GET['vendorid']), 'vendor');
+                } else {
+                    $user_details = DB::query($base_query . " WHERE vendor_id = %i AND user_type = %s", 
+                                             intval($_GET['vendorid']), 'vendor');
+                }
+            }
+        } else {
+            // Search by employee ID
+            if ($_GET['vendorid'] == 'select') {
+                if (!empty($search_input)) {
+                    $user_details = DB::query($base_query . " WHERE employee_id LIKE %s AND user_type = %s", 
+                                             $search_input, 'vendor');
+                } else {
+                    $user_details = DB::query($base_query . " WHERE user_type = %s", 'vendor');
+                }
+            } else {
+                if (!empty($search_input)) {
+                    $user_details = DB::query($base_query . " WHERE employee_id LIKE %s AND vendor_id = %i AND user_type = %s", 
+                                             $search_input, intval($_GET['vendorid']), 'vendor');
+                } else {
+                    $user_details = DB::query($base_query . " WHERE vendor_id = %i AND user_type = %s", 
+                                             intval($_GET['vendorid']), 'vendor');
+                }
+            }
         }
     }
-    
-    
 }
-
-
-
-}
-else if($_GET['usertype'] == 'VE')
-{
-   
-
-    if($_GET['searchinput']=='' && $_GET['vendorid']=='select')
-{
-    //$query=$query." where unit_id=".$_GET['unitid'];
-    $query=$query." where user_type='vendor'";
-    
-}
-else
-{
-    
-    if ($_GET['searchcriteria']=='0')
-    {
-        
-        if($_GET['vendorid']=='select')
-        {
-            $query=$query." where user_name like '%".$_GET['searchinput']."%' and user_type='vendor'";
-        }
-        else {
-            $query=$query." where user_name like '%".$_GET['searchinput']."%' and vendor_id=".$_GET['vendorid']." and user_type='vendor'";
-        }
-        
-           
-       
-        
-    }
-    else  {
-
-        if($_GET['vendorid']=='select')
-        {
-            $query=$query." where employee_id like '%".$_GET['searchinput']."%' and user_type='vendor'";
-        }
-        else {
-            $query=$query." where employee_id like '%".$_GET['searchinput']."%' and vendor_id=".$_GET['vendorid']." and user_type='vendor'";
-        }
-        
-            
-       
-    }
-    
-    
-}
-
-
-
-}
-
-
-
-
-
-
-
-$user_details= DB::query($query);
 
 
 

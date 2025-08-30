@@ -57,6 +57,42 @@ class RateLimiter {
                     'lockout' => defined('RATE_LIMIT_LOGIN_SYSTEM_LOCKOUT') ? RATE_LIMIT_LOGIN_SYSTEM_LOCKOUT : 600
                 ]
             ],
+            'otp_generation' => [
+                'per_ip' => [
+                    'max' => defined('RATE_LIMIT_OTP_GENERATION_MAX') ? RATE_LIMIT_OTP_GENERATION_MAX : 3,
+                    'window' => defined('RATE_LIMIT_OTP_GENERATION_WINDOW') ? RATE_LIMIT_OTP_GENERATION_WINDOW : 300,
+                    'lockout' => defined('RATE_LIMIT_OTP_GENERATION_LOCKOUT') ? RATE_LIMIT_OTP_GENERATION_LOCKOUT : 900
+                ],
+                'system_wide' => [
+                    'max' => defined('RATE_LIMIT_OTP_GENERATION_SYSTEM_MAX') ? RATE_LIMIT_OTP_GENERATION_SYSTEM_MAX : 200,
+                    'window' => defined('RATE_LIMIT_OTP_GENERATION_SYSTEM_WINDOW') ? RATE_LIMIT_OTP_GENERATION_SYSTEM_WINDOW : 300,
+                    'lockout' => defined('RATE_LIMIT_OTP_GENERATION_SYSTEM_LOCKOUT') ? RATE_LIMIT_OTP_GENERATION_SYSTEM_LOCKOUT : 600
+                ]
+            ],
+            'otp_verification_attempts' => [
+                'per_ip' => [
+                    'max' => defined('RATE_LIMIT_OTP_VERIFICATION_MAX') ? RATE_LIMIT_OTP_VERIFICATION_MAX : 10,
+                    'window' => defined('RATE_LIMIT_OTP_VERIFICATION_WINDOW') ? RATE_LIMIT_OTP_VERIFICATION_WINDOW : 300,
+                    'lockout' => defined('RATE_LIMIT_OTP_VERIFICATION_LOCKOUT') ? RATE_LIMIT_OTP_VERIFICATION_LOCKOUT : 600
+                ],
+                'system_wide' => [
+                    'max' => defined('RATE_LIMIT_OTP_VERIFICATION_SYSTEM_MAX') ? RATE_LIMIT_OTP_VERIFICATION_SYSTEM_MAX : 1000,
+                    'window' => defined('RATE_LIMIT_OTP_VERIFICATION_SYSTEM_WINDOW') ? RATE_LIMIT_OTP_VERIFICATION_SYSTEM_WINDOW : 300,
+                    'lockout' => defined('RATE_LIMIT_OTP_VERIFICATION_SYSTEM_LOCKOUT') ? RATE_LIMIT_OTP_VERIFICATION_SYSTEM_LOCKOUT : 600
+                ]
+            ],
+            'otp_email_sending' => [
+                'per_ip' => [
+                    'max' => defined('RATE_LIMIT_OTP_EMAIL_MAX') ? RATE_LIMIT_OTP_EMAIL_MAX : 5,
+                    'window' => defined('RATE_LIMIT_OTP_EMAIL_WINDOW') ? RATE_LIMIT_OTP_EMAIL_WINDOW : 300,
+                    'lockout' => defined('RATE_LIMIT_OTP_EMAIL_LOCKOUT') ? RATE_LIMIT_OTP_EMAIL_LOCKOUT : 1800
+                ],
+                'system_wide' => [
+                    'max' => defined('RATE_LIMIT_OTP_EMAIL_SYSTEM_MAX') ? RATE_LIMIT_OTP_EMAIL_SYSTEM_MAX : 500,
+                    'window' => defined('RATE_LIMIT_OTP_EMAIL_SYSTEM_WINDOW') ? RATE_LIMIT_OTP_EMAIL_SYSTEM_WINDOW : 300,
+                    'lockout' => defined('RATE_LIMIT_OTP_EMAIL_SYSTEM_LOCKOUT') ? RATE_LIMIT_OTP_EMAIL_SYSTEM_LOCKOUT : 900
+                ]
+            ],
             'password_reset' => [
                 'per_ip' => [
                     'max' => defined('RATE_LIMIT_PASSWORD_RESET_MAX') ? RATE_LIMIT_PASSWORD_RESET_MAX : 3,

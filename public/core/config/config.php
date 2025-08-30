@@ -10,7 +10,7 @@ if (!defined('DB_HOST')) {
     define('DB_HOST', 'localhost');
 }
 if (!defined('DB_NAME')) {
-    define('DB_NAME', 'proval4_demo');
+    define('DB_NAME', 'provalnxt_demo');
 }
 if (!defined('DB_USER')) {
     define('DB_USER', 'root');
@@ -306,6 +306,28 @@ if (!defined('EMAIL_REMINDER_VALIDATE_EMAIL_ADDRESSES')) {
     define('EMAIL_REMINDER_VALIDATE_EMAIL_ADDRESSES', true); // Validate email addresses before sending
 }
 
+// Email performance optimization settings
+if (!defined('EMAIL_ASYNC_ENABLED')) {
+    define('EMAIL_ASYNC_ENABLED', true); // Enable asynchronous email sending for better performance
+}
+if (!defined('EMAIL_CONNECTION_POOLING_ENABLED')) {
+    define('EMAIL_CONNECTION_POOLING_ENABLED', true); // Enable SMTP connection reuse
+}
+if (!defined('EMAIL_CONNECTION_KEEPALIVE_TIME')) {
+    define('EMAIL_CONNECTION_KEEPALIVE_TIME', 300); // Keep SMTP connection alive for 5 minutes
+}
+if (!defined('EMAIL_OTP_RATE_LIMIT_SECONDS')) {
+    define('EMAIL_OTP_RATE_LIMIT_SECONDS', 2); // Minimum seconds between OTP emails per user
+}
+if (!defined('EMAIL_GLOBAL_RATE_LIMIT_PER_MINUTE')) {
+    define('EMAIL_GLOBAL_RATE_LIMIT_PER_MINUTE', 10); // Max OTP emails per minute system-wide
+}
+if (!defined('EMAIL_BACKGROUND_TIMEOUT')) {
+    define('EMAIL_BACKGROUND_TIMEOUT', 30); // Background email sending timeout in seconds
+}
+if (!defined('EMAIL_TEMPLATE_CACHE_ENABLED')) {
+    define('EMAIL_TEMPLATE_CACHE_ENABLED', true); // Enable email template caching
+}
 
 
 // Session timeout configuration (in seconds)

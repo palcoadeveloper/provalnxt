@@ -139,45 +139,6 @@ require_once 'core/config/db.class.php';
                     
                     <form class="forms-sample" id="formreport">
                 <div class="form-row">
-                <div class="form-group  col-md-6">
-                <label for="exampleSelectGender">User Type</label>
-                <select class="form-control" id="user_type" name="user_type">
-                          <option value='IE'>Employee</option>
-                          <option value='VE'>Vendor Employee</option>
-  </select>
-  </div>
-
-<div id="showVE" class="myDiv form-group  col-md-6" style="display:none;">
-                        <label for="exampleSelectGender">Vendor</label>
-                        
-                    	  <select class="form-control" id="vendor_id" name="vendor_id" <?php echo ($_GET['u']=='c' )? "disabled":""; ?>>
-									
-										<option value='select'>Select </option>
-                       	<?php 
-                       try {
-                       	    $vendor_details=DB::query("SELECT vendor_id, vendor_name FROM vendors WHERE vendor_status='Active' ORDER BY vendor_name ASC");
-                       	    if(!empty($vendor_details))
-                       	    {
-                       	        foreach ($vendor_details as $vendor){
-                       	            echo "<option value='" . htmlspecialchars($vendor['vendor_id'], ENT_QUOTES, 'UTF-8') . "'>" . htmlspecialchars($vendor['vendor_name'], ENT_QUOTES, 'UTF-8') . "</option>";
-                       	        }
-                       	    }
-                       } catch (Exception $e) {
-                           error_log("Error fetching vendor details: " . $e->getMessage());
-                       }
-                       	
-                       	    
-                       
-                       	?>	
-                        </select>
-                    
-                    
-                    
-                      </div>
-
-
-
-
                     <div id="showIE" class="myDiv form-group  col-md-6">
                         <label for="exampleSelectGender">Unit</label>
                         <select class="form-control" id="unitid" name="unitid">
@@ -189,8 +150,9 @@ require_once 'core/config/db.class.php';
                        	        
                        	        if(!empty($results))
                        	        {
+                       	            $output = "";
                        	            foreach ($results as $row) {
-                       	                $output=$output. "<option value='" . htmlspecialchars($row['unit_id'], ENT_QUOTES, 'UTF-8') . "'>" . htmlspecialchars($row['unit_name'], ENT_QUOTES, 'UTF-8') . "</option>";
+                       	                $output .= "<option value='" . htmlspecialchars($row['unit_id'], ENT_QUOTES, 'UTF-8') . "'>" . htmlspecialchars($row['unit_name'], ENT_QUOTES, 'UTF-8') . "</option>";
                        	            }
                        	            
                        	            echo $output;
@@ -222,6 +184,42 @@ require_once 'core/config/db.class.php';
                        	}
                        	?>	
                         </select>
+                      </div>
+
+                <div class="form-group  col-md-6">
+                <label for="exampleSelectGender">User Type</label>
+                <select class="form-control" id="user_type" name="user_type">
+                          <option value='IE'>Employee</option>
+                          <option value='VE'>Vendor Employee</option>
+  </select>
+  </div>
+
+<div id="showVE" class="myDiv form-group  col-md-6" style="display:none;">
+                        <label for="exampleSelectGender">Vendor</label>
+                        
+                    	  <select class="form-control" id="vendor_id" name="vendor_id" <?php echo (isset($_GET['u']) && $_GET['u']=='c') ? "disabled":""; ?>>
+									
+										<option value='select'>Select </option>
+                       	<?php 
+                       try {
+                       	    $vendor_details=DB::query("SELECT vendor_id, vendor_name FROM vendors WHERE vendor_status='Active' ORDER BY vendor_name ASC");
+                       	    if(!empty($vendor_details))
+                       	    {
+                       	        foreach ($vendor_details as $vendor){
+                       	            echo "<option value='" . htmlspecialchars($vendor['vendor_id'], ENT_QUOTES, 'UTF-8') . "'>" . htmlspecialchars($vendor['vendor_name'], ENT_QUOTES, 'UTF-8') . "</option>";
+                       	        }
+                       	    }
+                       } catch (Exception $e) {
+                           error_log("Error fetching vendor details: " . $e->getMessage());
+                       }
+                       	
+                       	    
+                       
+                       	?>	
+                        </select>
+                    
+                    
+                    
                       </div>
                     
                     

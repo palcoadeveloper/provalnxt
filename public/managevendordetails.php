@@ -32,8 +32,8 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
     try {
         $user_details = DB::queryFirstRow(
             "SELECT vendor_id, vendor_name, vendor_spoc_name, vendor_spoc_mobile, vendor_spoc_email, vendor_status
-             FROM vendors WHERE vendor_id = ?", 
-            [intval($_GET['vendor_id'])]
+             FROM vendors WHERE vendor_id = %d", 
+            intval($_GET['vendor_id'])
         );
         
         if (!$user_details) {

@@ -35,6 +35,9 @@ require_once 'core/config/db.class.php';
 function fetchEquipments(unitid) {
   
      $('#equipment_id').empty();
+     
+     // Add "All" option as default
+     $('#equipment_id').append('<option value="All" selected>All</option>');
     
      $.get("core/data/get/getequipmentdetailsformaster.php",
                       {
@@ -187,7 +190,7 @@ e.preventDefault();
                        	}
                        	else {
                        	    try {
-                       	        $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = ?", [intval($_SESSION['unit_id'])]);
+                       	        $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %i", intval($_SESSION['unit_id']));
                        	        
                        	        echo "<option value='" . htmlspecialchars($_SESSION['unit_id'], ENT_QUOTES, 'UTF-8') . "'>" . htmlspecialchars($unit_name, ENT_QUOTES, 'UTF-8') . "</option>";
                        	    } catch (Exception $e) {
@@ -268,7 +271,7 @@ e.preventDefault();
                         
                     	  <select class="form-control" id="equipment_id" name="equipment_id">
 									
-										<option value='select'>Select </option>
+										<option value='All' selected>All</option>
                        	
                         </select>
                        

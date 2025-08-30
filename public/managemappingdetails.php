@@ -38,8 +38,8 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
              FROM equipment_test_vendor_mapping t1 
              INNER JOIN tests t2 ON t1.test_id = t2.test_id 
              INNER JOIN equipments t4 ON t1.equipment_id = t4.equipment_id 
-             WHERE t1.mapping_id = ?", 
-            [intval($_GET['mapping_id'])]
+             WHERE t1.mapping_id = %d", 
+            intval($_GET['mapping_id'])
         );
         
         if (!$testresult) {
@@ -56,8 +56,8 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 }
 
 try {
-    $test_details = DB::query("SELECT test_id, test_description, test_performed_by FROM tests WHERE test_status = ?", ['Active']);
-    $vendor_details = DB::query("SELECT vendor_id, vendor_name FROM vendors WHERE vendor_status = ?", ['Active']);
+    $test_details = DB::query("SELECT test_id, test_description, test_performed_by FROM tests WHERE test_status = %s", 'Active');
+    $vendor_details = DB::query("SELECT vendor_id, vendor_name FROM vendors WHERE vendor_status = %s", 'Active');
 } catch (Exception $e) {
     error_log("Error loading test/vendor details: " . $e->getMessage());
     $test_details = [];
@@ -447,7 +447,7 @@ $("#modify_mapping").click(async function(e) {
                        	    //echo "<option>".$_SESSION['unit_id']."</option>";
                        	    
                        	    try {
-                       	        $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = ?", [intval($_SESSION['unit_id'])]);
+                       	        $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %i", intval($_SESSION['unit_id']));
                        	        $selected = (isset($_GET['m']) && $_GET['m'] != 'a') ? 'selected' : '';
                        	        echo "<option value='" . intval($_SESSION['unit_id']) . "' " . $selected . ">" . htmlspecialchars($unit_name, ENT_QUOTES, 'UTF-8') . "</option>";
                        	    } catch (Exception $e) {

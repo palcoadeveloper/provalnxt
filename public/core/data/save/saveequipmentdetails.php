@@ -35,9 +35,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 }
+// Note: GET requests do not require CSRF validation as they should be read-only operations
 
 // Input validation helper
-class InputValidator {
+class EquipmentDetailsValidator {
     public static function validateEquipmentData($mode) {
         $required_fields = [
             'equipment_code', 'unit_id', 'department_id', 'equipment_category', 
@@ -55,7 +56,15 @@ class InputValidator {
         foreach ($required_fields as $field) {
             $value = safe_get($field, 'string', '');
             
-            if (empty($value) && !in_array($field, ['design_acph', 'design_cfm'])) {
+            // Special handling for numeric fields where "0" is a valid value
+            $numeric_fields = ['unit_id', 'department_id'];
+            $is_numeric_field = in_array($field, $numeric_fields);
+            
+            // For numeric fields, check if value is empty string, not just empty()
+            // For other fields, use normal empty() check
+            $is_field_empty = $is_numeric_field ? ($value === '') : empty($value);
+            
+            if ($is_field_empty && !in_array($field, ['design_acph', 'design_cfm'])) {
                 throw new InvalidArgumentException("Missing required field: $field");
             }
             
@@ -69,17 +78,17 @@ class InputValidator {
             $validated_data[$field] = $value;
         }
         
-        // Validate numeric fields
-        if (!empty($validated_data['unit_id']) && !is_numeric($validated_data['unit_id'])) {
-            throw new InvalidArgumentException("Invalid unit ID");
+        // Validate numeric fields - must be valid integers (0 and positive numbers are allowed)
+        if (!is_numeric($validated_data['unit_id'])) {
+            throw new InvalidArgumentException("Invalid unit ID - must be a number");
         }
         
-        if (!empty($validated_data['department_id']) && !is_numeric($validated_data['department_id'])) {
-            throw new InvalidArgumentException("Invalid department ID");
+        if (!is_numeric($validated_data['department_id'])) {
+            throw new InvalidArgumentException("Invalid department ID - must be a number");
         }
         
-        if ($mode === 'modify' && (!isset($validated_data['equipment_id']) || !is_numeric($validated_data['equipment_id']))) {
-            throw new InvalidArgumentException("Invalid equipment ID");
+        if ($mode === 'modify' && (!isset($validated_data['equipment_id']) || !is_numeric($validated_data['equipment_id']) || intval($validated_data['equipment_id']) <= 0)) {
+            throw new InvalidArgumentException("Invalid equipment ID - must be a positive number");
         }
         
         return $validated_data;
@@ -92,7 +101,7 @@ $mode = safe_get('mode', 'string', '');
 if ($mode === 'add') {
     try {
         // Validate input data
-        $validated_data = InputValidator::validateEquipmentData('add');
+        $validated_data = EquipmentDetailsValidator::validateEquipmentData('add');
         
         // Execute secure transaction
         $result = executeSecureTransaction(function() use ($validated_data) {
@@ -154,13 +163,30 @@ if ($mode === 'add') {
         echo json_encode(['error' => $e->getMessage()]);
     } catch (Exception $e) {
         error_log("Equipment add error: " . $e->getMessage());
-        echo json_encode(['error' => 'Database error occurred']);
+        
+        // Parse specific database error messages
+        $error_message = $e->getMessage();
+        
+        if (strpos($error_message, 'Duplicate entry') !== false && strpos($error_message, 'equipment_code_UNIQUE') !== false) {
+            // Extract the duplicate value from the error message
+            preg_match("/Duplicate entry '(.+?)' for key/", $error_message, $matches);
+            $duplicate_code = isset($matches[1]) ? $matches[1] : 'unknown';
+            echo json_encode(['error' => "Equipment code '$duplicate_code' already exists. Please use a different equipment code."]);
+        } elseif (strpos($error_message, 'Duplicate entry') !== false) {
+            echo json_encode(['error' => 'This record already exists. Please check your input and try again.']);
+        } elseif (strpos($error_message, 'foreign key constraint') !== false || strpos($error_message, 'FOREIGN KEY') !== false) {
+            echo json_encode(['error' => 'Invalid reference data. Please check your unit/department selection.']);
+        } elseif (strpos($error_message, 'Data too long') !== false) {
+            echo json_encode(['error' => 'Input data is too long. Please shorten your entries and try again.']);
+        } else {
+            echo json_encode(['error' => 'Database error occurred. Please try again or contact support.']);
+        }
     }
 }
 else if ($mode === 'modify') {
     try {
         // Validate input data
-        $validated_data = InputValidator::validateEquipmentData('modify');
+        $validated_data = EquipmentDetailsValidator::validateEquipmentData('modify');
         
         // Execute secure transaction
         $result = executeSecureTransaction(function() use ($validated_data) {
@@ -218,7 +244,7 @@ else if ($mode === 'modify') {
                 safe_get('filteration_relief_filter', 'string', ''),
                 safe_get('filteration_reativation_filter', 'string', ''),
                 $validated_data['equipment_status'],
-                DB::sqleval("NOW()"),
+                date('Y-m-d H:i:s'),
                 $validated_data['equipment_addition_date'],
                 intval($validated_data['equipment_id'])
             );
@@ -252,7 +278,24 @@ else if ($mode === 'modify') {
         echo json_encode(['error' => $e->getMessage()]);
     } catch (Exception $e) {
         error_log("Equipment modify error: " . $e->getMessage());
-        echo json_encode(['error' => 'Database error occurred']);
+        
+        // Parse specific database error messages
+        $error_message = $e->getMessage();
+        
+        if (strpos($error_message, 'Duplicate entry') !== false && strpos($error_message, 'equipment_code_UNIQUE') !== false) {
+            // Extract the duplicate value from the error message
+            preg_match("/Duplicate entry '(.+?)' for key/", $error_message, $matches);
+            $duplicate_code = isset($matches[1]) ? $matches[1] : 'unknown';
+            echo json_encode(['error' => "Equipment code '$duplicate_code' already exists. Please use a different equipment code."]);
+        } elseif (strpos($error_message, 'Duplicate entry') !== false) {
+            echo json_encode(['error' => 'This record already exists. Please check your input and try again.']);
+        } elseif (strpos($error_message, 'foreign key constraint') !== false || strpos($error_message, 'FOREIGN KEY') !== false) {
+            echo json_encode(['error' => 'Invalid reference data. Please check your unit/department selection.']);
+        } elseif (strpos($error_message, 'Data too long') !== false) {
+            echo json_encode(['error' => 'Input data is too long. Please shorten your entries and try again.']);
+        } else {
+            echo json_encode(['error' => 'Database error occurred. Please try again or contact support.']);
+        }
     }
 } else {
     echo json_encode(['error' => 'Invalid mode specified']);

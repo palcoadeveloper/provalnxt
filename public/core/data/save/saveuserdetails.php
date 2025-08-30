@@ -18,8 +18,8 @@ require_once('../../security/rate_limiting_utils.php');
 require_once('../../security/secure_transaction_wrapper.php');
 
 include_once("../../config/db.class.php");
-include_once("getpassword.php");
-include_once("../../email/sendemail.php");
+//include_once("getpassword.php");
+//include_once("../../email/sendemail.php");
 date_default_timezone_set("Asia/Kolkata");
 
 // Apply rate limiting for form submissions
@@ -57,7 +57,7 @@ class UserDetailsValidator {
         $validated_data = [];
         
         foreach ($common_fields as $field) {
-            $value = safe_get($field, 'string', '');
+            $value = safe_post($field, 'string', '');
             
             if (in_array($field, $required_fields) && empty($value)) {
                 throw new InvalidArgumentException("Missing required field: $field");
@@ -87,34 +87,34 @@ class UserDetailsValidator {
         
         // Additional fields based on user type
         if ($user_type === 'vendor') {
-            $vendor_id = safe_get('vendor_id', 'int', 0);
+            $vendor_id = safe_post('vendor_id', 'int', 0);
             if ($vendor_id <= 0) {
                 throw new InvalidArgumentException("Invalid vendor ID");
             }
             $validated_data['vendor_id'] = $vendor_id;
             
         } else if ($user_type === 'employee') {
-            $unit_id = safe_get('unit_id', 'int', 0);
+            $unit_id = safe_post('unit_id', 'int', 0);
             if ($unit_id <= 0) {
                 throw new InvalidArgumentException("Invalid unit ID");
             }
             $validated_data['unit_id'] = $unit_id;
             
-            $validated_data['department_id'] = safe_get('department_id', 'int', 0);
-            $validated_data['is_qa_head'] = safe_get('is_qa_head', 'string', 'No');
-            $validated_data['is_unit_head'] = safe_get('is_unit_head', 'string', 'No');
-            $validated_data['is_admin'] = safe_get('is_admin', 'string', 'No');
-            $validated_data['is_super_admin'] = safe_get('is_super_admin', 'string', 'No');
-            $validated_data['is_dept_head'] = safe_get('is_dept_head', 'string', 'No');
+            $validated_data['department_id'] = safe_post('department_id', 'int', 0);
+            $validated_data['is_qa_head'] = safe_post('is_qa_head', 'string', 'No');
+            $validated_data['is_unit_head'] = safe_post('is_unit_head', 'string', 'No');
+            $validated_data['is_admin'] = safe_post('is_admin', 'string', 'No');
+            $validated_data['is_super_admin'] = safe_post('is_super_admin', 'string', 'No');
+            $validated_data['is_dept_head'] = safe_post('is_dept_head', 'string', 'No');
         }
         
         if ($mode === 'modify') {
-            $user_id = safe_get('user_id', 'int', 0);
+            $user_id = safe_post('user_id', 'int', 0);
             if ($user_id <= 0) {
                 throw new InvalidArgumentException("Invalid user ID");
             }
             $validated_data['user_id'] = $user_id;
-            $validated_data['user_locked'] = safe_get('user_locked', 'string', 'No');
+            $validated_data['user_locked'] = safe_post('user_locked', 'string', 'No');
         }
         
         return $validated_data;
@@ -123,7 +123,7 @@ class UserDetailsValidator {
 
 $password = 'palcoa123'; // Default password
 $message = "";
-$mode = safe_get('mode', 'string', '');
+$mode = safe_post('mode', 'string', '');
 
 if ($mode == 'addv') {
     try {
@@ -142,7 +142,8 @@ if ($mode == 'addv') {
                 'user_email' => $validated_data['user_email'],
                 'user_domain_id' => $validated_data['domain_id'],
                 'is_default_password' => 'No',
-                'user_status' => $validated_data['user_status']
+                'user_status' => $validated_data['user_status'],
+                'user_created_datetime' => date('Y-m-d H:i:s')
             ]);
             
             $user_id = DB::insertId();
@@ -200,7 +201,8 @@ else if ($mode == 'addc') {
                 'is_admin' => $validated_data['is_admin'],
                 'is_super_admin' => $validated_data['is_super_admin'],
                 'is_dept_head' => $validated_data['is_dept_head'],
-                'user_status' => $validated_data['user_status']
+                'user_status' => $validated_data['user_status'],
+                'user_created_datetime' => date('Y-m-d H:i:s')
             ]);
             
             $user_id = DB::insertId();
@@ -255,7 +257,7 @@ else if ($mode == 'modifyc') {
         ];
         
         foreach ($paramToColumnMapping as $param => $column) {
-            $new_value = safe_get($param, 'string', '');
+            $new_value = safe_post($param, 'string', '');
             if (!empty($new_value) && isset($existingData[$column]) && $existingData[$column] != $new_value) {
                 $changes[$column] = [
                     'old_value' => $existingData[$column],
@@ -298,7 +300,7 @@ else if ($mode == 'modifyc') {
                 $validated_data['is_dept_head'], 
                 $validated_data['domain_id'],
                 $validated_data['user_status'], 
-                DB::sqleval("NOW()"), 
+                date('Y-m-d H:i:s'), 
                 $validated_data['user_locked'], 
                 $validated_data['user_id']
             );
@@ -368,7 +370,7 @@ else if ($mode == 'modifyv') {
         ];
         
         foreach ($paramToColumnMapping as $param => $column) {
-            $new_value = safe_get($param, 'string', '');
+            $new_value = safe_post($param, 'string', '');
             if (!empty($new_value) && isset($existingData[$column]) && $existingData[$column] != $new_value) {
                 $changes[$column] = [
                     'old_value' => $existingData[$column],
@@ -398,7 +400,7 @@ else if ($mode == 'modifyv') {
                 $validated_data['user_email'], 
                 $validated_data['vendor_id'], 
                 $validated_data['user_status'],
-                DB::sqleval("NOW()"), 
+                date('Y-m-d H:i:s'), 
                 $validated_data['user_locked'], 
                 $validated_data['domain_id'], 
                 $validated_data['user_id']

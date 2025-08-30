@@ -28,7 +28,7 @@ if (empty($_SESSION['csrf_token'])) {
 if (isset($_GET['m']) && $_GET['m'] != 'a') {
     try {
         $equipment_details = DB::queryFirstRow("SELECT equipment_id,equipment_code,unit_id,department_id,equipment_category,validation_frequency,area_served,section,design_acph,area_classification,area_classification_in_operation,equipment_type,design_cfm,filteration_fresh_air,filteration_pre_filter,filteration_intermediate,filteration_final_filter_plenum,filteration_exhaust_pre_filter,filteration_exhaust_final_filter,filteration_terminal_filter,filteration_terminal_filter_on_riser,filteration_bibo_filter,filteration_relief_filter,filteration_reativation_filter,equipment_status,equipment_addition_date 
-            FROM equipments WHERE equipment_id = ?", [intval($_GET['equip_id'])]);
+            FROM equipments WHERE equipment_id = %d", intval($_GET['equip_id']));
             
         if (!$equipment_details) {
             header('HTTP/1.1 404 Not Found');
@@ -138,12 +138,43 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                             window.location = "searchequipments.php";
                         });
                     } else {
+                        // Try to parse JSON error response
+                        let errorMessage = 'Something went wrong. Please try again.';
+                        let errorTitle = 'Error';
+                        
+                        try {
+                            const errorData = JSON.parse(response);
+                            if (errorData.error) {
+                                errorMessage = errorData.error;
+                                
+                                // Set specific titles based on error type
+                                if (errorMessage.includes('already exists')) {
+                                    errorTitle = 'Duplicate Equipment Code';
+                                } else if (errorMessage.includes('validation') || errorMessage.includes('required field')) {
+                                    errorTitle = 'Validation Error';
+                                } else if (errorMessage.includes('reference data') || errorMessage.includes('unit/department')) {
+                                    errorTitle = 'Invalid Reference';
+                                } else if (errorMessage.includes('too long')) {
+                                    errorTitle = 'Input Too Long';
+                                } else {
+                                    errorTitle = 'Database Error';
+                                }
+                            }
+                        } catch (e) {
+                            // If not JSON, check if it's a simple string error
+                            if (typeof response === 'string' && response !== 'failure') {
+                                errorMessage = response;
+                            }
+                        }
+                        
                         Swal.fire({
                             icon: 'error',
-                            title: 'Oops...',
-                            text: 'Something went wrong.'
+                            title: errorTitle,
+                            text: errorMessage,
+                            confirmButtonText: 'OK'
                         }).then((result) => {
-                            window.location = "searchequipments.php";
+                            // Don't redirect on error - let user fix the issue
+                            $('#pleasewaitmodal').modal('hide');
                         });
                     }
                 });
@@ -268,6 +299,46 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 
 
 
+    
+    <style>
+        /* Custom CSS to show red borders for invalid select dropdowns with higher specificity */
+        .needs-validation.was-validated .form-control:invalid,
+        .was-validated .form-control:invalid {
+            border-color: #dc3545 !important;
+            box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 0 3px rgba(220, 53, 69, 0.1) !important;
+        }
+        
+        .needs-validation.was-validated .form-control:invalid:focus,
+        .was-validated .form-control:invalid:focus {
+            border-color: #dc3545 !important;
+            box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+        }
+        
+        /* Specific styling for select dropdowns */
+        .needs-validation.was-validated select.form-control:invalid,
+        .was-validated select.form-control:invalid {
+            border: 1px solid #dc3545 !important;
+            border-color: #dc3545 !important;
+            background-color: #fff !important;
+        }
+        
+        .needs-validation.was-validated select.form-control:invalid:focus,
+        .was-validated select.form-control:invalid:focus {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+            outline: 0 !important;
+        }
+
+        /* Additional specific selectors for different dropdown IDs */
+        .was-validated #unit_id:invalid,
+        .was-validated #department_id:invalid,
+        .was-validated #equipment_category:invalid,
+        .was-validated #validation_frequency:invalid,
+        .was-validated #equipment_status:invalid {
+            border: 1px solid #dc3545 !important;
+            border-color: #dc3545 !important;
+        }
+    </style>
 
 </head>
 
@@ -345,8 +416,8 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 
                                             <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Unit</label>
-                                                <select class="form-control" id="unit_id" name="unit_id">
-
+                                                <select class="form-control" id="unit_id" name="unit_id" required>
+                                                    <option value="">Select Unit</option>
 
                                                     <?php
 
@@ -367,7 +438,7 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                                                             }
                                                         } else {
                                                             $unit_id = intval($_SESSION['unit_id']);
-                                                            $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %?", $unit_id);
+                                                            $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %i", $unit_id);
                                                             
                                                             if ($unit_name) {
                                                                 echo "<option value='" . htmlspecialchars($unit_id, ENT_QUOTES) . "'>" . htmlspecialchars($unit_name, ENT_QUOTES) . "</option>";
@@ -385,18 +456,21 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 
                                                     ?>
                                                 </select>
+                                                <div class="invalid-feedback">
+                                                    Please select a unit.
+                                                </div>
                                             </div>
 
                                             <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Department</label>
-                                                <select class="form-control" id="department_id" name="department_id">
-
+                                                <select class="form-control" id="department_id" name="department_id" required>
+                                                    <option value="">Select Department</option>
 
                                                     <?php
 
 
                                                     try {
-                                                        $results = DB::query("SELECT department_id, department_name FROM departments WHERE department_status = ?", ['Active']);
+                                                        $results = DB::query("SELECT department_id, department_name FROM departments WHERE department_status = %s", 'Active');
                                                         $output = "";
 
                                                         if (!empty($results)) {
@@ -420,6 +494,9 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 
                                                     ?>
                                                 </select>
+                                                <div class="invalid-feedback">
+                                                    Please select a department.
+                                                </div>
                                             </div>
 
 
@@ -437,9 +514,8 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 
                                             <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Category</label>
-                                                <select class="form-control" id="equipment_category" name="equipment_category">
-
-                                                    <option>Select</option>
+                                                <select class="form-control" id="equipment_category" name="equipment_category" required>
+                                                    <option value="">Select Category</option>
                                                     <?php
 
                                                     $categories = [
@@ -458,18 +534,23 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 
                                                     ?>
                                                 </select>
+                                                <div class="invalid-feedback">
+                                                    Please select an equipment category.
+                                                </div>
                                             </div>
 
                                             <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Equipment Addition Date</label>
                                                 <input type="text" class="form-control" id="equipment_addition_date" name="equipment_addition_date" value='<?php echo ($_GET['m'] != 'a' && isset($equipment_details['equipment_addition_date']) && !empty($equipment_details['equipment_addition_date'])) ? htmlspecialchars(date('d.m.Y', strtotime($equipment_details['equipment_addition_date'])), ENT_QUOTES, 'UTF-8') : ''; ?>' required>
+                                                <div class="invalid-feedback">
+                                                    Please provide an equipment addition date.
+                                                </div>
                                             </div>
 
                                             <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Validation Frequency</label>
-                                                <select class="form-control" id="validation_frequency" name="validation_frequency">
-
-                                                    <option>Select</option>
+                                                <select class="form-control" id="validation_frequency" name="validation_frequency" required>
+                                                    <option value="">Select Frequency</option>
                                                     <?php
 
                                                     $frequencies = [
@@ -488,6 +569,9 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 
                                                     ?>
                                                 </select>
+                                                <div class="invalid-feedback">
+                                                    Please select a validation frequency.
+                                                </div>
                                             </div>
                                         </div>
 
@@ -496,7 +580,7 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 
                                             <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Status</label>
-                                                <select class="form-control" id="equipment_status" name="equipment_status">
+                                                <select class="form-control" id="equipment_status" name="equipment_status" required>
 
 
                                                     <?php
@@ -509,6 +593,9 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 
                                                     ?>
                                                 </select>
+                                                <div class="invalid-feedback">
+                                                    Please select an equipment status.
+                                                </div>
                                             </div>
                                         </div>
                                         <br />
@@ -521,16 +608,25 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 
                                             <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Area Served</label>
-                                                <input type="text" class="form-control" value="<?php echo (($_GET['m'] != 'a') ?  $equipment_details['area_served'] : ''); ?>" id='area_served' name='area_served' />
+                                                <input type="text" class="form-control" value="<?php echo (($_GET['m'] != 'a') ?  $equipment_details['area_served'] : ''); ?>" id='area_served' name='area_served' required />
+                                                <div class="invalid-feedback">
+                                                    Please provide area served.
+                                                </div>
                                             </div>
 
                                             <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Section</label>
-                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['section'] : ''); ?>' id='section' name='section' />
+                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['section'] : ''); ?>' id='section' name='section' required />
+                                                <div class="invalid-feedback">
+                                                    Please provide section.
+                                                </div>
                                             </div>
                                             <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Design ACPH</label>
-                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['design_acph'] : ''); ?>' id='design_acph' name='design_acph' />
+                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['design_acph'] : ''); ?>' id='design_acph' name='design_acph' required />
+                                                <div class="invalid-feedback">
+                                                    Please provide design ACPH.
+                                                </div>
                                             </div>
 
                                         </div>
@@ -539,19 +635,28 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 
                                             <div class="form-group col-md-4">
                                                 <label for="exampleSelectGender">Area Classification (At Rest)</label>
-                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['area_classification'] : ''); ?>' id='area_classification' name='area_classification' />
+                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['area_classification'] : ''); ?>' id='area_classification' name='area_classification' required />
+                                                <div class="invalid-feedback">
+                                                    Please provide area classification (at rest).
+                                                </div>
                                             </div>
 
                                              <div class="form-group col-md-4">
                                                 <label for="exampleSelectGender">Area Classification (In Operation)</label>
-                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['area_classification_in_operation'] : ''); ?>' id='area_classification_in_operation' name='area_classification_in_operation' />
+                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['area_classification_in_operation'] : ''); ?>' id='area_classification_in_operation' name='area_classification_in_operation' required />
+                                                <div class="invalid-feedback">
+                                                    Please provide area classification (in operation).
+                                                </div>
                                             </div>
 
 
 
                                             <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Equipment Type</label>
-                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['equipment_type'] : ''); ?>' name='equipment_type' id='equipment_type' />
+                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['equipment_type'] : ''); ?>' name='equipment_type' id='equipment_type' required />
+                                                <div class="invalid-feedback">
+                                                    Please provide equipment type.
+                                                </div>
                                             </div>
 
                                            
@@ -564,17 +669,26 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                                         <div class="form-row">
                                              <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Design CFM</label>
-                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['design_cfm'] : ''); ?>' name='design_cfm' id='design_cfm' />
+                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['design_cfm'] : ''); ?>' name='design_cfm' id='design_cfm' required />
+                                                <div class="invalid-feedback">
+                                                    Please provide design CFM.
+                                                </div>
                                             </div>
 
 
                                             <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Filteration Fresh Air</label>
-                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['filteration_fresh_air'] : ''); ?>' name='filteration_fresh_air' id='filteration_fresh_air' />
+                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['filteration_fresh_air'] : ''); ?>' name='filteration_fresh_air' id='filteration_fresh_air' required />
+                                                <div class="invalid-feedback">
+                                                    Please provide filteration fresh air details.
+                                                </div>
                                             </div>
                                             <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Filtration Pre filter</label>
-                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ? $equipment_details['filteration_pre_filter'] : ''); ?>' name='filteration_pre_filter' id='filteration_pre_filter' />
+                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ? $equipment_details['filteration_pre_filter'] : ''); ?>' name='filteration_pre_filter' id='filteration_pre_filter' required />
+                                                <div class="invalid-feedback">
+                                                    Please provide filteration pre filter details.
+                                                </div>
                                             </div>
                                             
 
@@ -584,17 +698,26 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                                         <div class="form-row">
                                             <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Filteration Intermediate</label>
-                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['filteration_intermediate'] : ''); ?>' name='filteration_intermediate' id='filteration_intermediate' />
+                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['filteration_intermediate'] : ''); ?>' name='filteration_intermediate' id='filteration_intermediate' required />
+                                                <div class="invalid-feedback">
+                                                    Please provide filteration intermediate details.
+                                                </div>
                                             </div>
 
 
                                             <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Filteration Final Filter Plenum</label>
-                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['filteration_final_filter_plenum'] : ''); ?>' name='filteration_final_filter_plenum' id='filteration_final_filter_plenum' />
+                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['filteration_final_filter_plenum'] : ''); ?>' name='filteration_final_filter_plenum' id='filteration_final_filter_plenum' required />
+                                                <div class="invalid-feedback">
+                                                    Please provide filteration final filter plenum details.
+                                                </div>
                                             </div>
                                             <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Filteration Exhaust Pre Filter</label>
-                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ? $equipment_details['filteration_exhaust_pre_filter'] : ''); ?>' name='filteration_exhaust_pre_filter' id='filteration_exhaust_pre_filter' />
+                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ? $equipment_details['filteration_exhaust_pre_filter'] : ''); ?>' name='filteration_exhaust_pre_filter' id='filteration_exhaust_pre_filter' required />
+                                                <div class="invalid-feedback">
+                                                    Please provide filteration exhaust pre filter details.
+                                                </div>
                                             </div>
 
                                         </div>
@@ -603,17 +726,26 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                                         <div class="form-row">
                                                                                         <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Filteration Exhaust Final Filter</label>
-                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ? $equipment_details['filteration_exhaust_final_filter'] : ''); ?>' name='filteration_exhaust_final_filter' id='filteration_exhaust_final_filter' />
+                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ? $equipment_details['filteration_exhaust_final_filter'] : ''); ?>' name='filteration_exhaust_final_filter' id='filteration_exhaust_final_filter' required />
+                                                <div class="invalid-feedback">
+                                                    Please provide filteration exhaust final filter details.
+                                                </div>
                                             </div>
 
                                             <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Filteration Terminal Filter</label>
-                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['filteration_terminal_filter'] : ''); ?>' name='filteration_terminal_filter' id='filteration_terminal_filter' />
+                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['filteration_terminal_filter'] : ''); ?>' name='filteration_terminal_filter' id='filteration_terminal_filter' required />
+                                                <div class="invalid-feedback">
+                                                    Please provide filteration terminal filter details.
+                                                </div>
                                             </div>
 
                                             <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Filteration Terminal Filter On Riser</label>
-                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['filteration_terminal_filter_on_riser'] : ''); ?>' name='filteration_terminal_filter_on_riser' id='filteration_terminal_filter_on_riser' />
+                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['filteration_terminal_filter_on_riser'] : ''); ?>' name='filteration_terminal_filter_on_riser' id='filteration_terminal_filter_on_riser' required />
+                                                <div class="invalid-feedback">
+                                                    Please provide filteration terminal filter on riser details.
+                                                </div>
                                             </div>
                                            
 
@@ -622,16 +754,25 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                                         <div class="form-row">
                                              <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Fliteration BIBO Filter</label>
-                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['filteration_bibo_filter'] : ''); ?>' name='filteration_bibo_filter' id='filteration_bibo_filter' />
+                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['filteration_bibo_filter'] : ''); ?>' name='filteration_bibo_filter' id='filteration_bibo_filter' required />
+                                                <div class="invalid-feedback">
+                                                    Please provide filteration BIBO filter details.
+                                                </div>
                                             </div>
 
                                             <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Filteration Relief Filter</label>
-                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['filteration_relief_filter'] : ''); ?>' name='filteration_relief_filter' id='filteration_relief_filter' />
+                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['filteration_relief_filter'] : ''); ?>' name='filteration_relief_filter' id='filteration_relief_filter' required />
+                                                <div class="invalid-feedback">
+                                                    Please provide filteration relief filter details.
+                                                </div>
                                             </div>
                                             <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Filtraion Reactivation filter</label>
-                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['filteration_reativation_filter'] : ''); ?>' name='filteration_reativation_filter' id='filteration_reativation_filter' />
+                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['filteration_reativation_filter'] : ''); ?>' name='filteration_reativation_filter' id='filteration_reativation_filter' required />
+                                                <div class="invalid-feedback">
+                                                    Please provide filteration reactivation filter details.
+                                                </div>
                                             </div>
                                         </div>
 

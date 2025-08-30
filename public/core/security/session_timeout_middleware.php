@@ -32,6 +32,7 @@ function getBaseUrl() {
  * Validates if the current session is active and not expired
  * Redirects to login if session is invalid or expired
  * Updates last activity timestamp for valid sessions
+ * Handles 2FA intermediate states
  */
 function validateActiveSession() {
     // PURE CLIENT-SIDE MODE: Server-side session timeout validation DISABLED
@@ -54,6 +55,34 @@ function validateActiveSession() {
     // Check if session exists
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
+    }
+    
+    // Handle 2FA verification page - special case
+    if ($currentPage === 'verify_otp.php') {
+        // Check if user has pending 2FA session
+        if (!isset($_SESSION['pending_2fa']) || !isset($_SESSION['otp_session_token'])) {
+            redirectToLogin('no_2fa_session');
+            return;
+        }
+        
+        // Check if session has been destroyed
+        if (isset($_SESSION['session_destroyed'])) {
+            redirectToLogin('session_destroyed');
+            return;
+        }
+        
+        // Allow access to OTP verification page with pending 2FA session
+        // Update activity timestamp to prevent timeout during 2FA process
+        $_SESSION['last_activity'] = time();
+        return;
+    }
+    
+    // For all other pages, check if user is in 2FA pending state
+    if (isset($_SESSION['pending_2fa'])) {
+        // User is in 2FA pending state but trying to access other pages
+        // Redirect to OTP verification
+        header('Location: ' . getBaseUrl() . 'verify_otp.php');
+        exit();
     }
     
     // Check if user is logged in (basic session validation only)
@@ -180,11 +209,15 @@ function shouldShowSessionWarning() {
 
 /**
  * Destroys the current session completely
+ * Includes cleanup of 2FA pending sessions
  */
 function destroySession() {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
+    
+    // Clean up pending 2FA session data before destroying session
+    cleanupPending2FASession();
     
     // Clear session variables
     $_SESSION = array();
@@ -274,4 +307,33 @@ function getSessionStatus() {
     }
     
     return $status;
+}
+
+/**
+ * Clean up expired OTP sessions
+ * Should be called periodically to maintain database hygiene
+ */
+function cleanupExpiredOTPSessions() {
+    try {
+        require_once __DIR__ . '/two_factor_auth.php';
+        TwoFactorAuth::cleanupExpiredSessions();
+        error_log("OTP session cleanup completed");
+    } catch (Exception $e) {
+        error_log("Error during OTP session cleanup: " . $e->getMessage());
+    }
+}
+
+/**
+ * Clean up pending 2FA sessions that have exceeded timeout
+ * Called during session destruction to ensure no orphaned data
+ */
+function cleanupPending2FASession() {
+    if (isset($_SESSION['pending_2fa'])) {
+        error_log("Cleaning up pending 2FA session for user: " . ($_SESSION['pending_2fa']['employee_id'] ?? 'unknown'));
+        unset($_SESSION['pending_2fa']);
+    }
+    
+    if (isset($_SESSION['otp_session_token'])) {
+        unset($_SESSION['otp_session_token']);
+    }
 }

@@ -420,7 +420,7 @@ function changeAdhocRTStatusAfterAuth() {
                                }
                            } else {
                                $unit_id = intval($_SESSION['unit_id']);
-                               $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %?", $unit_id);
+                               $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %i", $unit_id);
                                
                                if ($unit_name) {
                                    echo "<option value='" . htmlspecialchars($unit_id, ENT_QUOTES) . "'>" . 

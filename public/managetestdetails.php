@@ -32,8 +32,8 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
     try {
         $test_details = DB::queryFirstRow(
             "SELECT test_name, test_description, test_purpose, test_performed_by, test_status 
-             FROM tests WHERE test_id = ?", 
-            [intval($_GET['test_id'])]
+             FROM tests WHERE test_id = %d", 
+            intval($_GET['test_id'])
         );
         
         if (!$test_details) {

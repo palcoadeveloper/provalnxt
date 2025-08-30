@@ -9,8 +9,8 @@
  * @version 1.0
  */
 
-require_once(__DIR__ . '/config.php');
-require_once(__DIR__ . '/db.class.php');
+require_once(__DIR__ . '/../config/config.php');
+require_once(__DIR__ . '/../config/db.class.php');
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;

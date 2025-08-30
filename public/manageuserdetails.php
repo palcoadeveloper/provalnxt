@@ -33,8 +33,8 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
         $user_details = DB::queryFirstRow(
             "SELECT employee_id, user_type, vendor_id, user_name, user_mobile, user_email, unit_id, department_id, 
              is_qa_head, is_unit_head, is_admin, is_super_admin, is_dept_head, user_domain_id, user_status, is_account_locked
-             FROM users WHERE user_id = ?", 
-            [intval($_GET['user_id'])]
+             FROM users WHERE user_id = %d", 
+            intval($_GET['user_id'])
         );
         
         if (!$user_details) {
