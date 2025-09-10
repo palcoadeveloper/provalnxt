@@ -70,19 +70,28 @@ if (!isset($_GET['pdf_path']) || empty($_GET['pdf_path'])) {
 // Get the PDF path
 $pdf_path = $_GET['pdf_path'];
 
-// Handle the path correctly - convert to absolute path from document root
-if (strpos($pdf_path, '../') === 0) {
-    // Remove ../ prefix and construct proper path from this location
-    $relative_path = ltrim($pdf_path, '../');
-    $full_path = __DIR__ . '/../../' . $relative_path;
-} else {
-    // Path doesn't have ../ prefix, construct proper path
+// Sanitize the PDF path to prevent directory traversal
+$pdf_path = str_replace(['../', '../', '..\\', '..\\\\'], '', $pdf_path);
+
+// Handle the path correctly - convert to absolute path from document root  
+if (strpos($pdf_path, 'uploads/') === 0) {
+    // Direct uploads path
     $full_path = __DIR__ . '/../../' . $pdf_path;
+} else if (strpos($pdf_path, 'core/uploads/') === 0) {
+    // Core uploads path
+    $full_path = __DIR__ . '/../../' . $pdf_path;
+} else {
+    // Default to uploads directory
+    $full_path = __DIR__ . '/../../uploads/' . basename($pdf_path);
 }
+
+// Log the path resolution for debugging
+error_log("PDF viewer - Original path: " . $_GET['pdf_path'] . ", Resolved path: " . $full_path);
 
 // Check if file exists
 if (!file_exists($full_path)) {
-    die('PDF file not found: ' . $full_path);
+    error_log("PDF file not found: " . $full_path);
+    die('PDF file not found: ' . basename($pdf_path) . '. Please check if the file exists and try again.');
 }
 
 // Get user details for the footer
@@ -146,5 +155,6 @@ try {
     while (ob_get_level()) {
         ob_end_clean();
     }
-    die('Error processing PDF: ' . $e->getMessage());
+    error_log('PDF processing error for file ' . $full_path . ': ' . $e->getMessage());
+    die('Error processing PDF: ' . $e->getMessage() . '. Please check if the PDF file is valid.');
 }

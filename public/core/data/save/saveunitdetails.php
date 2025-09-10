@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Input validation helper
 class UnitDetailsValidator {
     public static function validateUnitData($mode) {
-        $required_fields = ['unit_name', 'unit_status', 'primary_test_id'];
+        $required_fields = ['unit_name', 'unit_status', 'primary_test_id', 'validation_scheduling_logic'];
         
         if ($mode === 'modify') {
             $required_fields[] = 'unit_id';
@@ -70,6 +70,11 @@ class UnitDetailsValidator {
         // Validate unit_status
         if (!in_array($validated_data['unit_status'], ['Active', 'Inactive'])) {
             throw new InvalidArgumentException("Invalid unit status");
+        }
+        
+        // Validate validation_scheduling_logic
+        if (!in_array($validated_data['validation_scheduling_logic'], ['dynamic', 'fixed'])) {
+            throw new InvalidArgumentException("Invalid validation scheduling logic");
         }
         
         // Validate unit_id_input for add mode
@@ -159,6 +164,7 @@ try {
     $unit_data = [
         'unit_name' => $validated_data['unit_name'],
         'unit_status' => $validated_data['unit_status'],
+        'validation_scheduling_logic' => $validated_data['validation_scheduling_logic'],
         'primary_test_id' => !empty($validated_data['primary_test_id']) ? intval($validated_data['primary_test_id']) : null,
         'secondary_test_id' => !empty($validated_data['secondary_test_id']) ? intval($validated_data['secondary_test_id']) : null,
         'two_factor_enabled' => $validated_data['two_factor_enabled'] ?? 'No',

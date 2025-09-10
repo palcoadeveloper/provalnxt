@@ -27,18 +27,27 @@ if (empty($_SESSION['csrf_token'])) {
 
 if (isset($_GET['m']) && $_GET['m'] != 'a') {
     try {
-        $equipment_details = DB::queryFirstRow("SELECT equipment_id,equipment_code,unit_id,department_id,equipment_category,validation_frequency,area_served,section,design_acph,area_classification,area_classification_in_operation,equipment_type,design_cfm,filteration_fresh_air,filteration_pre_filter,filteration_intermediate,filteration_final_filter_plenum,filteration_exhaust_pre_filter,filteration_exhaust_final_filter,filteration_terminal_filter,filteration_terminal_filter_on_riser,filteration_bibo_filter,filteration_relief_filter,filteration_reativation_filter,equipment_status,equipment_addition_date 
+        $equipment_details = DB::queryFirstRow("SELECT equipment_id,equipment_code,unit_id,department_id,equipment_category,validation_frequency,first_validation_date,validation_frequencies,starting_frequency,area_served,section,design_acph,area_classification,area_classification_in_operation,equipment_type,design_cfm,filteration_fresh_air,filteration_pre_filter,filteration_intermediate,filteration_final_filter_plenum,filteration_exhaust_pre_filter,filteration_exhaust_final_filter,filteration_terminal_filter,filteration_terminal_filter_on_riser,filteration_bibo_filter,filteration_relief_filter,filteration_reativation_filter,equipment_status,equipment_addition_date 
             FROM equipments WHERE equipment_id = %d", intval($_GET['equip_id']));
             
         if (!$equipment_details) {
             header('HTTP/1.1 404 Not Found');
             exit('Equipment not found');
         }
+        
+        // Get the unit's validation scheduling logic
+        $unit_details = DB::queryFirstRow("SELECT validation_scheduling_logic FROM units WHERE unit_id = %d", intval($equipment_details['unit_id']));
+        if (!$unit_details) {
+            $unit_details = ['validation_scheduling_logic' => 'dynamic']; // default fallback
+        }
     } catch (Exception $e) {
         error_log("Database error in manageequipmentdetails.php: " . $e->getMessage());
         header('HTTP/1.1 500 Internal Server Error');
         exit('Database error occurred');
     }
+} else {
+    // For add mode, we'll handle this with JavaScript by checking the selected unit
+    $unit_details = ['validation_scheduling_logic' => 'dynamic']; // default
 }
 
 
@@ -67,6 +76,10 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
     <script>
         $(document).ready(function() {
 
+            // Get unit's validation scheduling logic from PHP
+            var currentUnitValidationLogic = '<?php echo isset($unit_details['validation_scheduling_logic']) ? $unit_details['validation_scheduling_logic'] : 'dynamic'; ?>';
+            console.log('Unit Validation Scheduling Logic:', currentUnitValidationLogic);
+
             // Function to convert date format
             function convertDateFormat(dateString) {
                 var dateParts = dateString.split('.');
@@ -84,6 +97,120 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                 }
             });
 
+            // Add datepicker for first validation date
+            $("#first_validation_date").datepicker({
+                dateFormat: 'dd.mm.yy',
+                changeMonth: true,
+                beforeShow: function(input, inst) {
+                    // Disable manual input by preventing focus on the input field
+                    setTimeout(function() {
+                        $(input).prop('readonly', true);
+                    }, 0);
+                }
+            });
+
+            // Frequency type switching logic
+            $('#frequency_type').on('change', function() {
+                const selectedType = $(this).val();
+                if (selectedType === 'single') {
+                    $('#single_freq_section').show();
+                    $('#dual_freq_section').hide();
+                    $('#single_freq_select').attr('required', true);
+                    $('#combined_freq_select').attr('required', false);
+                } else if (selectedType === 'dual') {
+                    $('#single_freq_section').hide();
+                    $('#dual_freq_section').show();
+                    $('#single_freq_select').attr('required', false);
+                    $('#combined_freq_select').attr('required', true);
+                }
+            });
+
+            // Initialize frequency sections based on current selection
+            function initializeFrequencySections() {
+                const currentFrequencyType = $('#frequency_type').val();
+                if (currentFrequencyType === 'single') {
+                    $('#single_freq_section').show();
+                    $('#dual_freq_section').hide();
+                    $('#single_freq_select').attr('required', true);
+                    $('#combined_freq_select').attr('required', false);
+                } else if (currentFrequencyType === 'dual') {
+                    $('#single_freq_section').hide();
+                    $('#dual_freq_section').show();
+                    $('#single_freq_select').attr('required', false);
+                    $('#combined_freq_select').attr('required', true);
+                }
+            }
+            
+            // Initialize on page load
+            initializeFrequencySections();
+
+            // Function to show/hide validation frequency fields based on unit's validation scheduling logic
+            function toggleValidationFrequencyFields(validationLogic) {
+                console.log('toggleValidationFrequencyFields called with:', validationLogic);
+                if (validationLogic === 'fixed') {
+                    console.log('Showing fields for Fixed Dates');
+                    // Show frequency_type, single_freq_select, combined_freq_select and First Validation Date for Fixed Dates
+                    $('#fixed_dates_validation_frequency').hide();
+                    $('#validation_frequency').attr('required', false);
+                    $('#first_validation_date').closest('.form-group').show();
+                    $('#first_validation_date').attr('required', true);
+                    
+                    // Show dynamic frequency fields
+                    $('#dynamic_dates_frequency_type').show();
+                    $('#dynamic_dates_frequency_selections').show();
+                    $('#frequency_type').attr('required', true);
+                    
+                    // Initialize the dynamic sections based on current frequency type selection
+                    initializeFrequencySections();
+                } else {
+                    console.log('Showing fields for Dynamic Dates');
+                    // Show only validation_frequency dropdown for Dynamic Dates, hide First Validation Date
+                    $('#fixed_dates_validation_frequency').show();
+                    $('#validation_frequency').attr('required', true);
+                    $('#first_validation_date').closest('.form-group').hide();
+                    $('#first_validation_date').attr('required', false);
+                    
+                    // Hide dynamic frequency fields
+                    $('#dynamic_dates_frequency_type').hide();
+                    $('#dynamic_dates_frequency_selections').hide();
+                    $('#frequency_type').attr('required', false);
+                    $('#single_freq_select').attr('required', false);
+                    $('#combined_freq_select').attr('required', false);
+                }
+            }
+            
+            // Initialize validation frequency fields on page load
+            toggleValidationFrequencyFields(currentUnitValidationLogic);
+            
+            // Handle unit selection change in add mode
+            $('#unit_id').on('change', function() {
+                var selectedUnitId = $(this).val();
+                console.log('Unit selected:', selectedUnitId);
+                if (selectedUnitId) {
+                    // Fetch unit's validation scheduling logic via AJAX
+                    $.ajax({
+                        url: 'core/data/get/getunitvalidationlogic.php',
+                        method: 'GET',
+                        data: { unit_id: selectedUnitId },
+                        dataType: 'json',
+                        success: function(response) {
+                            console.log('AJAX response:', response);
+                            if (response && response.validation_scheduling_logic) {
+                                currentUnitValidationLogic = response.validation_scheduling_logic;
+                                console.log('Updated validation logic to:', currentUnitValidationLogic);
+                                toggleValidationFrequencyFields(currentUnitValidationLogic);
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.log('AJAX error:', error);
+                            // Default to dynamic if error
+                            currentUnitValidationLogic = 'dynamic';
+                            toggleValidationFrequencyFields(currentUnitValidationLogic);
+                        }
+                    });
+                }
+            });
+
             // Function to submit equipment data after successful authentication
             function submitEquipmentData(mode, pen_val = 0, pen_rt = 0) {
                 $('#pleasewaitmodal').modal('show');
@@ -96,6 +223,10 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                     equipment_category: $("#equipment_category").val(),
                     equipment_addition_date: convertDateFormat($("#equipment_addition_date").val()),
                     validation_frequency: $("#validation_frequency").val(),
+                    first_validation_date: convertDateFormat($("#first_validation_date").val()),
+                    frequency_type: $("#frequency_type").val(),
+                    starting_frequency: $("#single_freq_select").val(),
+                    validation_frequencies: $("#combined_freq_select").val(),
                     equipment_status: $("#equipment_status").val(),
                     area_served: $("#area_served").val(),
                     section: $("#section").val(),
@@ -334,6 +465,10 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
         .was-validated #department_id:invalid,
         .was-validated #equipment_category:invalid,
         .was-validated #validation_frequency:invalid,
+        .was-validated #first_validation_date:invalid,
+        .was-validated #frequency_type:invalid,
+        .was-validated #single_freq_select:invalid,
+        .was-validated #combined_freq_select:invalid,
         .was-validated #equipment_status:invalid {
             border: 1px solid #dc3545 !important;
             border-color: #dc3545 !important;
@@ -406,15 +541,6 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                                         <div class="form-row">
 
                                             <div class="form-group  col-md-4">
-                                                <label for="exampleSelectGender">Equipment Code</label>
-                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['equipment_code'] : ''); ?>' name='equipment_code' id='equipment_code' required />
-                                                <div class="invalid-feedback">
-                                                    Please provide a valid equipment code.
-                                                </div>
-                                            </div>
-
-
-                                            <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Unit</label>
                                                 <select class="form-control" id="unit_id" name="unit_id" required>
                                                     <option value="">Select Unit</option>
@@ -458,6 +584,14 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                                                 </select>
                                                 <div class="invalid-feedback">
                                                     Please select a unit.
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group  col-md-4">
+                                                <label for="exampleSelectGender">Equipment Code</label>
+                                                <input type="text" class="form-control" value='<?php echo (($_GET['m'] != 'a') ?  $equipment_details['equipment_code'] : ''); ?>' name='equipment_code' id='equipment_code' required />
+                                                <div class="invalid-feedback">
+                                                    Please provide a valid equipment code.
                                                 </div>
                                             </div>
 
@@ -548,37 +682,6 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                                             </div>
 
                                             <div class="form-group  col-md-4">
-                                                <label for="exampleSelectGender">Validation Frequency</label>
-                                                <select class="form-control" id="validation_frequency" name="validation_frequency" required>
-                                                    <option value="">Select Frequency</option>
-                                                    <?php
-
-                                                    $frequencies = [
-                                                        'Q' => 'Quarterly',
-                                                        'H' => 'Half yearly',
-                                                        'Y' => 'Yearly',
-                                                        '2Y' => 'Biyearly'
-                                                    ];
-                                                    
-                                                    foreach ($frequencies as $value => $label) {
-                                                        $selected = ($_GET['m'] != 'a' && isset($equipment_details['validation_frequency']) && trim($equipment_details['validation_frequency']) == $value) ? 'selected' : '';
-                                                        echo "<option value='" . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . "' " . $selected . ">" . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . "</option>";
-                                                    }
-
-
-
-                                                    ?>
-                                                </select>
-                                                <div class="invalid-feedback">
-                                                    Please select a validation frequency.
-                                                </div>
-                                            </div>
-                                        </div>
-
-
-                                        <div class="form-row">
-
-                                            <div class="form-group  col-md-4">
                                                 <label for="exampleSelectGender">Status</label>
                                                 <select class="form-control" id="equipment_status" name="equipment_status" required>
 
@@ -597,6 +700,88 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                                                     Please select an equipment status.
                                                 </div>
                                             </div>
+
+                                        </div>
+
+                                        <div class="form-row">
+
+                                            <div class="form-group  col-md-4">
+                                                <label for="exampleSelectGender">First Validation Date <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="first_validation_date" name="first_validation_date" value='<?php echo ($_GET['m'] != 'a' && !empty($equipment_details['first_validation_date'])) ? date('d.m.Y', strtotime($equipment_details['first_validation_date'])) : ''; ?>' required>
+                                                <div class="invalid-feedback">
+                                                    Please provide a first validation date.
+                                                </div>
+                                            </div>
+
+                                            <!-- Fixed Dates: Show only validation_frequency dropdown -->
+                                            <div class="form-group col-md-4" id="fixed_dates_validation_frequency" style="display: none;">
+                                                <label for="validation_frequency">Validation Frequency <span class="text-danger">*</span></label>
+                                                <select class="form-control" id="validation_frequency" name="validation_frequency">
+                                                    <option value="">Select Frequency</option>
+                                                    <?php
+                                                    $frequencies = [
+                                                        'Y' => 'Yearly',
+                                                        '2Y' => 'Bi-Yearly'
+                                                    ];
+                                                    
+                                                    foreach ($frequencies as $value => $label) {
+                                                        $selected = ($_GET['m'] != 'a' && isset($equipment_details['validation_frequency']) && trim($equipment_details['validation_frequency']) == $value) ? 'selected' : '';
+                                                        echo "<option value='" . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . "' " . $selected . ">" . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . "</option>";
+                                                    }
+                                                    ?>
+                                                </select>
+                                                <div class="invalid-feedback">
+                                                    Please select a validation frequency.
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Dynamic Dates: Show frequency_type -->
+                                            <div class="form-group col-md-4" id="dynamic_dates_frequency_type" style="display: none;">
+                                                <label for="frequency_type">Frequency Type <span class="text-danger">*</span></label>
+                                                <select class="form-control" id="frequency_type" name="frequency_type">
+                                                    <?php
+                                                    // Determine frequency type based on data
+                                                    $frequency_type = 'single'; // default
+                                                    if ($_GET['m'] != 'a' && isset($equipment_details['validation_frequencies']) && !empty($equipment_details['validation_frequencies'])) {
+                                                        $frequency_type = 'dual';
+                                                    }
+                                                    ?>
+                                                    <option value="single" <?php echo ($frequency_type == 'single') ? 'selected' : ''; ?>>Single</option>
+                                                    <option value="dual" <?php echo ($frequency_type == 'dual') ? 'selected' : ''; ?>>Combined</option>
+                                                </select>
+                                                <div class="invalid-feedback">
+                                                    Please select a frequency type.
+                                                </div>
+                                            </div>
+
+                                            <!-- Dynamic Dates: Show single/combined frequency select -->
+                                            <div class="form-group col-md-4" id="dynamic_dates_frequency_selections" style="display: none;">
+                                                <div id="single_freq_section">
+                                                    <label for="single_freq_select">Validation Frequency <span class="text-danger">*</span></label>
+                                                    <select class="form-control" id="single_freq_select" name="single_freq_select">
+                                                        <option value="">Select Frequency</option>
+                                                        <option value="6M" <?php echo ($_GET['m'] != 'a' && isset($equipment_details['starting_frequency']) && $equipment_details['starting_frequency'] == '6M') ? 'selected' : ''; ?>>Six Monthly</option>
+                                                        <option value="Y" <?php echo ($_GET['m'] != 'a' && isset($equipment_details['starting_frequency']) && $equipment_details['starting_frequency'] == 'Y') ? 'selected' : ''; ?>>Yearly</option>
+                                                        <option value="2Y" <?php echo ($_GET['m'] != 'a' && isset($equipment_details['starting_frequency']) && $equipment_details['starting_frequency'] == '2Y') ? 'selected' : ''; ?>>Bi-Yearly</option>
+                                                    </select>
+                                                    <div class="invalid-feedback">
+                                                        Please select a validation frequency.
+                                                    </div>
+                                                </div>
+                                                <div id="dual_freq_section" style="display: none;">
+                                                    <label for="combined_freq_select">Frequency Combination <span class="text-danger">*</span></label>
+                                                    <select class="form-control" id="combined_freq_select" name="combined_freq_select">
+                                                        <option value="">Select Combination</option>
+                                                        <option value="6M,Y" <?php echo ($_GET['m'] != 'a' && isset($equipment_details['validation_frequencies']) && $equipment_details['validation_frequencies'] == '6M,Y') ? 'selected' : ''; ?>>Six Monthly + Yearly</option>
+                                                        <option value="Y,2Y" <?php echo ($_GET['m'] != 'a' && isset($equipment_details['validation_frequencies']) && $equipment_details['validation_frequencies'] == 'Y,2Y') ? 'selected' : ''; ?>>Yearly + Bi-Yearly</option>
+                                                        <option value="6M,Y,2Y" <?php echo ($_GET['m'] != 'a' && isset($equipment_details['validation_frequencies']) && $equipment_details['validation_frequencies'] == '6M,Y,2Y') ? 'selected' : ''; ?>>Six Monthly + Yearly + Bi-Yearly</option>
+                                                    </select>
+                                                    <div class="invalid-feedback">
+                                                        Please select a frequency combination.
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                         </div>
                                         <br />
                                         <h4 class="card-title">Additional Parameters</h4>

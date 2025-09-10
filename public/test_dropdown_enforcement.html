@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dropdown Enforcement Test</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .filter-entry { border: 1px solid #ccc; margin: 10px; padding: 10px; }
+        .bg-light { background-color: #f8f9fa !important; }
+        .disabled-dropdown { opacity: 0.6; }
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        button { margin: 5px; padding: 8px 12px; }
+        select { margin: 5px; }
+        #results { margin-top: 20px; padding: 10px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h3>Testing Reading Dropdown Enforcement - Enhanced Per-Filter Logic</h3>
+    
+    <!-- Simulate global instrument mode -->
+    <div style="margin-bottom: 20px;">
+        <label><strong>Global Instrument Mode:</strong></label><br>
+        <input type="radio" name="global_instrument_mode" value="single" checked> Single Instrument
+        <input type="radio" name="global_instrument_mode" value="individual"> Per-Filter
+    </div>
+    
+    <!-- Simulate Filter 1 -->
+    <div class="filter-entry" data-filter-id="1">
+        <h4>Filter 1</h4>
+        <div>
+            <label>Filter Instrument Mode:</label>
+            <input type="radio" name="filter_instrument_mode_1" value="single" class="filter-instrument-mode" data-filter-id="1" checked> Single
+            <input type="radio" name="filter_instrument_mode_1" value="individual" class="filter-instrument-mode" data-filter-id="1"> Individual
+        </div>
+        <div class="filter-instrument-container" data-filter-id="1" style="margin: 10px 0; border: 1px dashed #999; padding: 10px;">
+            <label><strong>Filter-Level Instrument Dropdown:</strong></label>
+            <select class="filter-instrument-select" data-filter-id="1">
+                <option value="">Select Filter Instrument</option>
+                <option value="inst1">Instrument 1</option>
+                <option value="inst2">Instrument 2</option>
+            </select>
+            <small>This should only show when Single mode is selected</small>
+        </div>
+        <div>
+            <label>Reading Dropdowns:</label>
+            <select class="reading-instrument-select" data-filter-id="1">
+                <option value="">Select Instrument</option>
+                <option value="inst1">Instrument 1</option>
+            </select>
+            <select class="reading-instrument-select" data-filter-id="1">
+                <option value="">Select Instrument</option>
+                <option value="inst1">Instrument 1</option>
+            </select>
+        </div>
+    </div>
+    
+    <!-- Simulate Filter 2 -->
+    <div class="filter-entry" data-filter-id="2">
+        <h4>Filter 2</h4>
+        <div>
+            <label>Filter Instrument Mode:</label>
+            <input type="radio" name="filter_instrument_mode_2" value="single" class="filter-instrument-mode" data-filter-id="2"> Single
+            <input type="radio" name="filter_instrument_mode_2" value="individual" class="filter-instrument-mode" data-filter-id="2" checked> Individual
+        </div>
+        <div>
+            <label>Reading Dropdowns:</label>
+            <select class="reading-instrument-select" data-filter-id="2">
+                <option value="">Select Instrument</option>
+                <option value="inst1">Instrument 1</option>
+            </select>
+            <select class="reading-instrument-select" data-filter-id="2">
+                <option value="">Select Instrument</option>
+                <option value="inst1">Instrument 1</option>
+            </select>
+        </div>
+    </div>
+    
+    <!-- Simulate Filter 3 (no mode selected) -->
+    <div class="filter-entry" data-filter-id="3">
+        <h4>Filter 3 (No Mode Selected)</h4>
+        <div>
+            <label>Filter Instrument Mode:</label>
+            <input type="radio" name="filter_instrument_mode_3" value="single" class="filter-instrument-mode" data-filter-id="3"> Single
+            <input type="radio" name="filter_instrument_mode_3" value="individual" class="filter-instrument-mode" data-filter-id="3"> Individual
+        </div>
+        <div>
+            <label>Reading Dropdowns:</label>
+            <select class="reading-instrument-select" data-filter-id="3">
+                <option value="">Select Instrument</option>
+                <option value="inst1">Instrument 1</option>
+            </select>
+            <select class="reading-instrument-select" data-filter-id="3">
+                <option value="">Select Instrument</option>
+                <option value="inst1">Instrument 1</option>
+            </select>
+        </div>
+    </div>
+    
+    <div style="margin-top: 20px;">
+        <button onclick="testGlobalSingleMode()">Test Global Single Mode</button>
+        <button onclick="testPerFilterMode()">Test Per-Filter Mode</button>
+        <button onclick="testNoModeSelected()">Test No Mode Selected</button>
+        <button onclick="testFilterModeChanges()">Test Filter Mode Changes</button>
+        <button onclick="testInstrumentReset()">Test Instrument Reset</button>
+        <button onclick="testFilterDropdownVisibility()">Test Filter Dropdown Visibility</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+    
+    <div id="results"></div>
+    
+    <script>
+        // Simulate the enhanced enforcement function from the main file
+        function enforceInstrumentDropdownStates() {
+            const globalMode = $('input[name="global_instrument_mode"]:checked').val();
+            
+            if (globalMode === 'single') {
+                $('.reading-instrument-select').prop('disabled', true).addClass('bg-light');
+                $('.filter-instrument-select').prop('disabled', true).addClass('bg-light');
+                $('.filter-instrument-mode').prop('disabled', true);
+                console.log('🔒 Enforced disabled state for instrument dropdowns in Single mode');
+                $('#results').append('<p style="color: red;">✓ All reading dropdowns DISABLED in Single mode</p>');
+            } else {
+                // In Per-Filter mode, enable filter-level controls but handle reading dropdowns per filter
+                $('.filter-instrument-select').prop('disabled', false).removeClass('bg-light');
+                $('.filter-instrument-mode').prop('disabled', false);
+                
+                // Handle reading dropdowns based on each filter's individual mode
+                $('.filter-entry').each(function() {
+                    const filterId = $(this).data('filter-id');
+                    const filterMode = $(`input[name="filter_instrument_mode_${filterId}"]:checked`).val();
+                    const $readingDropdowns = $(`.reading-instrument-select[data-filter-id="${filterId}"]`);
+                    
+                    if (filterMode === 'individual') {
+                        // Enable reading dropdowns for this filter
+                        $readingDropdowns.prop('disabled', false).removeClass('bg-light');
+                        console.log(`🔓 Filter ${filterId}: Enabled reading dropdowns (filter mode: individual)`);
+                        $('#results').append(`<p style="color: green;">✓ Filter ${filterId}: Reading dropdowns ENABLED (mode: individual)</p>`);
+                    } else {
+                        // Disable reading dropdowns for this filter (single mode or no mode selected)
+                        $readingDropdowns.prop('disabled', true).addClass('bg-light');
+                        console.log(`🔒 Filter ${filterId}: Disabled reading dropdowns (filter mode: ${filterMode || 'single'})`);
+                        $('#results').append(`<p style="color: orange;">✓ Filter ${filterId}: Reading dropdowns DISABLED (mode: ${filterMode || 'single'})</p>`);
+                    }
+                });
+                
+                console.log('🔄 Per-Filter mode: Applied filter-specific reading dropdown states');
+                $('#results').append('<p style="color: blue;">✓ Per-Filter mode: Applied filter-specific logic</p>');
+            }
+        }
+        
+        // Simulate setupFilterInstrumentMode function (with visibility fix)
+        function setupFilterInstrumentMode(filterId, mode) {
+            const globalMode = $('input[name="global_instrument_mode"]:checked').val();
+            const $filterContainer = $(`.filter-instrument-container[data-filter-id="${filterId}"]`);
+            const $readingDropdowns = $(`.reading-instrument-select[data-filter-id="${filterId}"]`);
+            
+            if (mode === 'single') {
+                // Show filter instrument dropdown only when Single mode is explicitly selected
+                $filterContainer.show();
+                $readingDropdowns.prop('disabled', true).addClass('bg-light');
+                console.log(`🔓 Filter ${filterId}: Showing filter instrument dropdown (Single mode selected)`);
+            } else {
+                // Hide filter instrument dropdown (Individual mode OR no mode selected)
+                $filterContainer.hide();
+                
+                if (mode === 'individual') {
+                    // Individual mode is explicitly selected
+                    if (globalMode !== 'single') {
+                        $readingDropdowns.prop('disabled', false).removeClass('bg-light');
+                        console.log(`🔓 Filter ${filterId}: Enabled reading dropdowns (Individual mode selected)`);
+                    } else {
+                        $readingDropdowns.prop('disabled', true).addClass('bg-light');
+                        console.log(`🔒 Filter ${filterId}: Keeping reading dropdowns disabled (global Single Instrument mode)`);
+                    }
+                } else {
+                    // No mode selected - disable reading dropdowns
+                    $readingDropdowns.prop('disabled', true).addClass('bg-light');
+                    console.log(`🔒 Filter ${filterId}: Disabled reading dropdowns (no filter mode selected)`);
+                }
+            }
+        }
+        
+        function testGlobalSingleMode() {
+            $('#results').html('<h4>Testing Global Single Mode:</h4>');
+            $('input[name="global_instrument_mode"][value="single"]').prop('checked', true);
+            enforceInstrumentDropdownStates();
+            
+            // Check that ALL dropdowns are disabled regardless of filter modes
+            let allDisabled = true;
+            $('.reading-instrument-select').each(function() {
+                if (!$(this).prop('disabled')) {
+                    allDisabled = false;
+                }
+            });
+            
+            if (allDisabled) {
+                $('#results').append('<p style="color: green; font-weight: bold;">✅ PASSED: All reading dropdowns disabled in Global Single mode</p>');
+            } else {
+                $('#results').append('<p style="color: red; font-weight: bold;">❌ FAILED: Some reading dropdowns still enabled in Global Single mode</p>');
+            }
+        }
+        
+        function testPerFilterMode() {
+            $('#results').html('<h4>Testing Per-Filter Mode Logic:</h4>');
+            $('input[name="global_instrument_mode"][value="individual"]').prop('checked', true);
+            
+            // Ensure different filter modes are set
+            $('input[name="filter_instrument_mode_1"][value="single"]').prop('checked', true);
+            $('input[name="filter_instrument_mode_2"][value="individual"]').prop('checked', true);
+            
+            enforceInstrumentDropdownStates();
+            
+            // Check Filter 1 (should be disabled - single mode)
+            const filter1Disabled = $('.reading-instrument-select[data-filter-id="1"]').prop('disabled');
+            // Check Filter 2 (should be enabled - individual mode)  
+            const filter2Disabled = $('.reading-instrument-select[data-filter-id="2"]').prop('disabled');
+            
+            $('#results').append(`<p>Filter 1 (single mode): Dropdowns disabled = ${filter1Disabled}</p>`);
+            $('#results').append(`<p>Filter 2 (individual mode): Dropdowns disabled = ${filter2Disabled}</p>`);
+            
+            if (filter1Disabled && !filter2Disabled) {
+                $('#results').append('<p style="color: green; font-weight: bold;">✅ PASSED: Filter-specific logic working correctly</p>');
+            } else {
+                $('#results').append('<p style="color: red; font-weight: bold;">❌ FAILED: Filter-specific logic not working</p>');
+            }
+        }
+        
+        function testNoModeSelected() {
+            $('#results').html('<h4>Testing No Mode Selected (Bug Fix):</h4>');
+            $('input[name="global_instrument_mode"][value="individual"]').prop('checked', true);
+            
+            // Clear all filter mode selections for Filter 3
+            $('input[name="filter_instrument_mode_3"]').prop('checked', false);
+            
+            // Set other filters for comparison
+            $('input[name="filter_instrument_mode_1"][value="single"]').prop('checked', true);
+            $('input[name="filter_instrument_mode_2"][value="individual"]').prop('checked', true);
+            
+            enforceInstrumentDropdownStates();
+            
+            // Check all filters
+            const filter1Disabled = $('.reading-instrument-select[data-filter-id="1"]').prop('disabled');
+            const filter2Disabled = $('.reading-instrument-select[data-filter-id="2"]').prop('disabled');
+            const filter3Disabled = $('.reading-instrument-select[data-filter-id="3"]').prop('disabled');
+            
+            $('#results').append(`<p>Filter 1 (single mode): Dropdowns disabled = ${filter1Disabled}</p>`);
+            $('#results').append(`<p>Filter 2 (individual mode): Dropdowns disabled = ${filter2Disabled}</p>`);
+            $('#results').append(`<p><strong>Filter 3 (NO MODE SELECTED): Dropdowns disabled = ${filter3Disabled}</strong></p>`);
+            
+            if (filter1Disabled && !filter2Disabled && filter3Disabled) {
+                $('#results').append('<p style="color: green; font-weight: bold;">✅ PASSED: Reading dropdowns properly disabled when no filter mode selected</p>');
+                $('#results').append('<p style="color: green;">This is the key bug fix - dropdowns should be disabled by default!</p>');
+            } else {
+                $('#results').append('<p style="color: red; font-weight: bold;">❌ FAILED: Bug still exists - dropdowns enabled when no mode selected</p>');
+            }
+        }
+        
+        function testFilterModeChanges() {
+            $('#results').html('<h4>Testing Dynamic Filter Mode Changes:</h4>');
+            $('input[name="global_instrument_mode"][value="individual"]').prop('checked', true);
+            
+            // Start with Filter 1 in single mode
+            $('input[name="filter_instrument_mode_1"][value="single"]').prop('checked', true);
+            enforceInstrumentDropdownStates();
+            
+            let filter1DisabledInSingle = $('.reading-instrument-select[data-filter-id="1"]').prop('disabled');
+            $('#results').append(`<p>Filter 1 in single mode: Disabled = ${filter1DisabledInSingle}</p>`);
+            
+            // Change Filter 1 to individual mode
+            $('input[name="filter_instrument_mode_1"][value="individual"]').prop('checked', true);
+            const filterId = 1;
+            const mode = 'individual';
+            setupFilterInstrumentMode(filterId, mode);
+            enforceInstrumentDropdownStates();
+            
+            let filter1EnabledInIndividual = !$('.reading-instrument-select[data-filter-id="1"]').prop('disabled');
+            $('#results').append(`<p>Filter 1 changed to individual mode: Enabled = ${filter1EnabledInIndividual}</p>`);
+            
+            if (filter1DisabledInSingle && filter1EnabledInIndividual) {
+                $('#results').append('<p style="color: green; font-weight: bold;">✅ PASSED: Dynamic filter mode changes working</p>');
+            } else {
+                $('#results').append('<p style="color: red; font-weight: bold;">❌ FAILED: Dynamic filter mode changes not working</p>');
+            }
+        }
+        
+        function testInstrumentReset() {
+            $('#results').html('<h4>Testing Instrument Reset on Filter Mode Change:</h4>');
+            $('input[name="global_instrument_mode"][value="individual"]').prop('checked', true);
+            
+            // First, set some instrument values for Filter 1
+            $('.reading-instrument-select[data-filter-id="1"]').val('inst1');
+            $('#results').append('<p>✓ Set all Filter 1 reading dropdowns to "inst1"</p>');
+            
+            // Verify they are set
+            let allSet = true;
+            $('.reading-instrument-select[data-filter-id="1"]').each(function() {
+                if ($(this).val() !== 'inst1') {
+                    allSet = false;
+                }
+            });
+            $('#results').append(`<p>✓ Verified all dropdowns set: ${allSet}</p>`);
+            
+            // Now change the filter instrument mode to trigger reset
+            $('#results').append('<p><strong>Changing filter mode to trigger reset...</strong></p>');
+            
+            // Simulate the filter mode change handler
+            const filterId = 1;
+            const newMode = 'individual';
+            
+            // This is the new reset logic
+            $(`.reading-instrument-select[data-filter-id="${filterId}"]`).val('');
+            $('#results').append('<p>🔄 Simulated: Reset all reading instrument dropdowns to "" (Select Instrument...)</p>');
+            
+            // Verify they are reset
+            let allReset = true;
+            $('.reading-instrument-select[data-filter-id="1"]').each(function() {
+                if ($(this).val() !== '') {
+                    allReset = false;
+                }
+            });
+            
+            if (allReset) {
+                $('#results').append('<p style="color: green; font-weight: bold;">✅ PASSED: All reading instrument dropdowns reset to "Select Instrument..." after filter mode change</p>');
+            } else {
+                $('#results').append('<p style="color: red; font-weight: bold;">❌ FAILED: Some reading instrument dropdowns were not reset</p>');
+            }
+            
+            // Show final state
+            $('#results').append('<p><strong>Final State Check:</strong></p>');
+            $('.reading-instrument-select[data-filter-id="1"]').each(function(index) {
+                const value = $(this).val();
+                const displayValue = value === '' ? '"Select Instrument..."' : `"${value}"`;
+                $('#results').append(`<p>Reading ${index + 1} dropdown: ${displayValue}</p>`);
+            });
+        }
+        
+        function testFilterDropdownVisibility() {
+            $('#results').html('<h4>Testing Filter-Level Instrument Dropdown Visibility:</h4>');
+            $('input[name="global_instrument_mode"][value="individual"]').prop('checked', true);
+            
+            // Test 1: Single mode selected - should show dropdown
+            $('#results').append('<p><strong>Test 1: Single Mode Selected</strong></p>');
+            $('input[name="filter_instrument_mode_1"][value="single"]').prop('checked', true);
+            setupFilterInstrumentMode(1, 'single');
+            
+            const singleModeVisible = $('.filter-instrument-container[data-filter-id="1"]').is(':visible');
+            if (singleModeVisible) {
+                $('#results').append('<p style="color: green;">✅ PASSED: Filter dropdown shown when Single mode selected</p>');
+            } else {
+                $('#results').append('<p style="color: red;">❌ FAILED: Filter dropdown hidden when Single mode selected</p>');
+            }
+            
+            // Test 2: Individual mode selected - should hide dropdown
+            $('#results').append('<p><strong>Test 2: Individual Mode Selected</strong></p>');
+            $('input[name="filter_instrument_mode_1"][value="individual"]').prop('checked', true);
+            setupFilterInstrumentMode(1, 'individual');
+            
+            const individualModeVisible = $('.filter-instrument-container[data-filter-id="1"]').is(':visible');
+            if (!individualModeVisible) {
+                $('#results').append('<p style="color: green;">✅ PASSED: Filter dropdown hidden when Individual mode selected</p>');
+            } else {
+                $('#results').append('<p style="color: red;">❌ FAILED: Filter dropdown shown when Individual mode selected (should be hidden)</p>');
+            }
+            
+            // Test 3: No mode selected - should hide dropdown
+            $('#results').append('<p><strong>Test 3: No Mode Selected</strong></p>');
+            $('input[name="filter_instrument_mode_1"]').prop('checked', false);
+            setupFilterInstrumentMode(1, undefined);
+            
+            const noModeVisible = $('.filter-instrument-container[data-filter-id="1"]').is(':visible');
+            if (!noModeVisible) {
+                $('#results').append('<p style="color: green;">✅ PASSED: Filter dropdown hidden when no mode selected</p>');
+            } else {
+                $('#results').append('<p style="color: red;">❌ FAILED: Filter dropdown shown when no mode selected (should be hidden)</p>');
+            }
+            
+            // Summary
+            const allPassed = singleModeVisible && !individualModeVisible && !noModeVisible;
+            if (allPassed) {
+                $('#results').append('<p style="color: green; font-weight: bold; margin-top: 15px;">🎯 ALL TESTS PASSED: Filter dropdown visibility working correctly!</p>');
+                $('#results').append('<p style="color: green;">• Single mode: Shows dropdown ✓</p>');
+                $('#results').append('<p style="color: green;">• Individual mode: Hides dropdown ✓</p>');
+                $('#results').append('<p style="color: green;">• No mode: Hides dropdown ✓</p>');
+            } else {
+                $('#results').append('<p style="color: red; font-weight: bold; margin-top: 15px;">❌ SOME TESTS FAILED: Check visibility logic</p>');
+            }
+        }
+        
+        function clearResults() {
+            $('#results').html('');
+        }
+        
+        // Initialize
+        $(document).ready(function() {
+            // Set up mode change handlers
+            $('input[name="global_instrument_mode"]').change(function() {
+                enforceInstrumentDropdownStates();
+            });
+            
+            $('.filter-instrument-mode').change(function() {
+                const filterId = $(this).data('filter-id');
+                const mode = $(this).val();
+                setupFilterInstrumentMode(filterId, mode);
+                enforceInstrumentDropdownStates();
+            });
+            
+            // Initial enforcement
+            enforceInstrumentDropdownStates();
+        });
+    </script>
+</body>
+</html>

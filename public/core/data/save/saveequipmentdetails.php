@@ -42,7 +42,7 @@ class EquipmentDetailsValidator {
     public static function validateEquipmentData($mode) {
         $required_fields = [
             'equipment_code', 'unit_id', 'department_id', 'equipment_category', 
-            'validation_frequency', 'area_served', 'section', 'design_acph', 
+            'validation_frequency', 'first_validation_date', 'frequency_type', 'area_served', 'section', 'design_acph', 
             'area_classification', 'area_classification_in_operation', 'equipment_type', 
             'design_cfm', 'equipment_status', 'equipment_addition_date'
         ];
@@ -112,6 +112,9 @@ if ($mode === 'add') {
                 'department_id' => intval($validated_data['department_id']),
                 'equipment_category' => $validated_data['equipment_category'],
                 'validation_frequency' => $validated_data['validation_frequency'],
+                'first_validation_date' => $validated_data['first_validation_date'],
+                'validation_frequencies' => ($validated_data['frequency_type'] == 'dual') ? safe_get('validation_frequencies', 'string', '') : '',
+                'starting_frequency' => ($validated_data['frequency_type'] == 'single') ? safe_get('starting_frequency', 'string', 'Y') : 'Y',
                 'area_served' => $validated_data['area_served'],
                 'section' => $validated_data['section'],
                 'design_acph' => $validated_data['design_acph'],
@@ -198,6 +201,9 @@ else if ($mode === 'modify') {
                 department_id = %i,
                 equipment_category = %s,
                 validation_frequency = %s,
+                first_validation_date = %s,
+                validation_frequencies = %s,
+                starting_frequency = %s,
                 area_served = %s,
                 section = %s,
                 design_acph = %s,
@@ -225,6 +231,9 @@ else if ($mode === 'modify') {
                 intval($validated_data['department_id']),
                 $validated_data['equipment_category'],
                 $validated_data['validation_frequency'],
+                $validated_data['first_validation_date'],
+                ($validated_data['frequency_type'] == 'dual') ? safe_get('validation_frequencies', 'string', '') : '',
+                ($validated_data['frequency_type'] == 'single') ? safe_get('starting_frequency', 'string', 'Y') : 'Y',
                 $validated_data['area_served'],
                 $validated_data['section'],
                 $validated_data['design_acph'],

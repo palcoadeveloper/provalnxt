@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Save Filter Data Validation Test</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .filter-section { border: 1px solid #ccc; padding: 15px; margin: 10px; }
+        .reading-row { margin: 5px 0; }
+        input, select { margin: 5px; padding: 5px; }
+        button { margin: 10px 5px; padding: 8px 15px; }
+        #results { margin-top: 20px; padding: 15px; border: 1px solid #ddd; min-height: 100px; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h3>Testing Save Filter Data Validation - Reading Instrument Requirement</h3>
+    
+    <!-- Simulate a filter -->
+    <div class="filter-section">
+        <h4>Filter Test (ID: 1)</h4>
+        
+        <div>
+            <label>Cell Area:</label>
+            <input type="text" class="filter-cell-area" data-filter-id="1" value="100" />
+            
+            <label>Flow Rate:</label>
+            <input type="text" class="filter-flow-rate" data-filter-id="1" value="500" />
+        </div>
+        
+        <div>
+            <strong>Readings and Instruments:</strong>
+        </div>
+        
+        <div class="reading-row">
+            <label>Reading 1:</label>
+            <input type="text" class="filter-reading" data-filter-id="1" data-reading="1" value="25.5" />
+            <select class="reading-instrument-select" data-filter-id="1" data-reading="1">
+                <option value="">Select Instrument...</option>
+                <option value="inst1">Instrument 1</option>
+                <option value="inst2">Instrument 2</option>
+                <option value="manual">Manual Entry</option>
+            </select>
+        </div>
+        
+        <div class="reading-row">
+            <label>Reading 2:</label>
+            <input type="text" class="filter-reading" data-filter-id="1" data-reading="2" value="26.0" />
+            <select class="reading-instrument-select" data-filter-id="1" data-reading="2">
+                <option value="">Select Instrument...</option>
+                <option value="inst1">Instrument 1</option>
+                <option value="inst2">Instrument 2</option>
+                <option value="manual">Manual Entry</option>
+            </select>
+        </div>
+        
+        <div class="reading-row">
+            <label>Reading 3:</label>
+            <input type="text" class="filter-reading" data-filter-id="1" data-reading="3" value="25.8" />
+            <select class="reading-instrument-select" data-filter-id="1" data-reading="3">
+                <option value="">Select Instrument...</option>
+                <option value="inst1">Instrument 1</option>
+                <option value="inst2">Instrument 2</option>
+                <option value="manual">Manual Entry</option>
+            </select>
+        </div>
+        
+        <div class="reading-row">
+            <label>Reading 4:</label>
+            <input type="text" class="filter-reading" data-filter-id="1" data-reading="4" value="26.2" />
+            <select class="reading-instrument-select" data-filter-id="1" data-reading="4">
+                <option value="">Select Instrument...</option>
+                <option value="inst1">Instrument 1</option>
+                <option value="inst2">Instrument 2</option>
+                <option value="manual">Manual Entry</option>
+            </select>
+        </div>
+        
+        <div class="reading-row">
+            <label>Reading 5:</label>
+            <input type="text" class="filter-reading" data-filter-id="1" data-reading="5" value="25.9" />
+            <select class="reading-instrument-select" data-filter-id="1" data-reading="5">
+                <option value="">Select Instrument...</option>
+                <option value="inst1">Instrument 1</option>
+                <option value="inst2">Instrument 2</option>
+                <option value="manual">Manual Entry</option>
+            </select>
+        </div>
+        
+        <div>
+            <button onclick="testValidationWithMissingInstruments()">Test Validation (Some Missing Instruments)</button>
+            <button onclick="selectAllInstruments()">Select All Instruments</button>
+            <button onclick="testValidationComplete()">Test Validation (All Complete)</button>
+            <button onclick="clearAllInstruments()">Clear All Instruments</button>
+        </div>
+    </div>
+    
+    <div id="results"></div>
+    
+    <script>
+        // Simulate the new validation logic
+        function validateReadingInstruments(filterId) {
+            let validationErrors = [];
+            
+            // Validate Cell Area and Flow Rate
+            const cellArea = $(`.filter-cell-area[data-filter-id="${filterId}"]`).val().trim();
+            const flowRate = $(`.filter-flow-rate[data-filter-id="${filterId}"]`).val().trim();
+            
+            if (!cellArea && !flowRate) {
+                validationErrors.push('Cell Area and Flow Rate are required fields');
+            } else if (!cellArea) {
+                validationErrors.push('Cell Area is required');
+            } else if (!flowRate) {
+                validationErrors.push('Flow Rate is required');
+            }
+            
+            // Check that ALL readings are provided
+            let missingReadings = [];
+            for (let i = 1; i <= 5; i++) {
+                const reading = $(`.filter-reading[data-filter-id="${filterId}"][data-reading="${i}"]`).val().trim();
+                if (reading === '') {
+                    missingReadings.push(`Reading ${i}`);
+                }
+            }
+            
+            if (missingReadings.length > 0) {
+                validationErrors.push(`All readings must be provided. Missing: ${missingReadings.join(', ')}`);
+            }
+            
+            // NEW VALIDATION: Validate that ALL reading instrument dropdowns have values selected
+            let missingReadingInstruments = [];
+            for (let i = 1; i <= 5; i++) {
+                const readingInstrument = $(`.reading-instrument-select[data-filter-id="${filterId}"][data-reading="${i}"]`).val();
+                if (!readingInstrument || readingInstrument === '' || readingInstrument === 'Select Instrument...') {
+                    missingReadingInstruments.push(`Reading ${i}`);
+                }
+            }
+            
+            if (missingReadingInstruments.length > 0) {
+                validationErrors.push(`All reading instrument dropdowns must have a value selected. Missing: ${missingReadingInstruments.join(', ')}`);
+            }
+            
+            return validationErrors;
+        }
+        
+        function testValidationWithMissingInstruments() {
+            $('#results').html('<h4>Validation Test - Missing Instruments:</h4>');
+            
+            // Leave some dropdowns unselected
+            $('.reading-instrument-select[data-reading="2"]').val('');
+            $('.reading-instrument-select[data-reading="4"]').val('');
+            
+            const errors = validateReadingInstruments(1);
+            
+            if (errors.length > 0) {
+                $('#results').append('<div class="error"><strong>Validation Errors Found:</strong></div>');
+                errors.forEach(error => {
+                    $('#results').append(`<div class="error">• ${error}</div>`);
+                });
+                $('#results').append('<div style="margin-top: 10px;"><strong>✅ VALIDATION WORKING:</strong> Missing reading instruments detected!</div>');
+            } else {
+                $('#results').append('<div class="error">❌ VALIDATION FAILED: No errors detected when there should be missing instruments</div>');
+            }
+        }
+        
+        function selectAllInstruments() {
+            $('.reading-instrument-select').each(function(index) {
+                if (index % 2 === 0) {
+                    $(this).val('inst1');
+                } else {
+                    $(this).val('manual');
+                }
+            });
+            $('#results').html('<div class="success">All instrument dropdowns have been selected with values.</div>');
+        }
+        
+        function testValidationComplete() {
+            $('#results').html('<h4>Validation Test - All Complete:</h4>');
+            
+            const errors = validateReadingInstruments(1);
+            
+            if (errors.length === 0) {
+                $('#results').append('<div class="success">✅ VALIDATION PASSED: All fields complete, no errors found!</div>');
+            } else {
+                $('#results').append('<div class="error"><strong>Unexpected Validation Errors:</strong></div>');
+                errors.forEach(error => {
+                    $('#results').append(`<div class="error">• ${error}</div>`);
+                });
+            }
+        }
+        
+        function clearAllInstruments() {
+            $('.reading-instrument-select').val('');
+            $('#results').html('<div class="error">All instrument dropdowns cleared (set to "Select Instrument...").</div>');
+        }
+        
+        // Initialize with some instruments selected
+        $(document).ready(function() {
+            $('.reading-instrument-select[data-reading="1"]').val('inst1');
+            $('.reading-instrument-select[data-reading="3"]').val('manual');
+            $('.reading-instrument-select[data-reading="5"]').val('inst2');
+        });
+    </script>
+</body>
+</html>

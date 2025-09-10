@@ -56,8 +56,8 @@ else
         echo "<td>".$row['vendor_spoc_name']."</td>";
         echo "<td>".$row['vendor_spoc_mobile']."</td>";
         echo "<td>".$row['vendor_spoc_email']."</td>";
-        echo "<td><a href='managevendordetails.php?vendor_id=".$row["vendor_id"]."&m=r' class='btn btn-sm btn-gradient-danger btn-icon-text' role='button' aria-pressed='true'>View </button></a>
-&nbsp;&nbsp;<a href='managevendordetails.php?vendor_id=".$row["vendor_id"]."&m=m' class='btn btn-sm btn-gradient-info btn-icon-text' role='button' aria-pressed='true'>Modify</a> </td>";
+        echo "<td><a href='managevendordetails.php?vendor_id=".$row["vendor_id"]."&m=r' class='btn btn-sm btn-gradient-danger btn-icon-text' role='button' aria-pressed='true'><i class='mdi mdi-eye'></i> View</a>
+&nbsp;&nbsp;<a href='managevendordetails.php?vendor_id=".$row["vendor_id"]."&m=m' class='btn btn-sm btn-gradient-info btn-icon-text' role='button' aria-pressed='true'><i class='mdi mdi-pencil'></i> Modify</a> </td>";
         echo "</tr>";
         $count++;
     }

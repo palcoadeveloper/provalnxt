@@ -280,6 +280,57 @@ $(document).ready(function(){
 function generateScheduleAfterAuth() {
   $('#pleasewaitmodal').modal('show');
   
+  // First, validate prerequisites before calling schedule generation
+  $.get("core/data/get/validateschedulerequest.php", {
+    schyear: window.scheduleFormData.schyear,
+    unitid: window.scheduleFormData.unitid
+  })
+  .done(function(validationResult) {
+    if(validationResult === 'valid') {
+      // Prerequisites met, now validate equipment data for fixed scheduling logic
+      $.get("core/data/get/validateequipmentdata.php", {
+        schyear: window.scheduleFormData.schyear,
+        unitid: window.scheduleFormData.unitid
+      })
+      .done(function(equipmentValidationResult) {
+        if(equipmentValidationResult === 'valid') {
+          // All validations passed, proceed with schedule generation
+          proceedWithScheduleGeneration();
+        } else {
+          // Equipment data missing, show confirmation dialog
+          showEquipmentDataWarning(equipmentValidationResult);
+        }
+      })
+      .fail(function() {
+        $('#pleasewaitmodal').modal('hide');
+        Swal.fire({
+          icon: 'error',
+          title: 'Connection Error',
+          text: 'Could not validate equipment data. Please try again.'
+        });
+      });
+    } else {
+      // Validation failed, show error message
+      $('#pleasewaitmodal').modal('hide');
+      Swal.fire({
+        icon: 'error',
+        title: 'Validation Error',
+        text: validationResult
+      });
+    }
+  })
+  .fail(function() {
+    $('#pleasewaitmodal').modal('hide');
+    Swal.fire({
+      icon: 'error',
+      title: 'Connection Error',
+      text: 'Could not validate schedule request. Please try again.'
+    });
+  });
+}
+
+// Helper function to proceed with schedule generation
+function proceedWithScheduleGeneration() {
   $.get("core/data/get/getschedulegenerationstatus.php", {
     schyear: window.scheduleFormData.schyear,
     unitid: window.scheduleFormData.unitid
@@ -308,6 +359,30 @@ function generateScheduleAfterAuth() {
       title: 'Connection Error',
       text: 'Could not connect to the server. Please try again.'
     });
+  });
+}
+
+// Helper function to show equipment data warning with confirmation
+function showEquipmentDataWarning(warningMessage) {
+  $('#pleasewaitmodal').modal('hide');
+  
+  Swal.fire({
+    icon: 'warning',
+    title: 'Missing Equipment Validation Data',
+    html: warningMessage,
+    showCancelButton: true,
+    confirmButtonText: 'Proceed Anyway',
+    cancelButtonText: 'Cancel',
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    reverseButtons: true
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // User confirmed to proceed despite missing data
+      $('#pleasewaitmodal').modal('show');
+      proceedWithScheduleGeneration();
+    }
+    // If cancelled, do nothing - user stays on the form
   });
 }
 

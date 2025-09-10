@@ -344,7 +344,7 @@ class SecureTransaction {
  * Security Exception for transaction-related security failures
  */
 class SecurityException extends Exception {
-    public function __construct($message, $code = 0, Exception $previous = null) {
+    public function __construct($message, $code = 0, ?Exception $previous = null) {
         // Log all security exceptions
         error_log("SECURITY EXCEPTION: " . $message);
         parent::__construct($message, $code, $previous);

@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Input validation helper
 class MappingInputValidator {
     public static function validateMappingData($mode) {
-        $required_fields = ['equipment_id', 'test_id', 'test_type', 'vendor_id', 'mapping_status'];
+        $required_fields = ['equipment_id', 'test_id', 'test_type', 'frequency_label', 'vendor_id', 'mapping_status'];
         
         if ($mode === 'modify') {
             $required_fields[] = 'mapping_id';
@@ -108,6 +108,7 @@ if ($mode === 'add') {
                 'equipment_id' => intval($validated_data['equipment_id']),
                 'test_id' => $validated_data['processed_test_id'],
                 'test_type' => $validated_data['test_type'],
+                'frequency_label' => $validated_data['frequency_label'],
                 'vendor_id' => intval($validated_data['vendor_id']),
                 'mapping_status' => $validated_data['mapping_status']
             ]);
@@ -141,7 +142,14 @@ if ($mode === 'add') {
         echo json_encode(['error' => $e->getMessage()]);
     } catch (Exception $e) {
         error_log("Mapping add error: " . $e->getMessage());
-        echo json_encode(['error' => 'Database error occurred']);
+        
+        // Check for duplicate entry error
+        if (strpos($e->getMessage(), 'Duplicate entry') !== false && 
+            strpos($e->getMessage(), 'equipment_id_UNIQUE') !== false) {
+            echo json_encode(['error' => 'This mapping already exists. A mapping for this equipment and test combination has already been configured.']);
+        } else {
+            echo json_encode(['error' => 'Database error occurred. Please contact support if this issue persists.']);
+        }
     }
 }
 else if ($mode === 'modify') {
@@ -159,13 +167,15 @@ else if ($mode === 'modify') {
                 "UPDATE equipment_test_vendor_mapping SET 
                 equipment_id = %i, 
                 test_id = %s,
-                test_type = %s, 
+                test_type = %s,
+                frequency_label = %s, 
                 vendor_id = %i,
                 mapping_status = %s  
                 WHERE mapping_id = %i",
                 intval($validated_data['equipment_id']),
                 $validated_data['processed_test_id'],
                 $validated_data['test_type'],
+                $validated_data['frequency_label'],
                 intval($validated_data['vendor_id']),
                 $validated_data['mapping_status'],
                 intval($validated_data['mapping_id'])
@@ -215,7 +225,14 @@ else if ($mode === 'modify') {
         echo json_encode(['error' => $e->getMessage()]);
     } catch (Exception $e) {
         error_log("Mapping modify error: " . $e->getMessage());
-        echo json_encode(['error' => 'Database error occurred']);
+        
+        // Check for duplicate entry error
+        if (strpos($e->getMessage(), 'Duplicate entry') !== false && 
+            strpos($e->getMessage(), 'equipment_id_UNIQUE') !== false) {
+            echo json_encode(['error' => 'This mapping already exists. A mapping for this equipment and test combination has already been configured.']);
+        } else {
+            echo json_encode(['error' => 'Database error occurred. Please contact support if this issue persists.']);
+        }
     }
 } else {
     echo json_encode(['error' => 'Invalid mode specified']);

@@ -64,7 +64,7 @@ class TestDetailsValidator {
         }
         
         // Validate optional fields
-        $optional_fields = ['test_performed_by', 'test_purpose', 'test_status'];
+        $optional_fields = ['test_performed_by', 'test_purpose', 'test_status', 'dependent_tests', 'paper_on_glass_enabled'];
         
         foreach ($optional_fields as $field) {
             $value = safe_get($field, 'string', '');
@@ -75,6 +75,23 @@ class TestDetailsValidator {
             }
             
             $validated_data[$field] = $value;
+        }
+        
+        // Special handling for dependent_tests - convert array to comma-separated string
+        if (isset($_GET['dependent_tests']) || isset($_POST['dependent_tests'])) {
+            $dependent_tests_input = safe_get('dependent_tests');
+            if (is_array($dependent_tests_input)) {
+                $validated_data['dependent_tests'] = empty($dependent_tests_input) ? 'NA' : implode(',', $dependent_tests_input);
+            } else {
+                $validated_data['dependent_tests'] = empty($dependent_tests_input) ? 'NA' : $dependent_tests_input;
+            }
+        } else {
+            $validated_data['dependent_tests'] = 'NA';
+        }
+        
+        // Validate paper_on_glass_enabled values
+        if (!empty($validated_data['paper_on_glass_enabled']) && !in_array($validated_data['paper_on_glass_enabled'], ['Yes', 'No'])) {
+            $validated_data['paper_on_glass_enabled'] = 'No';
         }
         
         // Validate test_id for modify mode
@@ -106,7 +123,9 @@ if ($mode === 'add') {
                 'test_description' => $validated_data['test_description'],
                 'test_performed_by' => $validated_data['test_performed_by'],
                 'test_purpose' => $validated_data['test_purpose'],
-                'test_status' => $validated_data['test_status']
+                'test_status' => $validated_data['test_status'],
+                'dependent_tests' => $validated_data['dependent_tests'],
+                'paper_on_glass_enabled' => $validated_data['paper_on_glass_enabled']
             ]);
             
             $testId = DB::insertId();
@@ -155,13 +174,17 @@ else if ($mode === 'modify') {
                 test_description = %s, 
                 test_performed_by = %s, 
                 test_purpose = %s, 
-                test_status = %s  
+                test_status = %s,
+                dependent_tests = %s,
+                paper_on_glass_enabled = %s  
                 WHERE test_id = %i", 
                 $validated_data['test_name'], 
                 $validated_data['test_description'], 
                 $validated_data['test_performed_by'], 
                 $validated_data['test_purpose'], 
                 $validated_data['test_status'], 
+                $validated_data['dependent_tests'],
+                $validated_data['paper_on_glass_enabled'],
                 $validated_data['test_id']
             );
             

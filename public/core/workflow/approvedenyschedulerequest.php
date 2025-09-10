@@ -1,5 +1,9 @@
 <?php
-session_start();
+
+// Load configuration first
+require_once(__DIR__ . '/../config/config.php');
+
+// Session is already started by config.php via session_init.php
 
 // Validate session timeout
 require_once('../security/session_timeout_middleware.php');
@@ -12,8 +16,8 @@ date_default_timezone_set("Asia/Kolkata");
 use setasign\Fpdi\Fpdi;
 use setasign\Fpdi\PdfReader;
 
-require_once(__DIR__ . "/fpdf/fpdf.php");
-require_once(__DIR__ . "/fpdf/fpdi/autoload.php");
+require_once(__DIR__ . "/../fpdf/fpdf.php");
+require_once(__DIR__ . "/../../vendor/setasign/fpdi/src/autoload.php");
 date_default_timezone_set("Asia/Kolkata");
 
 // Add error logging
@@ -138,9 +142,21 @@ try {
 
             $pdf = new Fpdi();
             if ($_POST['sch_type'] == 'val') {
-                $pageCount = $pdf->setSourceFile(__DIR__ . '/../uploads/schedule-report-' . $_SESSION['unit_id'] . '-' . $_POST['schedule_id'] . '.pdf');
+                $pdfPath = __DIR__ . '/../../uploads/schedule-report-' . $_SESSION['unit_id'] . '-' . $_POST['schedule_id'] . '.pdf';
+                if (!file_exists($pdfPath)) {
+                    error_log("PDF file not found: " . $pdfPath);
+                    echo 'error:pdf_missing';
+                    exit();
+                }
+                $pageCount = $pdf->setSourceFile($pdfPath);
             } else {
-                $pageCount = $pdf->setSourceFile(__DIR__ . '/../uploads/rt-schedule-report-' . $_SESSION['unit_id'] . '-' . $_POST['schedule_id'] . '.pdf');
+                $pdfPath = __DIR__ . '/../../uploads/rt-schedule-report-' . $_SESSION['unit_id'] . '-' . $_POST['schedule_id'] . '.pdf';
+                if (!file_exists($pdfPath)) {
+                    error_log("PDF file not found: " . $pdfPath);
+                    echo 'error:pdf_missing';
+                    exit();
+                }
+                $pageCount = $pdf->setSourceFile($pdfPath);
             }
             for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
                 $tplIdx = $pdf->importPage($pageNo, PdfReader\PageBoundaries::MEDIA_BOX);
@@ -159,10 +175,10 @@ try {
             $pdf->MultiCell(0, 10, $_SESSION['user_name'] . "\n" . "Engg / User Department (Cipla Ltd.)" . "\n" . 'Date: ' . date("d.m.Y H:i:s"), 1, 'C');
 
             if ($_POST['sch_type'] == 'val') {
-                $pdf->Output(__DIR__ . '/../uploads/schedule-report-' . $_SESSION['unit_id'] . '-' . $_POST['schedule_id'] . '.pdf', 'F');
+                $pdf->Output(__DIR__ . '/../../uploads/schedule-report-' . $_SESSION['unit_id'] . '-' . $_POST['schedule_id'] . '.pdf', 'F');
                 echo 'vsch_app_edh';
             } else {
-                $pdf->Output(__DIR__ . '/../uploads/rt-schedule-report-' . $_SESSION['unit_id'] . '-' . $_POST['schedule_id'] . '.pdf', 'F');
+                $pdf->Output(__DIR__ . '/../../uploads/rt-schedule-report-' . $_SESSION['unit_id'] . '-' . $_POST['schedule_id'] . '.pdf', 'F');
                 echo 'rsch_app_edh';
             }
         } else if ($isQADept && $isQAHead) {
@@ -199,9 +215,21 @@ try {
             
             $pdf = new Fpdi();
             if ($_POST['sch_type'] == 'val') {
-                $pageCount = $pdf->setSourceFile(__DIR__ . '/../uploads/schedule-report-' . $_SESSION['unit_id'] . '-' . $_POST['schedule_id'] . '.pdf');
+                $pdfPath = __DIR__ . '/../../uploads/schedule-report-' . $_SESSION['unit_id'] . '-' . $_POST['schedule_id'] . '.pdf';
+                if (!file_exists($pdfPath)) {
+                    error_log("PDF file not found: " . $pdfPath);
+                    echo 'error:pdf_missing';
+                    exit();
+                }
+                $pageCount = $pdf->setSourceFile($pdfPath);
             } else {
-                $pageCount = $pdf->setSourceFile(__DIR__ . '/../uploads/rt-schedule-report-' . $_SESSION['unit_id'] . '-' . $_POST['schedule_id'] . '.pdf');
+                $pdfPath = __DIR__ . '/../../uploads/rt-schedule-report-' . $_SESSION['unit_id'] . '-' . $_POST['schedule_id'] . '.pdf';
+                if (!file_exists($pdfPath)) {
+                    error_log("PDF file not found: " . $pdfPath);
+                    echo 'error:pdf_missing';
+                    exit();
+                }
+                $pageCount = $pdf->setSourceFile($pdfPath);
             }
             for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
                 $tplIdx = $pdf->importPage($pageNo, PdfReader\PageBoundaries::MEDIA_BOX);
@@ -220,7 +248,7 @@ try {
             $pdf->MultiCell(0, 10, $_SESSION['user_name'] . "\n" . "Quality Assurance (Cipla Ltd.)" . "\n" . 'Date: ' . date("d.m.Y H:i:s"), 1, 'C');
 
             if ($_POST['sch_type'] == 'val') {
-                $pdf->Output(__DIR__ . '/../uploads/schedule-report-' . $_SESSION['unit_id'] . '-' . $_POST['schedule_id'] . '.pdf', 'F');
+                $pdf->Output(__DIR__ . '/../../uploads/schedule-report-' . $_SESSION['unit_id'] . '-' . $_POST['schedule_id'] . '.pdf', 'F');
 
                 $query = "select * from tbl_proposed_val_schedules where schedule_id=" . $_POST['schedule_id'];
                 $query_results = DB::query($query);
@@ -239,7 +267,7 @@ try {
                     DB::query("DELETE FROM tbl_proposed_val_schedules WHERE schedule_id=%i", intval($_POST['schedule_id']));
                 }
             } else {
-                $pdf->Output(__DIR__ . '/../uploads/rt-schedule-report-' . $_SESSION['unit_id'] . '-' . $_POST['schedule_id'] . '.pdf', 'F');
+                $pdf->Output(__DIR__ . '/../../uploads/rt-schedule-report-' . $_SESSION['unit_id'] . '-' . $_POST['schedule_id'] . '.pdf', 'F');
                 $query = "select * from tbl_proposed_routine_test_schedules where schedule_id=" . $_POST['schedule_id'];
                 $query_results = DB::query($query);
 

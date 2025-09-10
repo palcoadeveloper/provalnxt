@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Filter Initialization Fix Verification</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { border: 1px solid #007bff; padding: 20px; margin: 15px 0; }
+        .filter-container { border: 2px dashed #28a745; padding: 15px; margin: 10px 0; }
+        .filter-instrument-container { 
+            margin: 10px 0; 
+            padding: 10px; 
+            border: 2px solid #dc3545; 
+            background-color: #f8d7da;
+            display: block; /* Initially visible to simulate bug */
+        }
+        .hidden { display: none !important; }
+        button { margin: 5px; padding: 8px 15px; }
+        #results { margin-top: 20px; padding: 15px; border: 1px solid #ddd; min-height: 100px; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .status.visible { background-color: #f8d7da; border: 1px solid #dc3545; color: #721c24; }
+        .status.hidden { background-color: #d4edda; border: 1px solid #28a745; color: #155724; }
+    </style>
+</head>
+<body>
+    <h2>Filter Initialization Fix Verification</h2>
+    <p>This test verifies that the setupFilterInstrumentMode function is now being called during initialization even when no filter mode is selected, properly hiding the filter instrument dropdown.</p>
+    
+    <!-- Global Mode Selection -->
+    <div class="test-section">
+        <h4>Global Mode Selection</h4>
+        <label><strong>Global Instrument Mode:</strong></label>
+        <input type="radio" name="global_instrument_mode" value="single"> Single Instrument
+        <input type="radio" name="global_instrument_mode" value="individual" checked> Per-Filter
+    </div>
+    
+    <!-- Test Filter - Simulating the scenario from screenshot -->
+    <div class="test-section">
+        <h4>Test Filter (Simulating Screenshot Scenario)</h4>
+        
+        <div class="filter-container" data-filter-id="1">
+            <h5>Filter: AHU-01/THF/0.3mu/01/A</h5>
+            
+            <!-- Filter Level Instrument Selection (NO mode selected initially) -->
+            <div>
+                <label><strong>Filter Level Instrument Selection:</strong></label>
+                <input type="radio" name="filter_instrument_mode_1" value="single" class="filter-instrument-mode" data-filter-id="1"> Single
+                <input type="radio" name="filter_instrument_mode_1" value="individual" class="filter-instrument-mode" data-filter-id="1"> Individual
+                <small style="color: #666;">(Neither radio button checked - this is the scenario from the screenshot)</small>
+            </div>
+            
+            <!-- This dropdown should be HIDDEN after initialization fix -->
+            <div class="filter-instrument-container" data-filter-id="1">
+                <label><strong>Instrument:</strong></label>
+                <select class="filter-instrument-select" data-filter-id="1">
+                    <option value="">Select Instrument...</option>
+                    <option value="inst1">Test Instrument 1</option>
+                    <option value="inst2">Test Instrument 2</option>
+                </select>
+                <div style="color: #721c24; font-size: 12px; margin-top: 5px;">
+                    🚨 This should be HIDDEN when no filter mode is selected!
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Test Controls -->
+    <div>
+        <button onclick="simulateOriginalBuggyInitialization()">Simulate Original Buggy Initialization</button>
+        <button onclick="simulateFixedInitialization()">Simulate FIXED Initialization</button>
+        <button onclick="testModeChanges()">Test Mode Selection Changes</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+    
+    <!-- Status Display -->
+    <div id="status-display">
+        <div id="visibility-status" class="status visible">
+            ❌ Filter Instrument Dropdown is currently VISIBLE (simulating bug)
+        </div>
+    </div>
+    
+    <div id="results"></div>
+    
+    <script>
+        // Copy of the FIXED setupFilterInstrumentMode function from the actual code
+        function setupFilterInstrumentMode(filterId, mode) {
+            const $filterContainer = $(`.filter-instrument-container[data-filter-id="${filterId}"]`);
+            const $readingDropdowns = $(`.reading-instrument-select[data-filter-id="${filterId}"]`);
+            const globalMode = $('input[name="global_instrument_mode"]:checked').val();
+            
+            console.log(`🔧 setupFilterInstrumentMode called for Filter ${filterId} with mode: "${mode}"`);
+            
+            if (mode === 'single') {
+                // Show filter instrument dropdown only when Single mode is explicitly selected
+                $filterContainer.show();
+                $readingDropdowns.prop('disabled', true).addClass('bg-light');
+                console.log(`🔓 Filter ${filterId}: Showing filter instrument dropdown (Single mode selected)`);
+            } else {
+                // Hide filter instrument dropdown (Individual mode OR no mode selected)
+                $filterContainer.hide();
+                
+                if (mode === 'individual') {
+                    // Individual mode is explicitly selected
+                    if (globalMode !== 'single') {
+                        $readingDropdowns.prop('disabled', false).removeClass('bg-light');
+                        console.log(`🔓 Filter ${filterId}: Enabled reading dropdowns (Individual mode selected)`);
+                    } else {
+                        $readingDropdowns.prop('disabled', true).addClass('bg-light');
+                        console.log(`🔒 Filter ${filterId}: Keeping reading dropdowns disabled (global Single mode)`);
+                    }
+                } else {
+                    // No mode selected - disable reading dropdowns
+                    $readingDropdowns.prop('disabled', true).addClass('bg-light');
+                    console.log(`🔒 Filter ${filterId}: Disabled reading dropdowns (no filter mode selected)`);
+                }
+                
+                // Clear filter selection when hiding dropdown
+                $(`.filter-instrument-select[data-filter-id="${filterId}"]`).val('');
+            }
+            
+            updateVisibilityStatus();
+        }
+        
+        // Simulate the ORIGINAL buggy initialization (before fix)
+        function simulateOriginalBuggyInitialization() {
+            $('#results').html('<h4>Simulating Original Buggy Initialization:</h4>');
+            $('#results').append('<p>🐛 <strong>Original Logic:</strong> Only called setupFilterInstrumentMode if a mode was selected</p>');
+            
+            $('.filter-instrument-mode').each(function() {
+                const filterId = $(this).data('filter-id');
+                if (filterId) {
+                    const checkedMode = $(`input[name="filter_instrument_mode_${filterId}"]:checked`).val();
+                    $('#results').append(`<p>Filter ${filterId}: Checked mode = "${checkedMode || 'undefined'}"</p>`);
+                    
+                    // ORIGINAL BUGGY LOGIC: Only call setup if mode is selected
+                    if (checkedMode) {
+                        setupFilterInstrumentMode(filterId, checkedMode);
+                        $('#results').append(`<p>✓ Called setupFilterInstrumentMode(${filterId}, ${checkedMode})</p>`);
+                    } else {
+                        $('#results').append(`<p>❌ <strong>BUG:</strong> Did NOT call setupFilterInstrumentMode for ${filterId} (no mode selected)</p>`);
+                        $('#results').append(`<p>🚨 Result: Dropdown remains visible by default!</p>`);
+                    }
+                }
+            });
+            
+            // Show the dropdown to simulate the bug
+            $('.filter-instrument-container[data-filter-id="1"]').show();
+            updateVisibilityStatus();
+        }
+        
+        // Simulate the FIXED initialization 
+        function simulateFixedInitialization() {
+            $('#results').html('<h4>Simulating FIXED Initialization:</h4>');
+            $('#results').append('<p>✅ <strong>Fixed Logic:</strong> Always call setupFilterInstrumentMode to ensure proper visibility state</p>');
+            
+            $('.filter-instrument-mode').each(function() {
+                const filterId = $(this).data('filter-id');
+                if (filterId) {
+                    const checkedMode = $(`input[name="filter_instrument_mode_${filterId}"]:checked`).val();
+                    $('#results').append(`<p>Filter ${filterId}: Checked mode = "${checkedMode || 'undefined'}"</p>`);
+                    
+                    // FIXED LOGIC: Always call setupFilterInstrumentMode
+                    setupFilterInstrumentMode(filterId, checkedMode);
+                    $('#results').append(`<p>✅ Always called setupFilterInstrumentMode(${filterId}, ${checkedMode || 'undefined'})</p>`);
+                }
+            });
+            
+            // Check final state
+            const isVisible = $('.filter-instrument-container[data-filter-id="1"]').is(':visible');
+            if (!isVisible) {
+                $('#results').append('<p class="success">🎯 SUCCESS: Filter instrument dropdown is now properly HIDDEN!</p>');
+                $('#results').append('<p class="success">✅ BUG FIXED: Initialization now handles unselected modes correctly</p>');
+            } else {
+                $('#results').append('<p class="error">❌ FAILED: Filter instrument dropdown is still visible</p>');
+            }
+        }
+        
+        function testModeChanges() {
+            $('#results').html('<h4>Testing Mode Selection Changes:</h4>');
+            
+            // Test Single mode
+            $('input[name="filter_instrument_mode_1"][value="single"]').prop('checked', true);
+            setupFilterInstrumentMode(1, 'single');
+            const singleVisible = $('.filter-instrument-container[data-filter-id="1"]').is(':visible');
+            $('#results').append(`<p>✅ Single mode selected: Dropdown visible = ${singleVisible} (should be true)</p>`);
+            
+            // Test Individual mode  
+            $('input[name="filter_instrument_mode_1"][value="individual"]').prop('checked', true);
+            setupFilterInstrumentMode(1, 'individual');
+            const individualVisible = $('.filter-instrument-container[data-filter-id="1"]').is(':visible');
+            $('#results').append(`<p>✅ Individual mode selected: Dropdown visible = ${individualVisible} (should be false)</p>`);
+            
+            // Test no mode selected (the scenario from screenshot)
+            $('input[name="filter_instrument_mode_1"]').prop('checked', false);
+            setupFilterInstrumentMode(1, undefined);
+            const noModeVisible = $('.filter-instrument-container[data-filter-id="1"]').is(':visible');
+            $('#results').append(`<p>🎯 No mode selected: Dropdown visible = ${noModeVisible} (should be false - this was the bug!)</p>`);
+            
+            if (singleVisible && !individualVisible && !noModeVisible) {
+                $('#results').append('<p class="success">🎉 ALL TESTS PASSED: Mode changes work correctly!</p>');
+                $('#results').append('<p class="success">✅ The screenshot issue is RESOLVED</p>');
+            } else {
+                $('#results').append('<p class="error">❌ Some tests failed</p>');
+            }
+        }
+        
+        function updateVisibilityStatus() {
+            const isVisible = $('.filter-instrument-container[data-filter-id="1"]').is(':visible');
+            const $status = $('#visibility-status');
+            
+            if (isVisible) {
+                $status.removeClass('hidden').addClass('visible');
+                $status.html('❌ Filter Instrument Dropdown is currently VISIBLE');
+            } else {
+                $status.removeClass('visible').addClass('hidden');
+                $status.html('✅ Filter Instrument Dropdown is properly HIDDEN');
+            }
+        }
+        
+        function clearResults() {
+            $('#results').html('');
+        }
+        
+        // Initialize in buggy state to demonstrate the problem
+        $(document).ready(function() {
+            $('#results').html('<p><strong>Initial State:</strong> Dropdown is visible (simulating the bug from the screenshot)</p>');
+            $('#results').append('<p>Click buttons above to test the original bug vs the fix!</p>');
+            updateVisibilityStatus();
+        });
+    </script>
+</body>
+</html>

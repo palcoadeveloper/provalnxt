@@ -40,7 +40,8 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
     try {
         $unit_details = DB::queryFirstRow(
             "SELECT unit_name, unit_status, primary_test_id, secondary_test_id, 
-                    two_factor_enabled, otp_validity_minutes, otp_digits, otp_resend_delay_seconds
+                    two_factor_enabled, otp_validity_minutes, otp_digits, otp_resend_delay_seconds,
+                    validation_scheduling_logic
              FROM units WHERE unit_id = %i", 
             intval($_GET['unit_id'])
         );
@@ -88,6 +89,7 @@ try {
           unit_status: $("#unit_status").val(),
           primary_test_id: $("#primary_test_id").val(),
           secondary_test_id: $("#secondary_test_id").val(),
+          validation_scheduling_logic: $("#validation_scheduling_logic").val(),
           two_factor_enabled: $("#two_factor_enabled").val(),
           otp_validity_minutes: $("#otp_validity_minutes").val(),
           otp_digits: $("#otp_digits").val(),
@@ -269,6 +271,24 @@ try {
         }
       });
       
+      // Handle Validation Scheduling Logic dropdown change
+      $("#validation_scheduling_logic").on("change", function() {
+        var selectedValue = $(this).val();
+        
+        if (selectedValue === "fixed") {
+          // Disable dropdowns for Fixed Dates
+          $("#primary_test_id").prop("disabled", true);
+          $("#secondary_test_id").prop("disabled", true);
+        } else {
+          // Enable dropdowns for Dynamic Dates
+          $("#primary_test_id").prop("disabled", false);
+          $("#secondary_test_id").prop("disabled", false);
+        }
+      });
+      
+      // Initialize dropdown state on page load
+      $("#validation_scheduling_logic").trigger("change");
+      
     });
     
     </script>
@@ -350,6 +370,21 @@ try {
                     </div>
 
                     <div class="form-group col-md-4">
+                        <label for="validation_scheduling_logic">Validation Scheduling Logic *</label>
+                        <select class="form-control" id="validation_scheduling_logic" name="validation_scheduling_logic" required <?php echo ((isset($_GET['m']) && $_GET['m']=='r')?'disabled':'');?>>
+                            <option value="dynamic" <?php echo (isset($_GET['m']) && $_GET['m']!='a' && $unit_details['validation_scheduling_logic']=='dynamic') ? 'selected' : (!isset($_GET['m']) || $_GET['m']=='a' ? 'selected' : ''); ?>>Dynamic Dates</option>
+                            <option value="fixed" <?php echo (isset($_GET['m']) && $_GET['m']!='a' && $unit_details['validation_scheduling_logic']=='fixed') ? 'selected' : ''; ?>>Fixed Dates</option>
+                        </select>
+                        <div class="invalid-feedback">Please select a validation scheduling logic.</div>
+                        <small class="text-muted">Dynamic dates adjust automatically; Fixed dates remain constant.</small>
+                    </div>
+
+
+                    </div>
+                    
+                    <div class="form-row">
+                      
+                      <div class="form-group col-md-4">
                         <label for="primary_test_id">Primary Test *</label>
                         <select class="form-control" id="primary_test_id" name="primary_test_id" required <?php echo ((isset($_GET['m']) && $_GET['m']=='r')?'disabled':'');?>>
                             <option value="">Select Primary Test</option>
@@ -361,12 +396,8 @@ try {
                             ?>
                         </select>
                         <div class="invalid-feedback">Please select a Primary Test.</div>
-                    </div>
+                      </div>
 
-                    </div>
-                    
-                    <div class="form-row">
-                      
                       <div class="form-group col-md-4">
                         <label for="secondary_test_id">Secondary Test</label>
                         <select class="form-control" id="secondary_test_id" name="secondary_test_id" <?php echo ((isset($_GET['m']) && $_GET['m']=='r')?'disabled':'');?>>
@@ -382,17 +413,6 @@ try {
                       </div>
 
                       <div class="form-group col-md-4">
-                        <label for="two_factor_enabled">Two Factor Authentication</label>
-                        <select class="form-control" id="two_factor_enabled" name="two_factor_enabled" <?php echo ((isset($_GET['m']) && $_GET['m']=='r')?'disabled':'');?>>
-			            <?php 
-			            echo "<option value='No'".(isset($_GET['m']) && $_GET['m']!='a' && ($unit_details['two_factor_enabled']=='No')? "selected" : "") .">No</option>";
-			            echo "<option value='Yes'".(isset($_GET['m']) && $_GET['m']!='a' && ($unit_details['two_factor_enabled']=='Yes')? "selected" : "") .">Yes</option>";
-			            ?>	
-                        </select>
-                        <div class="invalid-feedback">Please select Two Factor Authentication setting.</div>
-                      </div>
-
-                      <div class="form-group col-md-4">
                         <label for="unit_status">Status</label>
                         <select class="form-control" id="unit_status" name="unit_status" <?php echo ((isset($_GET['m']) && $_GET['m']=='r')?'disabled':'');?>>
 			            <?php 
@@ -401,6 +421,21 @@ try {
 			            ?>	
                         </select>
                         <div class="invalid-feedback">Please select a unit status.</div>
+                      </div>
+
+                    </div>
+                    
+                    <div class="form-row">
+                      
+                      <div class="form-group col-md-4">
+                        <label for="two_factor_enabled">Two Factor Authentication</label>
+                        <select class="form-control" id="two_factor_enabled" name="two_factor_enabled" <?php echo ((isset($_GET['m']) && $_GET['m']=='r')?'disabled':'');?>>
+			            <?php 
+			            echo "<option value='No'".(isset($_GET['m']) && $_GET['m']!='a' && ($unit_details['two_factor_enabled']=='No')? "selected" : "") .">No</option>";
+			            echo "<option value='Yes'".(isset($_GET['m']) && $_GET['m']!='a' && ($unit_details['two_factor_enabled']=='Yes')? "selected" : "") .">Yes</option>";
+			            ?>	
+                        </select>
+                        <div class="invalid-feedback">Please select Two Factor Authentication setting.</div>
                       </div>
 
                     </div>

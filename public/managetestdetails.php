@@ -31,7 +31,7 @@ require_once 'core/config/db.class.php';
 if (isset($_GET['m']) && $_GET['m'] != 'a') {
     try {
         $test_details = DB::queryFirstRow(
-            "SELECT test_name, test_description, test_purpose, test_performed_by, test_status 
+            "SELECT test_name, test_description, test_purpose, test_performed_by, test_status, dependent_tests, paper_on_glass_enabled 
              FROM tests WHERE test_id = %d", 
             intval($_GET['test_id'])
         );
@@ -66,6 +66,15 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
         
         $('#pleasewaitmodal').modal('show');
         
+        // Prepare dependent tests value
+        let dependentTestsValue = $("#dependent_tests").val();
+        let dependentTestsString = '';
+        if (dependentTestsValue && dependentTestsValue.length > 0) {
+          dependentTestsString = dependentTestsValue.join(',');
+        } else {
+          dependentTestsString = 'NA';
+        }
+
         // Prepare data object based on mode
         let data = {
           csrf_token: csrfToken,
@@ -74,6 +83,8 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
           test_purpose: $("#test_purpose").val(),
           test_performed_by: $("#test_performed_by").val(),
           test_status: $("#test_status").val(),
+          dependent_tests: dependentTestsString,
+          paper_on_glass_enabled: $("#paper_on_glass_enabled").val(),
           mode: mode
         };
         
@@ -704,6 +715,46 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
           }
         });
       }
+
+      // Dependent Tests validation to prevent circular dependencies
+      $("#dependent_tests").change(function() {
+        var currentTestId = $("#test_id").val();
+        var selectedTests = $(this).val();
+        
+        if (currentTestId && selectedTests && selectedTests.includes(currentTestId)) {
+          // Remove the current test from selection to prevent circular dependency
+          var filteredTests = selectedTests.filter(function(testId) {
+            return testId !== currentTestId;
+          });
+          $(this).val(filteredTests);
+          
+          // Show warning
+          Swal.fire({
+            icon: 'warning',
+            title: 'Invalid Selection',
+            text: 'A test cannot depend on itself. This selection has been removed.',
+            timer: 3000,
+            showConfirmButton: false
+          });
+        }
+      });
+
+      // Initialize dependent tests field behavior
+      $("#dependent_tests").on('focus', function() {
+        var naOption = $(this).find('option[value="NA"]');
+        if (naOption.is(':selected')) {
+          naOption.prop('selected', false);
+        }
+      });
+      
+      // If NA is selected, clear other selections
+      $("#dependent_tests").on('change', function() {
+        var selectedValues = $(this).val();
+        if (selectedValues && selectedValues.includes('NA')) {
+          // If NA is selected, clear all other selections
+          $(this).val(['NA']);
+        }
+      });
       
       
     
@@ -932,7 +983,42 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                       </div>
                      
                       
-					</div>		
+					</div>
+					
+					<div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="dependent_tests">Dependent Test(s)</label>
+                            <select class="form-control" id="dependent_tests" name="dependent_tests" multiple style="height: 120px;">
+                                <option value="NA" <?php echo ((isset($_GET['m']) && $_GET['m']!='a' && ($test_details['dependent_tests']=='NA' || empty($test_details['dependent_tests'])))? 'selected' : '');?>>NA</option>
+                                <?php
+                                // Get all available tests for dependent test selection
+                                $all_tests = DB::query("SELECT test_id, test_name FROM tests WHERE test_status='Active' ORDER BY test_name");
+                                
+                                // Get current dependent tests if editing
+                                $current_dependent_tests = array();
+                                if(isset($_GET['m']) && $_GET['m']!='a' && !empty($test_details['dependent_tests']) && $test_details['dependent_tests'] != 'NA' && $test_details['dependent_tests'] !== null) {
+                                    $current_dependent_tests = explode(',', $test_details['dependent_tests']);
+                                    $current_dependent_tests = array_map('trim', $current_dependent_tests);
+                                }
+                                
+                                foreach($all_tests as $test) {
+                                    $selected = in_array($test['test_id'], $current_dependent_tests) ? 'selected' : '';
+                                    echo "<option value='".$test['test_id']."' ".$selected.">".$test['test_name']."</option>";
+                                }
+                                ?>
+                            </select>
+                            <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple tests</small>
+                        </div>
+                        
+                        <div class="form-group col-md-6">
+                            <label for="paper_on_glass_enabled">Paper-on-Glass Enabled</label>
+                            <select class="form-control" id="paper_on_glass_enabled" name="paper_on_glass_enabled">
+                                <option value="No" <?php echo ((isset($_GET['m']) && $_GET['m']!='a' && $test_details['paper_on_glass_enabled']=='No') || (!isset($_GET['m']) || $_GET['m']=='a') ? 'selected' : '');?>>No</option>
+                                <option value="Yes" <?php echo ((isset($_GET['m']) && $_GET['m']!='a' && $test_details['paper_on_glass_enabled']=='Yes') ? 'selected' : '');?>>Yes</option>
+                            </select>
+                            <small class="form-text text-muted">Enable paper-on-glass functionality for this test</small>
+                        </div>
+                    </div>		
 							
 					
 						

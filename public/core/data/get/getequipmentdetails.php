@@ -19,6 +19,36 @@ $base_query = "SELECT equipment_id, equipment_code, t1.unit_id, t2.department_na
 
 $unit_id = intval($_GET['unitid']);
 
+// Check for ETV mapping filter
+$etv_mapping_filter = isset($_GET['etv_mapping_filter']) ? $_GET['etv_mapping_filter'] : 'Select';
+
+// Add ETV mapping condition to base query if needed
+if ($etv_mapping_filter === 'Yes') {
+    // Show only equipment without ETV mappings
+    $base_query = "SELECT equipment_id, equipment_code, t1.unit_id, t2.department_name, equipment_category 
+                   FROM equipments t1 
+                   INNER JOIN departments t2 ON t1.department_id = t2.department_id 
+                   WHERE t1.unit_id = %i 
+                   AND t1.equipment_id NOT IN (
+                       SELECT DISTINCT equipment_id 
+                       FROM equipment_test_vendor_mapping 
+                       WHERE mapping_status = 'Active' 
+                       AND equipment_id IS NOT NULL
+                   )";
+} elseif ($etv_mapping_filter === 'No') {
+    // Show only equipment with ETV mappings
+    $base_query = "SELECT equipment_id, equipment_code, t1.unit_id, t2.department_name, equipment_category 
+                   FROM equipments t1 
+                   INNER JOIN departments t2 ON t1.department_id = t2.department_id 
+                   WHERE t1.unit_id = %i 
+                   AND t1.equipment_id IN (
+                       SELECT DISTINCT equipment_id 
+                       FROM equipment_test_vendor_mapping 
+                       WHERE mapping_status = 'Active' 
+                       AND equipment_id IS NOT NULL
+                   )";
+}
+
 // Start building the query conditionally
 if ($_GET['dept_id'] != 'Select' && $_GET['equipment_type'] != 'Select' && !empty($_GET['equipment_id']) && $_GET['equipment_id'] != 'All') {
     // All filters selected

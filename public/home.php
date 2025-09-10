@@ -395,23 +395,27 @@ elseif ($userType === 'employee') {
 // Role-Based Cards - QA Head (Independent of department)
 if ($_SESSION['logged_in_user'] == 'employee' && $_SESSION['is_qa_head'] == "Yes") {
     try {
-        // Combined query for QA Head metrics
-        $qaHeadQuery = "
-            SELECT 
-                COUNT(CASE WHEN t.val_wf_current_stage = %s AND t.unit_id = %i THEN 1 END) as qa_approval_pending,
-                COUNT(CASE WHEN vsr.schedule_request_status = '2' AND vsr.schedule_year != '0' AND vsr.unit_id = %i THEN 1 END) as validation_schedule_requests,
-                COUNT(CASE WHEN rtsr.schedule_request_status = '2' AND rtsr.schedule_year != '0' AND rtsr.unit_id = %i THEN 1 END) as routine_schedule_requests
-            FROM tbl_val_wf_tracking_details t
-            LEFT JOIN tbl_val_wf_schedule_requests vsr ON 1=1
-            LEFT JOIN tbl_routine_test_wf_schedule_requests rtsr ON 1=1";
+        // Get QA Head approval pending count
+        $qaApprovalPending = DB::queryFirstField(
+            "SELECT COUNT(*) FROM tbl_val_wf_tracking_details WHERE val_wf_current_stage = %s AND unit_id = %i", 
+            STAGE_QA_HEAD_APPROVAL, $unitId
+        );
         
-        $qaHeadData = DB::queryFirstRow($qaHeadQuery, STAGE_QA_HEAD_APPROVAL, $unitId, $unitId, $unitId);
+        // Get validation schedule requests count
+        $validationScheduleRequests = DB::queryFirstField(
+            "SELECT COUNT(*) FROM tbl_val_wf_schedule_requests WHERE schedule_request_status = '2' AND schedule_year != '0' AND unit_id = %i", 
+            $unitId
+        );
         
-        if ($qaHeadData) {
-            renderDashboardCard('danger', 'QA Head Approval Pending', $qaHeadData['qa_approval_pending'], 'Pending for QA Head approval', 'mdi-diamond');
-            renderDashboardCard('secondary', 'Validation Schedule Requests Pending', $qaHeadData['validation_schedule_requests'], 'Validation protocol schedule requests pending', 'mdi-calendar-clock');
-            renderDashboardCard('primary', 'Routine Test Schedule Requests Pending', $qaHeadData['routine_schedule_requests'], 'QA approval needed for routine test schedules', 'mdi-calendar-check');
-        }
+        // Get routine test schedule requests count
+        $routineScheduleRequests = DB::queryFirstField(
+            "SELECT COUNT(*) FROM tbl_routine_test_wf_schedule_requests WHERE schedule_request_status = '2' AND schedule_year != '0' AND unit_id = %i", 
+            $unitId
+        );
+        
+        renderDashboardCard('danger', 'QA Head Approval Pending', $qaApprovalPending, 'Pending for QA Head approval', 'mdi-diamond');
+        renderDashboardCard('secondary', 'Validation Schedule Requests Pending', $validationScheduleRequests, 'Validation protocol schedule requests pending', 'mdi-calendar-clock');
+        renderDashboardCard('primary', 'Routine Test Schedule Requests Pending', $routineScheduleRequests, 'QA approval needed for routine test schedules', 'mdi-calendar-check');
         
     } catch (Exception $e) {
         error_log("Dashboard error for QA Head: " . $e->getMessage());
@@ -437,20 +441,20 @@ if ($_SESSION['logged_in_user'] == 'employee' && $_SESSION['is_unit_head'] == "Y
 // Role-Based Cards - Engineering Department Head
 if ($_SESSION['logged_in_user'] == 'employee' && $_SESSION['department_id'] == DEPT_ENGINEERING && $_SESSION['is_dept_head'] == "Yes") {
     try {
-        // Combined query for Engineering Dept Head metrics
-        $engHeadQuery = "
-            SELECT 
-                COUNT(CASE WHEN vsr.schedule_request_status = '1' AND vsr.schedule_year != '0' AND vsr.unit_id = %i THEN 1 END) as validation_schedule_requests,
-                COUNT(CASE WHEN rtsr.schedule_request_status = '1' AND rtsr.schedule_year != '0' AND rtsr.unit_id = %i THEN 1 END) as routine_schedule_requests
-            FROM tbl_val_wf_schedule_requests vsr
-            LEFT JOIN tbl_routine_test_wf_schedule_requests rtsr ON 1=1";
+        // Get validation schedule requests count for Engineering approval
+        $validationScheduleRequests = DB::queryFirstField(
+            "SELECT COUNT(*) FROM tbl_val_wf_schedule_requests WHERE schedule_request_status = '1' AND schedule_year != '0' AND unit_id = %i", 
+            $unitId
+        );
         
-        $engHeadData = DB::queryFirstRow($engHeadQuery, $unitId, $unitId);
+        // Get routine test schedule requests count for Engineering approval
+        $routineScheduleRequests = DB::queryFirstField(
+            "SELECT COUNT(*) FROM tbl_routine_test_wf_schedule_requests WHERE schedule_request_status = '1' AND schedule_year != '0' AND unit_id = %i", 
+            $unitId
+        );
         
-        if ($engHeadData) {
-            renderDashboardCard('secondary', 'Validation Schedule Requests Pending Approval', $engHeadData['validation_schedule_requests'], 'Engineering approval needed for schedule requests', 'mdi-calendar-clock');
-            renderDashboardCard('primary', 'Routine Test Schedule Requests Pending', $engHeadData['routine_schedule_requests'], 'Engineering approval needed for routine test schedules', 'mdi-calendar-check');
-        }
+        renderDashboardCard('secondary', 'Validation Schedule Requests Pending Approval', $validationScheduleRequests, 'Engineering approval needed for schedule requests', 'mdi-calendar-clock');
+        renderDashboardCard('primary', 'Routine Test Schedule Requests Pending', $routineScheduleRequests, 'Engineering approval needed for routine test schedules', 'mdi-calendar-check');
         
     } catch (Exception $e) {
         error_log("Dashboard error for Engineering Head: " . $e->getMessage());

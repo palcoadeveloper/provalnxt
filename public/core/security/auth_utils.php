@@ -109,7 +109,7 @@ function getUserDetails($userType, $username) {
         try{
         $user = DB::queryFirstRow(
             "SELECT user_id, employee_id, user_name, vendor_name, is_account_locked, 
-                    user_password, is_default_password, user_status, user_domain_id 
+                    user_password, is_default_password, user_status, user_domain_id, u.vendor_id
              FROM users u, vendors v 
              WHERE u.vendor_id = v.vendor_id 
                AND u.user_type = 'vendor' 
@@ -461,7 +461,7 @@ function handleSuccessfulLogin($user, $userType)
         $_SESSION['account_name'] = htmlspecialchars($user['user_domain_id']);
         $_SESSION['user_id'] = (int)$user['user_id'];
         $_SESSION['user_name'] = htmlspecialchars($user['user_name']);
-        $_SESSION['employee_id'] = "";
+        $_SESSION['employee_id'] = htmlspecialchars($user['employee_id']);
         $_SESSION['emp_id'] = htmlspecialchars($user['employee_id']);
         $_SESSION['unit_id'] = "";
         $_SESSION['department_id'] = "";
@@ -471,6 +471,7 @@ function handleSuccessfulLogin($user, $userType)
         $_SESSION['is_super_admin'] = "";
         $_SESSION['user_domain_id'] = htmlspecialchars($user['user_domain_id']);
         $_SESSION['vendor_name'] = htmlspecialchars($user['vendor_name']);
+        $_SESSION['vendor_id'] = (int)$user['vendor_id'];
         try{
         // Log the login with proper escaping
         DB::insert('log', [

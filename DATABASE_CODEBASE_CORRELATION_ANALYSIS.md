@@ -2,11 +2,11 @@
 
 ## Executive Summary
 
-This document provides a comprehensive analysis of the ProVal HVAC system's database architecture and its integration with the PHP codebase. The system manages HVAC equipment validation workflows in pharmaceutical and manufacturing environments through a robust 54-table database structure.
+This document provides a comprehensive analysis of the ProVal HVAC system's database architecture and its integration with the PHP codebase. The system manages HVAC equipment validation workflows in pharmaceutical and manufacturing environments through a robust 55-table database structure.
 
-**Analysis Date:** August 30, 2025  
+**Analysis Date:** December 2024  
 **Database Type:** MySQL/MariaDB  
-**Total Tables:** 54  
+**Total Tables:** 55 (including new test_specific_data table)  
 **Core Framework:** Custom PHP with MeekroDB abstraction  
 **Architecture:** Multi-tier validation management system  
 
@@ -35,7 +35,7 @@ ProVal HVAC is an enterprise validation management system that handles:
 
 ## Table Categorization and Analysis
 
-### 1. Core Entities (6 tables)
+### 1. Core Entities (7 tables)
 
 #### `users` - Central User Management
 **Purpose:** Core user authentication and authorization  
@@ -115,6 +115,30 @@ filteration_* (multiple filtration system fields)
 - Test categorization and descriptions
 - Performer role definitions
 - Test purpose documentation
+- Paper on Glass enablement (`paper_on_glass_enabled`)
+
+#### `test_specific_data` - Test Data Entry Storage ✨ NEW
+**Purpose:** Flexible storage for test-specific data entry when Paper on Glass is enabled  
+**Key Features:**
+- JSON-based flexible data storage per test section
+- Test workflow ID correlation (`test_val_wf_id`)
+- Section type categorization (airflow, temperature, pressure, etc.)
+- Full audit trail with user tracking and timestamps
+- Unit-based data segregation for multi-tenant support
+
+**Schema Highlights:**
+```sql
+id (PRI), test_val_wf_id (MUL), section_type, data_json (JSON),
+entered_by (user_id), entered_date, modified_by (user_id), 
+modified_date, unit_id (MUL)
+UNIQUE KEY: (test_val_wf_id, section_type)
+```
+
+**Codebase Integration:**
+- Data entry UI in `assets/inc/_testdataentry_*.php` components
+- API endpoints: `core/data/get/gettestspecificdata.php`, `core/data/save/savetestspecificdata.php`
+- Integration in `updatetaskdetails.php` and `viewtestwindow.php`
+- Paper on Glass conditional display logic
 
 #### `vendors` - External Vendor Registry
 **Purpose:** Vendor management for external testing services  

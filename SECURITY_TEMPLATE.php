@@ -305,6 +305,97 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
 }
 
 // =======================================================================================
+// API ENDPOINT SECURITY TEMPLATE ✨ NEW
+// =======================================================================================
+
+/*
+ * Use this pattern for Test Data Entry style API endpoints
+ * Examples: core/data/save/savetestspecificdata.php, core/data/get/gettestspecificdata.php
+ * 
+ * Uncomment and customize the following section for API endpoints:
+ */
+
+/*
+// For API endpoints, set JSON content type early
+header('Content-Type: application/json');
+
+// Validate HTTP method
+$allowed_methods = ['POST']; // or ['GET'] for retrieval endpoints
+if (!in_array($_SERVER['REQUEST_METHOD'], $allowed_methods)) {
+    http_response_code(405);
+    echo json_encode(['error' => 'Method not allowed']);
+    exit();
+}
+
+// Validate user type for API access
+$userType = $_SESSION['logged_in_user'] ?? '';
+if (!in_array($userType, ['employee', 'vendor'])) {
+    http_response_code(403);
+    echo json_encode(['error' => 'Unauthorized access']);
+    exit();
+}
+
+// API-specific input validation
+try {
+    // Example for Test Data Entry endpoints
+    $test_val_wf_id = $_POST['test_val_wf_id'] ?? $_GET['test_val_wf_id'] ?? '';
+    $section_type = $_POST['section_type'] ?? $_GET['section_type'] ?? '';
+    
+    // Validate required parameters
+    if (empty($test_val_wf_id)) {
+        throw new InvalidArgumentException("Missing required parameter: test_val_wf_id");
+    }
+    
+    // Validate section_type against whitelist (for Test Data Entry)
+    $allowed_sections = ['airflow', 'temperature', 'pressure', 'humidity', 'particlecount'];
+    if (!empty($section_type) && !in_array($section_type, $allowed_sections)) {
+        throw new InvalidArgumentException("Invalid section type: " . $section_type);
+    }
+    
+    // Verify user has access to the resource
+    $user_unit_id = intval($_SESSION['unit_id'] ?? 0);
+    $access_check = DB::queryFirstRow(
+        "SELECT test_wf_id FROM tbl_test_schedules_tracking 
+         WHERE test_wf_id = %s AND unit_id = %i",
+        $test_val_wf_id,
+        $user_unit_id
+    );
+    
+    if (!$access_check) {
+        throw new InvalidArgumentException("Invalid test workflow or access denied");
+    }
+    
+    // Process API request here...
+    
+    // Success response
+    echo json_encode([
+        'status' => 'success',
+        'message' => 'Operation completed successfully',
+        'data' => $responseData ?? null,
+        'timestamp' => date('Y-m-d H:i:s')
+    ]);
+    
+} catch (InvalidArgumentException $e) {
+    error_log("API validation error: " . $e->getMessage());
+    http_response_code(400);
+    echo json_encode([
+        'status' => 'error',
+        'message' => $e->getMessage()
+    ]);
+} catch (Exception $e) {
+    error_log("API error: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'Internal server error. Please try again.'
+    ]);
+}
+
+// For API endpoints, exit here to prevent HTML output
+exit();
+*/
+
+// =======================================================================================
 // HTML OUTPUT BEGINS HERE
 // =======================================================================================
 ?>

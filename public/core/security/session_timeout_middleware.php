@@ -124,8 +124,16 @@ function validateActiveSession() {
         $_SESSION['last_activity'] = time();
     }
     
-    // Note: Activity timestamp is updated by explicit user interactions and transactions
-    // Page loads alone do not extend session - only real user activity does
+    // Update activity timestamp on every valid page request to prevent timeout during active use
+    // This ensures users actively navigating the system don't get unexpectedly logged out
+    $_SESSION['last_activity'] = time();
+    
+    // Log activity update for debugging (only in development)
+    if (defined('ENVIRONMENT') && ENVIRONMENT === 'dev') {
+        $userType = isset($_SESSION['employee_id']) && !empty($_SESSION['employee_id']) ? 'employee' : 'vendor';
+        $userId = $_SESSION['employee_id'] ?? $_SESSION['vendor_id'] ?? 'unknown';
+        error_log("Session activity updated for {$userType}: {$userId} on page: " . basename($_SERVER['PHP_SELF']));
+    }
 }
 
 /**
@@ -138,8 +146,14 @@ function updateSessionActivity() {
     }
     $_SESSION['last_activity'] = time();
     
-    // Log activity update for debugging
-    error_log("Session activity updated for user: " . ($_SESSION['employee_id'] ?? $_SESSION['vendor_id'] ?? 'unknown') . " at " . date('Y-m-d H:i:s'));
+    // Log activity update for debugging (only if enabled)
+    if (defined('SESSION_ACTIVITY_LOGGING_ENABLED') && SESSION_ACTIVITY_LOGGING_ENABLED) {
+        $userType = isset($_SESSION['employee_id']) && !empty($_SESSION['employee_id']) ? 'employee' : 'vendor';
+        $userId = $_SESSION['employee_id'] ?? $_SESSION['vendor_id'] ?? 'unknown';
+        $userName = $_SESSION['user_name'] ?? 'Unknown';
+        
+        error_log("[SESSION ACTIVITY] Updated for {$userType}: {$userName} (ID: {$userId}) at " . date('Y-m-d H:i:s'));
+    }
 }
 
 /**
@@ -241,9 +255,58 @@ function destroySession() {
 function logSessionTimeout() {
     if (isset($_SESSION['employee_id']) || isset($_SESSION['vendor_id'])) {
         $userId = $_SESSION['employee_id'] ?? $_SESSION['vendor_id'] ?? 'unknown';
-        $userType = isset($_SESSION['employee_id']) ? 'employee' : 'vendor';
+        $userType = isset($_SESSION['employee_id']) && !empty($_SESSION['employee_id']) ? 'employee' : 'vendor';
+        $userName = $_SESSION['user_name'] ?? 'Unknown';
+        $vendorName = $_SESSION['vendor_name'] ?? '';
         
-        error_log("Session timeout for {$userType}: {$userId} at " . date('Y-m-d H:i:s'));
+        // Calculate session duration
+        $sessionDuration = 'Unknown';
+        if (isset($_SESSION['login_time'])) {
+            $sessionDuration = (time() - $_SESSION['login_time']) . ' seconds';
+        }
+        
+        // Calculate inactive time
+        $inactiveTime = 'Unknown';
+        if (isset($_SESSION['last_activity'])) {
+            $inactiveTime = (time() - $_SESSION['last_activity']) . ' seconds';
+        }
+        
+        // Build detailed log message
+        $logDetails = [
+            'timestamp' => date('Y-m-d H:i:s'),
+            'user_type' => $userType,
+            'user_id' => $userId,
+            'user_name' => $userName,
+            'session_duration' => $sessionDuration,
+            'inactive_time' => $inactiveTime,
+            'session_timeout_setting' => getSessionTimeout(),
+            'ip_address' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
+        ];
+        
+        if ($userType === 'vendor') {
+            $logDetails['vendor_name'] = $vendorName;
+        }
+        
+        // Log to error log if timeout logging is enabled
+        if (defined('SESSION_TIMEOUT_LOGGING_ENABLED') && SESSION_TIMEOUT_LOGGING_ENABLED) {
+            error_log("[SESSION TIMEOUT] " . json_encode($logDetails));
+        }
+        
+        // Log to database if available
+        if (class_exists('DB')) {
+            try {
+                DB::insert('log', [
+                    'change_type' => 'session_timeout',
+                    'table_name' => 'sessions',
+                    'change_description' => "Session timeout for {$userType}: {$userName} (ID: {$userId}) - Duration: {$sessionDuration}, Inactive: {$inactiveTime}",
+                    'change_by' => isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0,
+                    'unit_id' => isset($_SESSION['unit_id']) ? (int)$_SESSION['unit_id'] : null
+                ]);
+            } catch (Exception $e) {
+                error_log("Failed to log session timeout to database: " . $e->getMessage());
+            }
+        }
         
         // Log to session timeout file if it exists
         if (file_exists('log_session_timeout.php')) {
@@ -252,7 +315,7 @@ function logSessionTimeout() {
                 $ch = curl_init();
                 curl_setopt($ch, CURLOPT_URL, getBaseUrl() . 'core/debug/log_session_timeout.php');
                 curl_setopt($ch, CURLOPT_POST, 1);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, 'action=session_timeout');
+                curl_setopt($ch, CURLOPT_POSTFIELDS, 'action=session_timeout&data=' . urlencode(json_encode($logDetails)));
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
                 curl_setopt($ch, CURLOPT_TIMEOUT, 2);
                 curl_exec($ch);

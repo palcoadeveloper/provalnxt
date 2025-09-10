@@ -220,7 +220,70 @@ Large Input Tests:
 // 4. Verify cleanup logging
 ```
 
-### G. HTTPS/Transport Security Testing
+### G. Test Data Entry API Testing ✨ NEW
+- [ ] **API Authentication Testing**
+  - [ ] Test `savetestspecificdata.php` without authentication
+  - [ ] Test `gettestspecificdata.php` without authentication
+  - [ ] Verify proper HTTP 403 responses for unauthorized access
+  - [ ] Test with invalid user types (non-employee, non-vendor)
+  - [ ] Verify session timeout handling during API calls
+
+- [ ] **Input Validation Testing**
+  - [ ] Test with invalid `test_val_wf_id` values
+  - [ ] Test with invalid `section_type` values (not in whitelist)
+  - [ ] Test with malformed JSON data structures
+  - [ ] Submit XSS payloads in test data fields
+  - [ ] Test with excessively long field values
+  - [ ] Submit non-alphanumeric field names
+
+- [ ] **HTTP Method Validation**
+  - [ ] Test GET requests to save endpoints (should return 405)
+  - [ ] Test POST requests to get endpoints (should work)
+  - [ ] Verify OPTIONS requests are handled properly
+  - [ ] Test with invalid HTTP methods
+
+- [ ] **Data Validation & Sanitization**
+  - [ ] Test with SQL injection payloads in data fields
+  - [ ] Test with script tags in text fields
+  - [ ] Test with null/undefined values
+  - [ ] Test with empty data objects
+  - [ ] Verify field key validation (alphanumeric + underscore only)
+
+- [ ] **Authorization Testing**
+  - [ ] Test access to other units' test workflows
+  - [ ] Test access to test workflows without Paper on Glass enabled
+  - [ ] Verify unit-based data segregation
+  - [ ] Test cross-unit data access attempts
+
+- [ ] **CSRF Protection Testing**
+  - [ ] Submit requests without CSRF tokens
+  - [ ] Submit requests with invalid CSRF tokens
+  - [ ] Submit requests with expired CSRF tokens
+  - [ ] Test CSRF token reuse scenarios
+
+#### Test Data Entry API Test Scenarios:
+```bash
+# Test Case 1: Invalid section type
+curl -X POST 'core/data/save/savetestspecificdata.php' \
+  -d 'test_val_wf_id=TEST001&section_type=invalid&data[test]=value'
+# Expected: 400 Bad Request with error message
+
+# Test Case 2: XSS in data fields
+curl -X POST 'core/data/save/savetestspecificdata.php' \
+  -d 'test_val_wf_id=TEST001&section_type=airflow&data[pressure]=<script>alert(1)</script>'
+# Expected: Data sanitized, script tags escaped
+
+# Test Case 3: Unauthorized access to other unit's data
+curl -X GET 'core/data/get/gettestspecificdata.php?test_val_wf_id=OTHER_UNIT_TEST'
+# Expected: 403 Forbidden or empty result set
+
+# Test Case 4: SQL injection attempt
+curl -X POST 'core/data/save/savetestspecificdata.php' \
+  -d "test_val_wf_id='; DROP TABLE test_specific_data; --&section_type=airflow"
+# Expected: Parameterized query prevents injection
+```
+
+### H. HTTPS/Transport Security Testing
 - [ ] Verify HTTPS enforcement on sensitive pages
 - [ ] Test mixed content scenarios
 - [ ] Verify security headers presence

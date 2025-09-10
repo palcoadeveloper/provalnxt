@@ -517,7 +517,7 @@ function successfulSubmission() {
               text: "The validation protocol is successfully initiated."
             }).then((result) => {
               if (typeof url !== 'undefined' && url) {
-              alert (url);
+              //alert (url);
                 window.location.href = url;
               } else {
                 window.location.reload();

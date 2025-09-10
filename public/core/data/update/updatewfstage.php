@@ -387,6 +387,137 @@ try {
             } elseif ($action === "qa_reject") {
                 // When QA rejects the task, automatically reject all uploaded files
                 rejectAllFilesForWorkflow($validated_data['test_val_wf_id']);
+                
+            } elseif ($action === "engg_approve") {
+                // Handle Engineering approval with witness functionality
+                $test_wf_id = $validated_data['test_val_wf_id'];
+                $current_stage = $validated_data['current_wf_stage'] ?? null;
+                
+                // Check if conditions are met: data_entry_mode = 'online' and test_wf_current_stage = 2
+                $test_conditions = DB::queryFirstRow("
+                    SELECT tst.data_entry_mode, tst.test_wf_current_stage
+                    FROM tbl_test_schedules_tracking tst
+                    WHERE tst.test_wf_id = %s
+                ", $test_wf_id);
+                
+                if ($test_conditions && 
+                    $test_conditions['data_entry_mode'] === 'online' && 
+                    $test_conditions['test_wf_current_stage'] == '2') {
+                    
+                    // Check if Engineering/QA user (department_id = 1 for Engineering, 8 for QA)
+                    $user_dept = $_SESSION['department_id'] ?? null;
+                    if ($user_dept == 1 || $user_dept == 8) {
+                        
+                        // Check if witness record already exists
+                        $existing_witness = DB::queryFirstRow("
+                            SELECT witness, test_witnessed_on 
+                            FROM tbl_test_finalisation_details 
+                            WHERE test_wf_id = %s AND status = 'Active'
+                        ", $test_wf_id);
+                        
+                        if ($existing_witness && empty($existing_witness['witness'])) {
+                            // Update existing record with witness information
+                            DB::query("
+                                UPDATE tbl_test_finalisation_details 
+                                SET witness = %i, 
+                                    test_witnessed_on = NOW(), 
+                                    witness_action = 'approve'
+                                WHERE test_wf_id = %s AND status = 'Active'
+                            ", $_SESSION['user_id'], $test_wf_id);
+                            
+                            error_log("Witness data updated for test_wf_id: {$test_wf_id} by user: {$_SESSION['user_id']}");
+                            
+                        } elseif (!$existing_witness) {
+                            // Create new witness record (this handles case where finalization hasn't occurred yet)
+                            $witness_data = [
+                                'test_wf_id' => $test_wf_id,
+                                'witness' => $_SESSION['user_id'],
+                                'test_witnessed_on' => date('Y-m-d H:i:s'),
+                                'witness_action' => 'approve',
+                                'status' => 'Active'
+                            ];
+                            
+                            DB::insert('tbl_test_finalisation_details', $witness_data);
+                            error_log("New witness record created for test_wf_id: {$test_wf_id} by user: {$_SESSION['user_id']}");
+                        }
+                        
+                        // Regenerate PDFs with witness details after approval
+                        try {
+                            // Include PDF regeneration function
+                            require_once(__DIR__ . '/../save/regenerate_witness_pdfs.php');
+                            
+                            // Prepare witness details
+                            $witnessDetails = [
+                                'test_wf_id' => $test_wf_id,
+                                'name' => $_SESSION['user_name'] ?? 'Unknown',
+                                'employee_id' => $_SESSION['employee_id'] ?? $_SESSION['user_id'] ?? 'N/A',
+                                'department' => $_SESSION['department_name'] ?? 'Unknown Department',
+                                'designation' => $_SESSION['designation'] ?? 'Unknown'
+                            ];
+                            
+                            // Regenerate PDFs with witness details
+                            $pdfRegenerationResult = regeneratePDFsWithWitness($test_wf_id, $witnessDetails);
+                            
+                            if ($pdfRegenerationResult) {
+                                error_log("PDF regeneration with witness details completed successfully for test_wf_id: $test_wf_id");
+                            } else {
+                                error_log("PDF regeneration with witness details failed for test_wf_id: $test_wf_id");
+                            }
+                            
+                        } catch (Exception $pdf_regen_error) {
+                            error_log("Error during PDF regeneration with witness details for test_wf_id $test_wf_id: " . $pdf_regen_error->getMessage());
+                        }
+                    }
+                }
+                
+            } elseif ($action === "engg_reject") {
+                // Handle Engineering rejection with status inactivation
+                $test_wf_id = $validated_data['test_val_wf_id'];
+                
+                // Check if conditions are met: data_entry_mode = 'online' and test_wf_current_stage = 2
+                $test_conditions = DB::queryFirstRow("
+                    SELECT tst.data_entry_mode, tst.test_wf_current_stage
+                    FROM tbl_test_schedules_tracking tst
+                    WHERE tst.test_wf_id = %s
+                ", $test_wf_id);
+                
+                if ($test_conditions && 
+                    $test_conditions['data_entry_mode'] === 'online' && 
+                    $test_conditions['test_wf_current_stage'] == '2') {
+                    
+                    // Check if Engineering user (department_id = 1)
+                    $user_dept = $_SESSION['department_id'] ?? null;
+                    if ($user_dept == 1) {
+                        
+                        // 1. Set tbl_test_finalisation_details records to Inactive
+                        $finalisation_updated = DB::query("
+                            UPDATE tbl_test_finalisation_details 
+                            SET status = 'Inactive'
+                            WHERE test_wf_id = %s AND status = 'Active'
+                        ", $test_wf_id);
+                        
+                        // 2. Set test_specific_data records to Inactive  
+                        $test_data_updated = DB::query("
+                            UPDATE test_specific_data
+                            SET status = 'Inactive'
+                            WHERE test_val_wf_id = %s AND status = 'Active'
+                        ", $test_wf_id);
+                        
+                        // Log the status changes
+                        $finalisation_rows = DB::affectedRows();
+                        $test_specific_rows = DB::affectedRows(); // Get affected rows from the UPDATE operation
+                        error_log("Engineering reject for test_wf_id: {$test_wf_id} by user: {$_SESSION['user_id']}");
+                        error_log("- Set {$finalisation_rows} tbl_test_finalisation_details records to Inactive");
+                        error_log("- Set {$test_specific_rows} Active test_specific_data records to Inactive (all versions preserved)");
+                        
+                    } else {
+                        error_log("Engineering reject attempted by non-Engineering user. User department: {$user_dept}, test_wf_id: {$test_wf_id}");
+                    }
+                } else {
+                    $mode = $test_conditions['data_entry_mode'] ?? 'unknown';
+                    $stage = $test_conditions['test_wf_current_stage'] ?? 'unknown';
+                    error_log("Engineering reject skipped - conditions not met. Mode: {$mode}, Stage: {$stage}, test_wf_id: {$test_wf_id}");
+                }
             }
             
             // Update test workflow stage

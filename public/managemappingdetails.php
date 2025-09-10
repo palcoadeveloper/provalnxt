@@ -34,7 +34,7 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
     try {
         $testresult = DB::queryFirstRow(
             "SELECT t1.equipment_id, t4.equipment_code, t1.test_id, t2.test_performed_by, 
-             t1.test_type, t1.vendor_id, t1.mapping_status, t2.test_name, t2.test_description, t2.test_purpose
+             t1.test_type, t1.frequency_label, t1.vendor_id, t1.mapping_status, t2.test_name, t2.test_description, t2.test_purpose
              FROM equipment_test_vendor_mapping t1 
              INNER JOIN tests t2 ON t1.test_id = t2.test_id 
              INNER JOIN equipments t4 ON t1.equipment_id = t4.equipment_id 
@@ -163,6 +163,7 @@ function submitMappingData(mode) {
     test_performed_by: $("#test_performed_by").val(),
     vendor_id: $("#vendor_id").val(),
     test_type: $("#test_type").val(),
+    frequency_label: $("#frequency_label").val(),
     mapping_status: $("#test_status").val(), // Use mapping_status instead of test_status
     mode: mode
   };
@@ -194,14 +195,62 @@ function submitMappingData(mode) {
         window.location = "searchmapping.php";
       });
     } else {
+      // Handle error responses with specific messages
+      let errorMessage = 'An unexpected error occurred. Please try again.';
+      let errorTitle = 'Error';
+      
+      // Check if response is JSON with error message
+      try {
+        const errorData = JSON.parse(response);
+        if (errorData && errorData.error) {
+          errorMessage = errorData.error;
+          errorTitle = 'Validation Error';
+        }
+      } catch (e) {
+        // If not JSON, check if response contains meaningful error text
+        if (typeof response === 'string' && response.trim() !== '' && response !== 'failure') {
+          errorMessage = response;
+        } else if (response === 'failure') {
+          errorMessage = 'The operation failed. Please check your input and try again.';
+        }
+      }
+      
       Swal.fire({
         icon: 'error',
-        title: 'Oops...',
-        text: 'Something went wrong.'
+        title: errorTitle,
+        text: errorMessage
       }).then((result) => {
         window.location = "searchmapping.php";
       });
     }
+  }).fail(function(xhr, status, error) {
+    // Handle AJAX errors (network issues, server errors, etc.)
+    $('#pleasewaitmodal').modal('hide');
+    
+    let errorMessage = 'Network error or server unavailable. Please try again later.';
+    
+    if (xhr.status === 403) {
+      errorMessage = 'Access denied. Your session may have expired. Please log in again.';
+    } else if (xhr.status === 429) {
+      errorMessage = 'Too many requests. Please wait a moment before trying again.';
+    } else if (xhr.status >= 500) {
+      errorMessage = 'Server error occurred. Please contact support if this persists.';
+    } else if (xhr.responseText) {
+      try {
+        const errorData = JSON.parse(xhr.responseText);
+        if (errorData && errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (e) {
+        // Keep default message if response isn't JSON
+      }
+    }
+    
+    Swal.fire({
+      icon: 'error',
+      title: 'Request Failed',
+      text: errorMessage
+    });
   });
 }
 
@@ -594,10 +643,16 @@ $("#modify_mapping").click(async function(e) {
                        	?>	
                         </select> </div>
                       
-                      
-                      
-                      
-                          
+                      <div class="form-group col-md-6">
+                        <label for="frequency_label">Frequency Label <span class="text-danger">*</span></label>
+                        <select class="form-control" id="frequency_label" name="frequency_label" required <?php echo ($_GET['m']=='r')?'disabled':'' ; ?>>
+                          <option value="">Select Frequency</option>
+                          <option value="ALL"<?php echo ($_GET['m']!='a' && ($testresult['frequency_label']=='ALL')? ' selected' : ''); ?>>ALL (All Frequencies)</option>
+                          <option value="6M"<?php echo ($_GET['m']!='a' && ($testresult['frequency_label']=='6M')? ' selected' : ''); ?>>6M (Six Monthly)</option>
+                          <option value="Y"<?php echo ($_GET['m']!='a' && ($testresult['frequency_label']=='Y')? ' selected' : ''); ?>>Y (Yearly)</option>
+                          <option value="2Y"<?php echo ($_GET['m']!='a' && ($testresult['frequency_label']=='2Y')? ' selected' : ''); ?>>2Y (Bi-Yearly)</option>
+                        </select>
+                      </div>
                       
                       </div>
                       

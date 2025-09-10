@@ -51,6 +51,7 @@ if (!isset($_SESSION['csrf_token'])) {
 
 // Secure input validation for GET parameters
 $test_val_wf_id = secure_get('test_val_wf_id', 'string');
+$val_wf_id = secure_get('val_wf_id', 'string');
 $test_id = secure_get('test_id', 'int');  
 $current_wf_stage = secure_get('current_wf_stage', 'string');
 
@@ -102,8 +103,11 @@ try {
                 t.test_name,
                 t.test_purpose,
                 t.test_performed_by,
+                t.paper_on_glass_enabled,
                 w.wf_stage_description,
                 ts.test_conducted_date,
+                ts.data_entry_mode,
+                ts.test_wf_current_stage,
                 e.equipment_code
             FROM tests t
             LEFT JOIN workflow_stages w ON w.wf_stage = %s
@@ -119,8 +123,11 @@ try {
                 t.test_name,
                 t.test_purpose,
                 t.test_performed_by,
+                t.paper_on_glass_enabled,
                 w.wf_stage_description,
                 ts.test_conducted_date,
+                ts.data_entry_mode,
+                ts.test_wf_current_stage,
                 e.equipment_code
             FROM tests t
             LEFT JOIN workflow_stages w ON w.wf_stage = %s
@@ -134,7 +141,11 @@ try {
     if ($mainData) {
         $result = [
             'test_name' => $mainData['test_name'] ?? 'Unknown Test',
-            'test_purpose' => $mainData['test_purpose'] ?? 'No purpose specified'
+            'test_purpose' => $mainData['test_purpose'] ?? 'No purpose specified',
+            'paper_on_glass_enabled' => $mainData['paper_on_glass_enabled'] ?? 'No',
+            'data_entry_mode' => $mainData['data_entry_mode'] ?? null,
+            'test_wf_current_stage' => $mainData['test_wf_current_stage'] ?? null,
+            'test_id' => $test_id
         ];
         $workflow_details = [
             'wf_stage_description' => $mainData['wf_stage_description'] ?? 'Unknown Stage'
@@ -167,6 +178,66 @@ try {
     $audit_trails = [];
 }
 
+// Check test finalisation status for conditional UI logic
+$hide_upload_and_submit = false;
+try {
+    // Check if paper-on-glass is enabled AND data entry mode is online AND test is not finalised
+    if (($result['paper_on_glass_enabled'] ?? 'No') == 'Yes' && ($result['data_entry_mode'] ?? '') == 'online') {
+        $finalisation_check = DB::queryFirstRow("
+            SELECT test_finalised_on, test_finalised_by 
+            FROM tbl_test_finalisation_details 
+            WHERE test_wf_id = %s AND status = 'Active'
+        ", $test_val_wf_id);
+        
+        // Hide upload documents and submit if test is not finalised yet (only for online mode with paper-on-glass)
+        //if (!$finalisation_check || empty($finalisation_check['test_finalised_on']) || empty($finalisation_check['test_finalised_by'])) 
+        if (!$finalisation_check )
+        {
+            $hide_upload_and_submit = true;
+        }
+    }
+} catch (Exception $e) {
+    error_log("Database error in updatetaskdetails.php (finalisation_check): " . $e->getMessage());
+}
+
+// Prepare finalization data for JavaScript
+$finalization_js_data = 'null';
+if (isset($finalisation_check) && $finalisation_check && 
+    !empty($finalisation_check['test_finalised_on']) && 
+    !empty($finalisation_check['test_finalised_by'])) {
+    
+    // Get user name for finalization details
+    try {
+        $finalised_by_user = DB::queryFirstRow("
+            SELECT user_name 
+            FROM users 
+            WHERE user_id = %i
+        ", $finalisation_check['test_finalised_by']);
+        
+        $finalization_js_data = json_encode([
+            'is_finalized' => true,
+            'finalized_on' => date('d/m/Y H:i', strtotime($finalisation_check['test_finalised_on'])),
+            'finalized_by' => $finalised_by_user['user_name'] ?? 'Unknown User'
+        ]);
+    } catch (Exception $e) {
+        error_log("Error fetching finalization user details: " . $e->getMessage());
+        $finalization_js_data = json_encode([
+            'is_finalized' => true,
+            'finalized_on' => date('d/m/Y H:i', strtotime($finalisation_check['test_finalised_on'])),
+            'finalized_by' => 'Unknown User'
+        ]);
+    }
+} else {
+    $finalization_js_data = json_encode(['is_finalized' => false]);
+}
+
+// Prepare user role information for JavaScript
+$user_role_data = json_encode([
+    'department_id' => $_SESSION['department_id'] ?? null,
+    'logged_in_user' => $_SESSION['logged_in_user'] ?? null,
+    'is_engineering_or_qa' => ($_SESSION['department_id'] == 1 || $_SESSION['department_id'] == 8)
+]);
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -183,6 +254,11 @@ try {
   <!-- Performance Optimization -->
   <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <script type="text/javascript">
+    // Global variables for user role and test finalization status
+    window.testFinalizationStatus = <?php echo $finalization_js_data; ?>;
+    window.userRoleData = <?php echo $user_role_data; ?>;
+  </script>
   <script>
     $(document).ready(function() {
 
@@ -414,16 +490,19 @@ function restoreViewedDocumentStates() {
         return errorMessage;
       }
 
-      $("#test_conducted_date").datepicker({
-        dateFormat: 'dd.mm.yy',
-        changeMonth: true,
-        beforeShow: function(input, inst) {
-          // Disable manual input by preventing focus on the input field
-          setTimeout(function() {
-            $(input).prop('readonly', true);
-          }, 0);
-        }
-      });
+      // Initialize datepicker only if the field is not disabled
+      if (!$("#test_conducted_date").prop('disabled')) {
+        $("#test_conducted_date").datepicker({
+          dateFormat: 'dd.mm.yy',
+          changeMonth: true,
+          beforeShow: function(input, inst) {
+            // Disable manual input by preventing focus on the input field
+            setTimeout(function() {
+              $(input).prop('readonly', true);
+            }, 0);
+          }
+        });
+      }
 
       is_doc_uploaded = "no";
       is_remark_added = "no";
@@ -436,18 +515,56 @@ function restoreViewedDocumentStates() {
       department_id = "<?php echo htmlspecialchars(!empty($_SESSION['department_id']) ? $_SESSION['department_id'] : '', ENT_QUOTES, 'UTF-8'); ?>";
       read_mode = "<?php echo htmlspecialchars((!empty(secure_get('mode', 'string')) ? 'yes' : 'no'), ENT_QUOTES, 'UTF-8'); ?>";
 
+      // PDF Regeneration Spinner Functions
+      function showPDFRegenerationSpinner() {
+        // Create spinner overlay if it doesn't exist
+        if ($('#pdf-regeneration-spinner').length === 0) {
+          const spinnerHTML = `
+            <div id="pdf-regeneration-spinner" style="
+              position: fixed;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              background: rgba(0, 0, 0, 0.7);
+              z-index: 9999;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              flex-direction: column;
+            ">
+              <div class="spinner-border text-primary" style="width: 3rem; height: 3rem; margin-bottom: 1rem;" role="status">
+                <span class="sr-only">Loading...</span>
+              </div>
+              <div style="color: white; font-size: 18px; font-weight: 500;">
+                Regenerating PDFs with witness details...
+              </div>
+              <div style="color: #ccc; font-size: 14px; margin-top: 0.5rem;">
+                Please wait, this may take a few moments
+              </div>
+            </div>
+          `;
+          $('body').append(spinnerHTML);
+        }
+        $('#pdf-regeneration-spinner').fadeIn(200);
+        // Disable scrolling
+        $('body').css('overflow', 'hidden');
+      }
 
+      function hidePDFRegenerationSpinner() {
+        $('#pdf-regeneration-spinner').fadeOut(200, function() {
+          $(this).remove();
+        });
+        // Re-enable scrolling
+        $('body').css('overflow', '');
+      }
 
       $(document).on('click', '.navlink-approve', async function(e) {
-
-
         e.preventDefault();
 
         if (read_mode == 'yes') {
           alert("No action allowed");
-        } else
-
-        {
+        } else {
 
           const result = await Swal.fire({
             title: 'Are you sure?',
@@ -458,46 +575,93 @@ function restoreViewedDocumentStates() {
             cancelButtonText: 'No'
           });
 
-
           if (result.isConfirmed) {
-
-            $.post("core/data/update/updateuploadstatus.php", {
-                up_id: $(this).attr('data-upload-id'),
-                test_val_wf_id: $('#test_wf_id').val(),
+            const uploadId = $(this).attr('data-upload-id');
+            const testWfId = $('#test_wf_id').val();
+            const csrfToken = $('meta[name="csrf-token"]').attr('content');
+            
+            // Show spinner for PDF regeneration
+            showPDFRegenerationSpinner();
+            
+            try {
+              // Step 1: Try PDF regeneration first (only if conditions are met)
+              const pdfResponse = await $.post("core/data/save/regenerate_pdfs_for_approval.php", {
+                test_wf_id: testWfId,
+                csrf_token: csrfToken
+              });
+              
+              let pdfSuccess = false;
+              let pdfMessage = '';
+              
+              if (pdfResponse.success) {
+                pdfSuccess = true;
+                pdfMessage = ' PDFs regenerated with witness details.';
+                console.log('PDF regeneration successful:', pdfResponse.message);
+              } else {
+                console.log('PDF regeneration not performed:', pdfResponse.error);
+                // If PDF regeneration fails due to conditions not met, continue with approval
+                if (pdfResponse.error.includes('conditions not met')) {
+                  pdfMessage = ' (PDF regeneration skipped - conditions not met)';
+                } else {
+                  throw new Error(pdfResponse.error);
+                }
+              }
+              
+              // Step 2: Proceed with normal approval process
+              const approvalResponse = await $.post("core/data/update/updateuploadstatus.php", {
+                up_id: uploadId,
+                test_val_wf_id: testWfId,
                 action: 'approve',
                 wf_stage: current_wf_stage,
-                csrf_token: $('meta[name="csrf-token"]').attr('content')
-
-
-              },
-              async function(data, status) {
-
-
-                $.ajax({
-                  url: "core/data/get/getuploadedfiles.php", // Your PHP script to generate the content
-                  method: "GET",
-                  data: {
-                    test_val_wf_id: $('#test_wf_id').val()
-                    // Add more parameters as needed
-                  },
-                  success: function(data) {
-                    $("#targetDocLayer").html(data);
-                    
-                    // Restore viewed document states after table update
-                    setTimeout(function() {
-                      restoreViewedDocumentStates();
-                    }, 100);
-                  },
-                  error: function() {
-                    alert("Failed to reload section.");
-                  }
-                });
-                const result = await Swal.fire({
-                  icon: 'success', // 'error' is the icon for an error message
-                  title: 'Success',
-                  text: 'The files were successfully approved.'
-                });
+                csrf_token: csrfToken
               });
+              
+              // Step 3: Refresh the file display
+              await $.ajax({
+                url: "core/data/get/getuploadedfiles.php",
+                method: "GET",
+                data: {
+                  test_val_wf_id: testWfId
+                },
+                success: function(data) {
+                  $("#targetDocLayer").html(data);
+                  
+                  // Restore viewed document states after table update
+                  setTimeout(function() {
+                    restoreViewedDocumentStates();
+                  }, 100);
+                },
+                error: function() {
+                  console.error("Failed to reload uploaded files section.");
+                }
+              });
+              
+              // Hide spinner
+              hidePDFRegenerationSpinner();
+              
+              // Step 4: Show success message
+              const successMessage = pdfSuccess ? 
+                'Files approved successfully and PDFs regenerated with witness details.' :
+                'Files approved successfully.' + pdfMessage;
+                
+              await Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: successMessage
+              });
+              
+            } catch (error) {
+              // Hide spinner on error
+              hidePDFRegenerationSpinner();
+              
+              console.error('Approval process error:', error);
+              
+              await Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to complete approval process: ' + (error.message || error)
+              });
+            }
           }
         }
       });
@@ -583,7 +747,26 @@ function restoreViewedDocumentStates() {
 
 
 
+
       $("#vendorsubmitassign").click(function() {
+        console.log('Submit button clicked - checking ACPH validation');
+        
+        // Check ACPH validation first if functions are available
+        if (typeof window.validateACPHDataComplete === 'function') {
+          console.log('ACPH validation function found, calling it...');
+          const validationResult = window.validateACPHDataComplete();
+          console.log('ACPH validation result:', validationResult);
+          
+          if (!validationResult.isComplete && !validationResult.validationSkipped) {
+            console.log('ACPH validation failed, showing error');
+            window.showACPHValidationError(validationResult);
+            return false;
+          } else {
+            console.log('ACPH validation passed or skipped');
+          }
+        } else {
+          console.log('ACPH validation function not found');
+        }
 
         // alert(current_wf_stage);      
         url = "core/data/update/updatewfstage.php?test_conducted_date=" + convertDateFormat($('#test_conducted_date').val()) + "&val_wf_id=" + val_wf_id + "&test_val_wf_id=" + test_val_wf_id + "&current_wf_stage=" + current_wf_stage + "&action=assign";
@@ -613,6 +796,15 @@ function restoreViewedDocumentStates() {
 
 
       $("#vendorsubmitreassign").click(function() {
+        // Check ACPH validation first if functions are available
+        if (typeof window.validateACPHDataComplete === 'function') {
+          const validationResult = window.validateACPHDataComplete();
+          if (!validationResult.isComplete && !validationResult.validationSkipped) {
+            window.showACPHValidationError(validationResult);
+            return false;
+          }
+        }
+        
         //alert(current_wf_stage);
         if (current_wf_stage == '<?php echo STAGE_REASSIGNED_B; ?>') {
           url = "core/data/update/updatewfstage.php?test_conducted_date=" + convertDateFormat($('#test_conducted_date').val()) + "&val_wf_id=" + val_wf_id + "&test_val_wf_id=" + test_val_wf_id + "&current_wf_stage=" + current_wf_stage + "&action=assign_back_engg_vendor";
@@ -627,6 +819,14 @@ function restoreViewedDocumentStates() {
 
 
       $("#enggsubmit").click(function() {
+        // Check ACPH validation first if functions are available
+        if (typeof window.validateACPHDataComplete === 'function') {
+          const validationResult = window.validateACPHDataComplete();
+          if (!validationResult.isComplete && !validationResult.validationSkipped) {
+            window.showACPHValidationError(validationResult);
+            return false;
+          }
+        }
 
         url = "core/data/update/updatewfstage.php?test_conducted_date=" + convertDateFormat($('#test_conducted_date').val()) + "&test_type=internal&val_wf_id=" + val_wf_id + "&test_val_wf_id=" + test_val_wf_id + "&current_wf_stage=" +
           current_wf_stage + "&action=assign";
@@ -655,7 +855,14 @@ function restoreViewedDocumentStates() {
       });
 
       $("#enggapprove").click(function() {
-
+        // Check ACPH validation first if functions are available
+        if (typeof window.validateACPHDataComplete === 'function') {
+          const validationResult = window.validateACPHDataComplete();
+          if (!validationResult.isComplete && !validationResult.validationSkipped) {
+            window.showACPHValidationError(validationResult);
+            return false;
+          }
+        }
 
         url = "core/data/update/updatewfstage.php?test_conducted_date=" + convertDateFormat($('#test_conducted_date').val()) + "&val_wf_id=" + val_wf_id + "&test_val_wf_id=" + test_val_wf_id + "&current_wf_stage=" + current_wf_stage + "&action=engg_approve";
 
@@ -681,7 +888,14 @@ function restoreViewedDocumentStates() {
       });
 
       $("#enggreject").click(function() {
-
+        // Check ACPH validation first if functions are available
+        if (typeof window.validateACPHDataComplete === 'function') {
+          const validationResult = window.validateACPHDataComplete();
+          if (!validationResult.isComplete && !validationResult.validationSkipped) {
+            window.showACPHValidationError(validationResult);
+            return false;
+          }
+        }
 
         url = "core/data/update/updatewfstage.php?test_conducted_date=" + convertDateFormat($('#test_conducted_date').val()) + "&val_wf_id=" + val_wf_id + "&test_val_wf_id=" + test_val_wf_id + "&current_wf_stage=" + current_wf_stage + "&action=engg_reject";
 
@@ -697,6 +911,15 @@ function restoreViewedDocumentStates() {
       });
 
       $("#enggapproval1").click(function() {
+        // Check ACPH validation first if functions are available
+        if (typeof window.validateACPHDataComplete === 'function') {
+          const validationResult = window.validateACPHDataComplete();
+          if (!validationResult.isComplete && !validationResult.validationSkipped) {
+            window.showACPHValidationError(validationResult);
+            return false;
+          }
+        }
+        
         url = "core/data/update/updatewfstage.php?test_conducted_date=" + convertDateFormat($('#test_conducted_date').val()) + "&val_wf_id=" + val_wf_id + "&test_val_wf_id=" + test_val_wf_id + "&current_wf_stage=" + current_wf_stage + "&action=engg_approve_final";
         if ($(".navlink-approve")[0]) {
           Swal.fire({
@@ -710,6 +933,15 @@ function restoreViewedDocumentStates() {
       });
 
       $("#qaapprove").click(function() {
+        // Check ACPH validation first if functions are available
+        if (typeof window.validateACPHDataComplete === 'function') {
+          const validationResult = window.validateACPHDataComplete();
+          if (!validationResult.isComplete && !validationResult.validationSkipped) {
+            window.showACPHValidationError(validationResult);
+            return false;
+          }
+        }
+        
         url = "core/data/update/updatewfstage.php?test_conducted_date=" + convertDateFormat($('#test_conducted_date').val()) + "&val_wf_id=" + val_wf_id + "&test_val_wf_id=" + test_val_wf_id + "&current_wf_stage=" + current_wf_stage + "&action=qa_approve";
         
         // Check if current_wf_stage is 3A and user is QA team
@@ -736,6 +968,15 @@ function restoreViewedDocumentStates() {
       });
 
       $("#qareject").click(function() {
+        // Check ACPH validation first if functions are available
+        if (typeof window.validateACPHDataComplete === 'function') {
+          const validationResult = window.validateACPHDataComplete();
+          if (!validationResult.isComplete && !validationResult.validationSkipped) {
+            window.showACPHValidationError(validationResult);
+            return false;
+          }
+        }
+        
         url = "core/data/update/updatewfstage.php?test_conducted_date=" + convertDateFormat($('#test_conducted_date').val()) + "&val_wf_id=" + val_wf_id + "&test_val_wf_id=" + test_val_wf_id + "&current_wf_stage=" + current_wf_stage + "&action=qa_reject";
         
         // Check if current_wf_stage is 3A and user is QA team  
@@ -1158,6 +1399,878 @@ function adduserremark(ur, up) {
       setTimeout(function() {
         restoreViewedDocumentStates();
       }, 1500); // Longer delay for initial page load to ensure all AJAX content is loaded
+      
+      // Test Data Entry - Instrument Management Functionality
+      if ($('#instrument_search').length > 0) {
+        // Define workflow ID variables from PHP
+        const test_val_wf_id = '<?php echo htmlspecialchars($test_val_wf_id, ENT_QUOTES); ?>';
+        const val_wf_id = '<?php echo htmlspecialchars($val_wf_id ?? '', ENT_QUOTES); ?>';
+        
+        let selectedInstrument = null;
+        let searchTimeout = null;
+        
+        // Load existing instruments on page load
+        loadTestInstruments();
+        
+        // Check if offline mode is already selected and disable buttons
+        if ($('#mode_offline').is(':checked')) {
+          $('#mode_online').prop('disabled', true);
+          $('#mode_offline').prop('disabled', true);
+          $('.mode-option').addClass('disabled-mode');
+        }
+        
+        // Instrument search functionality
+        $('#instrument_search').on('input', function() {
+          const searchTerm = $(this).val().trim();
+          
+          // Clear previous timeout
+          if (searchTimeout) {
+            clearTimeout(searchTimeout);
+          }
+          
+          // Handle clear button visibility
+          if (searchTerm.length > 0) {
+            $('#clear_selection_btn').show();
+          } else {
+            $('#clear_selection_btn').hide();
+            selectedInstrument = null;
+          }
+          
+          // Hide dropdown if less than 2 characters
+          if (searchTerm.length < 2) {
+            $('#instrument_dropdown').hide();
+            $('#add_instrument_btn').prop('disabled', true);
+            selectedInstrument = null;
+            return;
+          }
+          
+          // Reset selection when user types (not selecting from dropdown)
+          selectedInstrument = null;
+          $('#add_instrument_btn').prop('disabled', true);
+          
+          // Set new timeout for search
+          searchTimeout = setTimeout(function() {
+            searchInstruments(searchTerm);
+          }, 300);
+        });
+        
+        // Hide dropdown when clicking outside
+        $(document).on('click', function(event) {
+          if (!$(event.target).closest('#instrument_search, #instrument_dropdown').length) {
+            $('#instrument_dropdown').hide();
+          }
+        });
+        
+        // Handle instrument selection from dropdown
+        $(document).on('click', '.instrument-option', function(e) {
+          e.preventDefault();
+          
+          // Check if instrument is disabled (expired calibration)
+          if ($(this).data('disabled') === 'true') {
+            // Show error message for expired instruments
+            Swal.fire({
+              icon: 'error',
+              title: 'Cannot Add Instrument',
+              text: 'This instrument cannot be added because its calibration has expired.',
+              timer: 3000,
+              showConfirmButton: false
+            });
+            return;
+          }
+          
+          const instrumentData = $(this).data();
+          selectedInstrument = instrumentData;
+          
+          // Format: "Air Capture Hood - INs234 - s222"
+          const formattedText = `${instrumentData.type} - ${instrumentData.code} - ${instrumentData.serial || instrumentData.name}`;
+          $('#instrument_search').val(formattedText);
+          $('#instrument_dropdown').hide();
+          $('#add_instrument_btn').prop('disabled', false);
+          $('#clear_selection_btn').show();
+        });
+        
+        // Clear selection button click
+        $('#clear_selection_btn').click(function() {
+          $('#instrument_search').val('');
+          selectedInstrument = null;
+          $('#add_instrument_btn').prop('disabled', true);
+          $('#clear_selection_btn').hide();
+          $('#instrument_dropdown').hide();
+        });
+        
+        // Add instrument button click
+        $('#add_instrument_btn').click(function() {
+          if (selectedInstrument) {
+            addInstrumentToTest(selectedInstrument.id);
+          }
+        });
+        
+        // Data Entry Mode change handling
+        $('input[name="data_entry_mode"]').on('change', function() {
+          // Prevent changes if buttons are disabled
+          if ($(this).is(':disabled')) {
+            return false;
+          }
+          
+          const selectedMode = $(this).val();
+          
+          // If user selects offline mode, show confirmation dialog
+          if (selectedMode === 'offline') {
+            Swal.fire({
+              icon: 'warning',
+              title: 'Switch to Offline Mode?',
+              html: `
+                <div class="text-left">
+                  <p><strong>Important:</strong> This action cannot be undone for this test.</p>
+                  <p>In offline mode, you will need to:</p>
+                  <ul style="text-align: left; padding-left: 20px;">
+                    <li>Record all test data on paper first</li>
+                    <li>Upload the handwritten data sheets to the system</li>
+                    <li>Enter data digitally based on your paper records</li>
+                  </ul>
+                  <p><strong>Are you sure you want to proceed?</strong></p>
+                </div>
+              `,
+              showCancelButton: true,
+              confirmButtonText: 'Yes, Switch to Offline Mode',
+              cancelButtonText: 'Cancel',
+              confirmButtonColor: '#d33',
+              cancelButtonColor: '#3085d6'
+            }).then((result) => {
+              if (result.isConfirmed) {
+                // User confirmed - save offline mode to database
+                saveDataEntryMode('offline');
+              } else {
+                // User cancelled - revert to online mode
+                $('#mode_online').prop('checked', true);
+                $('#mode_offline').prop('checked', false);
+              }
+            });
+          } else if (selectedMode === 'online') {
+            // Save online mode to database (no confirmation needed)
+            saveDataEntryMode('online');
+          }
+        });
+        
+        // Remove instrument functionality
+        $(document).on('click', '.remove-instrument-btn', function() {
+          const mappingId = $(this).data('mapping-id');
+          const instrumentName = $(this).data('instrument-name');
+          
+          Swal.fire({
+            title: 'Remove Instrument?',
+            text: `Are you sure you want to remove "${instrumentName}" from this test?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, Remove',
+            cancelButtonText: 'Cancel'
+          }).then((result) => {
+            if (result.isConfirmed) {
+              removeInstrumentFromTest(mappingId);
+            }
+          });
+        });
+      }
+      
+      // Function to save data entry mode to database
+      function saveDataEntryMode(mode) {
+        $.ajax({
+          url: 'core/data/update/savedataentrymode.php',
+          type: 'POST',
+          data: {
+            test_val_wf_id: test_val_wf_id,
+            val_wf_id: val_wf_id,
+            data_entry_mode: mode
+          },
+          success: function(response) {
+            if (response.status === 'success') {
+              if (mode === 'offline') {
+                // Disable both radio buttons to prevent further changes
+                $('#mode_online').prop('disabled', true);
+                $('#mode_offline').prop('disabled', true);
+                
+                // Add visual indication that buttons are disabled
+                $('.mode-option').addClass('disabled-mode');
+                
+                // Show confirmation for offline mode
+                Swal.fire({
+                  icon: 'info',
+                  title: 'Offline Mode Enabled',
+                  text: 'Test data must now be recorded on paper first and uploaded to the system. This selection cannot be changed.',
+                  timer: 4000,
+                  showConfirmButton: false
+                });
+              }
+            } else {
+              // Show error message
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: response.message || 'Failed to save data entry mode'
+              });
+              
+              // Revert the radio button on error
+              if (mode === 'offline') {
+                $('#mode_online').prop('checked', true);
+                $('#mode_offline').prop('checked', false);
+              } else {
+                $('#mode_offline').prop('checked', true);
+                $('#mode_online').prop('checked', false);
+              }
+            }
+          },
+          error: function(xhr, status, error) {
+                
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Failed to save data entry mode. Please try again.'
+            });
+            
+            // Revert the radio button on error
+            if (mode === 'offline') {
+              $('#mode_online').prop('checked', true);
+              $('#mode_offline').prop('checked', false);
+            } else {
+              $('#mode_offline').prop('checked', true);
+              $('#mode_online').prop('checked', false);
+            }
+          }
+        });
+      }
+      
+      // Function to search instruments
+      function searchInstruments(searchTerm) {
+        
+        $.ajax({
+          url: 'core/data/get/searchinstruments_autocomplete.php',
+          type: 'GET',
+          data: {
+            q: searchTerm,
+            test_val_wf_id: test_val_wf_id
+          },
+          beforeSend: function() {
+            $('#instrument_dropdown').html('<div class="dropdown-item-text text-info">Searching...</div>').show();
+          },
+          success: function(response) {
+            
+            // Handle both JSON object and string responses
+            let data = response;
+            if (typeof response === 'string') {
+              try {
+                data = JSON.parse(response);
+              } catch (e) {
+                console.error('Failed to parse response as JSON:', e);
+                $('#instrument_dropdown').html('<div class="dropdown-item-text text-danger">Invalid response format</div>').show();
+                return;
+              }
+            }
+            
+            if (data.instruments && data.instruments.length > 0) {
+              let dropdownHtml = '';
+              data.instruments.forEach(function(instrument) {
+                // Check if instrument calibration is expired
+                const isExpired = instrument.calibration_status === 'Expired';
+                const badgeClass = instrument.calibration_status === 'Valid' ? 'success' : 
+                                 instrument.calibration_status === 'Expired' ? 'danger' : 'warning';
+                const itemClass = isExpired ? 'dropdown-item instrument-option disabled' : 'dropdown-item instrument-option';
+                const disabledAttr = isExpired ? 'data-disabled="true"' : '';
+                
+                dropdownHtml += `
+                  <a href="#" class="${itemClass}" 
+                     data-id="${instrument.id}"
+                     data-code="${instrument.code}"
+                     data-name="${instrument.name}"
+                     data-type="${instrument.type}"
+                     data-serial="${instrument.serial_number || ''}"
+                     data-calibration-status="${instrument.calibration_status}"
+                     ${disabledAttr}
+                     ${isExpired ? 'style="opacity: 0.6; cursor: not-allowed;"' : ''}>
+                    <div class="d-flex justify-content-between">
+                      <div>
+                        <strong>${instrument.name}</strong> (${instrument.code})
+                        <br><small class="text-muted">${instrument.type} - ${instrument.serial_number}</small>
+                        ${isExpired ? '<br><small class="text-danger"><i class="mdi mdi-alert-circle"></i> Calibration Expired - Cannot be added</small>' : ''}
+                      </div>
+                      <div class="text-right">
+                        <span class="badge badge-${badgeClass}">${instrument.calibration_status}</span>
+                      </div>
+                    </div>
+                  </a>
+                `;
+              });
+              $('#instrument_dropdown').html(dropdownHtml).show();
+            } else if (data.error) {
+              $('#instrument_dropdown').html(`<div class="dropdown-item-text text-danger">Error: ${data.error}</div>`).show();
+            } else {
+              $('#instrument_dropdown').html('<div class="dropdown-item-text text-muted">No instruments found</div>').show();
+            }
+          },
+          error: function(xhr, status, error) {
+            console.error('Search AJAX error:', {xhr: xhr, status: status, error: error});
+            console.error('Response text:', xhr.responseText);
+            
+            let errorMsg = 'Search failed. Please try again.';
+            if (xhr.responseText) {
+              try {
+                let errorData = JSON.parse(xhr.responseText);
+                if (errorData.error) {
+                  errorMsg = errorData.error;
+                }
+              } catch (e) {
+                // If not JSON, show first 100 chars of response
+                errorMsg = `Error: ${xhr.responseText.substring(0, 100)}`;
+              }
+            }
+            
+            $('#instrument_dropdown').html(`<div class="dropdown-item-text text-danger">${errorMsg}</div>`).show();
+          }
+        });
+      }
+      
+      // Function to reload all test-specific data entry sections after instrument changes
+      function reloadTestDataEntrySections(action) {
+        console.log('[RELOAD] Starting reload of test data entry sections after instrument ' + action);
+        
+        // Debug: Check what functions are available
+        console.log('[DEBUG] Checking available functions:');
+        console.log('  - loadACPHFiltersAndData:', typeof loadACPHFiltersAndData);
+        console.log('  - loadInstrumentsForDropdowns:', typeof loadInstrumentsForDropdowns);
+        console.log('  - loadInstrumentsForTemperatureDropdowns:', typeof loadInstrumentsForTemperatureDropdowns);
+        console.log('  - loadInstrumentsForAirflowDropdowns:', typeof loadInstrumentsForAirflowDropdowns);
+        
+        // 1. ACPH Test - Reload filters and instrument dropdowns directly
+        if (typeof loadACPHFiltersAndData === 'function') {
+          console.log('[ACPH] Calling loadACPHFiltersAndData()');
+          loadACPHFiltersAndData();
+          console.log('[SUCCESS] Completed ACPH filter sections reload');
+        } else {
+          console.log('[WARNING] loadACPHFiltersAndData function not available');
+        }
+        
+        // 1.1. ACPH Test - Direct instrument dropdown reload (more reliable)
+        if (typeof loadInstrumentsForDropdowns === 'function') {
+          console.log('[ACPH] Calling loadInstrumentsForDropdowns() directly');
+          loadInstrumentsForDropdowns();
+          console.log('[SUCCESS] Completed direct ACPH instrument dropdowns reload');
+        } else {
+          console.log('[WARNING] loadInstrumentsForDropdowns function not available - attempting manual reload');
+          
+          // Manual ACPH instrument reload if function not available
+          try {
+            console.log('[MANUAL] Attempting manual ACPH instrument dropdowns reload...');
+            
+            $.ajax({
+              url: 'core/data/get/gettestinstruments.php',
+              type: 'GET',
+              data: {
+                test_val_wf_id: test_val_wf_id,
+                format: 'dropdown'
+              },
+              success: function(response) {
+                console.log('[AJAX] Manual instrument data received:', response);
+                try {
+                  const data = typeof response === 'string' ? JSON.parse(response) : response;
+                  
+                  if (data.instruments && Array.isArray(data.instruments)) {
+                    console.log('[MANUAL] Manual update of ACPH instrument dropdowns with ' + data.instruments.length + ' instruments');
+                    
+                    // Create instrument options
+                    const instrumentOptions = data.instruments.map(function(instrument) {
+                      let statusClass = '';
+                      if (instrument.calibration_status === 'Expired') {
+                        statusClass = ' (EXPIRED)';
+                      } else if (instrument.calibration_status === 'Due Soon') {
+                        statusClass = ' (Due Soon)';
+                      }
+                      return `<option value="${instrument.id}" data-status="${instrument.calibration_status}">${instrument.display_name}${statusClass}</option>`;
+                    }).join('');
+                    
+                    // Update Global Instrument Selection dropdown
+                    const $globalSelect = $('#global_instrument_select');
+                    if ($globalSelect.length > 0) {
+                      const currentGlobalValue = $globalSelect.val();
+                      $globalSelect.html('<option value="">Select Instrument for ALL Readings...</option><option value="manual">Manual Entry</option>' + instrumentOptions);
+                      if (currentGlobalValue) {
+                        $globalSelect.val(currentGlobalValue);
+                        if ($globalSelect.val() !== currentGlobalValue) {
+                          console.warn('[WARNING] Previously selected global instrument ' + currentGlobalValue + ' no longer available');
+                          $globalSelect.val('');
+                        }
+                      }
+                      console.log('[SUCCESS] Updated global instrument dropdown');
+                    } else {
+                      console.log('[WARNING] Global instrument select not found');
+                    }
+                    
+                    // Update all filter-level instrument dropdowns
+                    const $filterSelects = $('.filter-instrument-select');
+                    if ($filterSelects.length > 0) {
+                      $filterSelects.each(function() {
+                        const $select = $(this);
+                        const currentValue = $select.val();
+                        $select.html('<option value="">Select instrument...</option><option value="manual">Manual Entry</option>' + instrumentOptions);
+                        if (currentValue) {
+                          $select.val(currentValue);
+                          if ($select.val() !== currentValue) {
+                            console.warn('[WARNING] Previously selected filter instrument ' + currentValue + ' no longer available');
+                            $select.val('');
+                          }
+                        }
+                      });
+                      console.log('[SUCCESS] Updated ' + $filterSelects.length + ' filter instrument dropdowns');
+                    } else {
+                      console.log('[WARNING] No filter instrument selects found');
+                    }
+                    
+                    // Update all reading instrument dropdowns
+                    const $readingSelects = $('.reading-instrument-select');
+                    if ($readingSelects.length > 0) {
+                      $readingSelects.each(function() {
+                        const $select = $(this);
+                        const currentValue = $select.val();
+                        // Clear existing instrument options but preserve base options
+                        $select.find('option').not('[value=""], [value="manual"]').remove();
+                        // Add instrument options after "Manual Entry"
+                        const $manualOption = $select.find('option[value="manual"]');
+                        if ($manualOption.length > 0) {
+                          $manualOption.after(instrumentOptions);
+                        } else {
+                          $select.append(instrumentOptions);
+                        }
+                        // Restore selection
+                        if (currentValue) {
+                          $select.val(currentValue);
+                          if ($select.val() !== currentValue) {
+                            console.warn('[WARNING] Previously selected reading instrument ' + currentValue + ' no longer available');
+                            $select.val('');
+                          }
+                        }
+                      });
+                      console.log('[SUCCESS] Updated ' + $readingSelects.length + ' reading instrument dropdowns');
+                    } else {
+                      console.log('[WARNING] No reading instrument selects found');
+                    }
+                    
+                  } else {
+                    console.error('[ERROR] Invalid instrument data received');
+                  }
+                } catch (e) {
+                  console.error('[ERROR] Failed to parse instrument data:', e);
+                }
+              },
+              error: function(xhr, status, error) {
+                console.error('[ERROR] Failed to load instruments manually:', error);
+              }
+            });
+          } catch (e) {
+            console.error('[ERROR] Error during manual instrument reload:', e);
+          }
+        }
+        
+        // 2. Temperature Test - Reload instrument dropdowns
+        if (typeof loadInstrumentsForTemperatureDropdowns === 'function') {
+          console.log('[TEMP] Calling loadInstrumentsForTemperatureDropdowns()');
+          loadInstrumentsForTemperatureDropdowns();
+          console.log('[SUCCESS] Completed Temperature test instrument dropdowns reload');
+        }
+        
+        // 3. Airflow Test - Reload instrument dropdowns
+        if (typeof loadInstrumentsForAirflowDropdowns === 'function') {
+          console.log('[AIRFLOW] Calling loadInstrumentsForAirflowDropdowns()');
+          loadInstrumentsForAirflowDropdowns();
+          console.log('[SUCCESS] Completed Airflow test instrument dropdowns reload');
+        }
+        
+        // 4. Generic reload for any test-specific sections with instrument dropdowns
+        try {
+          const $genericSelects = $('.test-specific-instrument-select');
+          if ($genericSelects.length > 0) {
+            console.log('[GENERIC] Generic reload for ' + $genericSelects.length + ' test-specific instrument selects');
+            
+            // Reload all instrument dropdowns in test-specific sections
+            $genericSelects.each(function() {
+              const $select = $(this);
+              const currentValue = $select.val(); // Preserve current selection
+              
+              // Reload instrument options via AJAX
+              $.ajax({
+                url: 'core/data/get/gettestinstruments.php',
+                type: 'GET',
+                data: {
+                  test_val_wf_id: test_val_wf_id,
+                  format: 'dropdown'
+                },
+                success: function(response) {
+                  try {
+                    const data = typeof response === 'string' ? JSON.parse(response) : response;
+                    
+                    if (data.instruments && Array.isArray(data.instruments)) {
+                      // Update dropdown options
+                      const instrumentOptions = data.instruments.map(function(instrument) {
+                        let statusClass = '';
+                        if (instrument.calibration_status === 'Expired') {
+                          statusClass = ' (EXPIRED)';
+                        } else if (instrument.calibration_status === 'Due Soon') {
+                          statusClass = ' (Due Soon)';
+                        }
+                        
+                        return `<option value="${instrument.id}" data-status="${instrument.calibration_status}">${instrument.display_name}${statusClass}</option>`;
+                      }).join('');
+                      
+                      // Clear existing instrument options but preserve base options
+                      $select.find('option').not('[value=""], [value="manual"]').remove();
+                      
+                      // Find manual entry option and add after it
+                      const $manualOption = $select.find('option[value="manual"]');
+                      if ($manualOption.length > 0) {
+                        $manualOption.after(instrumentOptions);
+                      } else {
+                        // If no manual entry option, just append to end
+                        $select.append(instrumentOptions);
+                      }
+                      
+                      // Restore previous selection if still valid
+                      if (currentValue) {
+                        $select.val(currentValue);
+                        if ($select.val() !== currentValue) {
+                          console.warn('[WARNING] Previously selected generic instrument ' + currentValue + ' no longer available');
+                          $select.val(''); // Clear invalid selection
+                        }
+                      }
+                    }
+                  } catch (e) {
+                    console.error('[ERROR] Failed to parse instruments response for generic dropdown reload:', e);
+                  }
+                },
+                error: function(xhr, status, error) {
+                  console.error('[ERROR] Failed to reload instruments for generic dropdown:', error);
+                }
+              });
+            });
+            
+            console.log('[SUCCESS] Initiated generic test-specific instrument dropdowns reload');
+          } else {
+            console.log('[INFO] No generic test-specific instrument selects found');
+          }
+          
+        } catch (e) {
+          console.error('[ERROR] Error during generic instrument dropdown reload:', e);
+        }
+        
+        // 5. Trigger custom event for any custom test sections to listen for
+        $(document).trigger('testInstrumentsUpdated', {
+          action: action,
+          test_val_wf_id: test_val_wf_id
+        });
+        console.log('[EVENT] Triggered testInstrumentsUpdated event');
+        
+        console.log('[COMPLETE] Completed test data entry sections reload after instrument ' + action);
+      }
+      
+      // Function to add instrument to test
+      function addInstrumentToTest(instrumentId) {
+        $.ajax({
+          url: 'core/data/save/addtestinstrument_simple.php',
+          type: 'POST',
+          data: {
+            instrument_id: instrumentId,
+            test_val_wf_id: test_val_wf_id,
+            csrf_token: $('meta[name="csrf-token"]').attr('content')
+          },
+          success: function(response) {
+            if (response.status === 'success') {
+              // Update CSRF token
+              if (response.csrf_token) {
+                $('meta[name="csrf-token"]').attr('content', response.csrf_token);
+              }
+              
+              // Clear search field and hide clear button
+              $('#instrument_search').val('');
+              $('#add_instrument_btn').prop('disabled', true);
+              $('#clear_selection_btn').hide();
+              selectedInstrument = null;
+              
+              // Reload instruments table
+              loadTestInstruments();
+              
+              // Reload all test-specific data entry sections
+              reloadTestDataEntrySections('add');
+              console.log('Reloaded all test data entry sections after adding new instrument');
+              
+              // Show success message
+              Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: response.message,
+                timer: 2000,
+                showConfirmButton: false
+              });
+            } else {
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: response.message
+              });
+            }
+          },
+          error: function(xhr, status, error) {
+            
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Failed to add instrument. Please check console for details.'
+            });
+          }
+        });
+      }
+      
+      // Function to remove instrument from test
+      function removeInstrumentFromTest(mappingId) {
+        $.ajax({
+          url: 'core/data/update/removetestinstrument_simple.php',
+          type: 'POST',
+          data: {
+            mapping_id: mappingId,
+            test_val_wf_id: test_val_wf_id,
+            csrf_token: $('meta[name="csrf-token"]').attr('content')
+          },
+          success: function(response) {
+            if (response.status === 'success') {
+              // Update CSRF token
+              if (response.csrf_token) {
+                $('meta[name="csrf-token"]').attr('content', response.csrf_token);
+              }
+              
+              // Reload instruments table
+              loadTestInstruments();
+              
+              // Reload all test-specific data entry sections
+              reloadTestDataEntrySections('remove');
+              console.log('Reloaded all test data entry sections after removing instrument');
+              
+              // Show success message
+              Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: response.message,
+                timer: 2000,
+                showConfirmButton: false
+              });
+            } else {
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: response.message
+              });
+            }
+          },
+          error: function(xhr, status, error) {
+            let errorMessage = 'Failed to remove instrument. Please check console for details.';
+            let errorTitle = 'Error';
+            
+            // Handle specific error types for better user experience
+            if (xhr.status === 400 && xhr.responseJSON) {
+              const response = xhr.responseJSON;
+              if (response.error_type === 'instrument_in_use') {
+                errorTitle = 'Instrument Currently In Use';
+                errorMessage = response.message;
+                
+                // Show detailed error with additional guidance
+                Swal.fire({
+                  icon: 'warning',
+                  title: errorTitle,
+                  html: `
+                    <div style="text-align: left; margin: 10px 0;">
+                      <p><strong>Issue:</strong> ${response.message}</p>
+                      <br>
+                      <p><strong>To resolve this:</strong></p>
+                      <ol style="text-align: left; margin-left: 20px;">
+                        <li>Go to the ACPH test data entry section</li>
+                        <li>Update the affected filter sections to use different instruments</li>
+                        <li>Save the filter data changes</li>
+                        <li>Then try removing this instrument again</li>
+                      </ol>
+                      <br>
+                      <p><em>Affected sections: ${response.usage_count} filter(s)</em></p>
+                    </div>
+                  `,
+                  width: 600,
+                  confirmButtonText: 'Got it',
+                  confirmButtonColor: '#007bff'
+                });
+                return; // Exit early to avoid the generic error dialog
+              }
+            }
+            
+            // Generic error handling
+            Swal.fire({
+              icon: 'error',
+              title: errorTitle,
+              text: errorMessage
+            });
+          }
+        });
+      }
+      
+      // Function to load test instruments
+      function loadTestInstruments() {
+        
+        $.ajax({
+          url: 'core/data/get/gettestinstruments.php',
+          type: 'GET',
+          data: {
+            test_val_wf_id: test_val_wf_id
+          },
+          success: function(response) {
+            
+            // Handle both JSON object and string responses
+            let data = response;
+            if (typeof response === 'string') {
+              try {
+                data = JSON.parse(response);
+              } catch (e) {
+                console.error('Failed to parse instruments response as JSON:', e);
+                $('#test_instruments_tbody').html(`
+                  <tr>
+                    <td colspan="8" class="text-center text-danger">Invalid response format. Please refresh the page.</td>
+                  </tr>
+                `);
+                return;
+              }
+            }
+            
+            if (data.error) {
+              $('#test_instruments_tbody').html(`
+                <tr>
+                  <td colspan="8" class="text-center text-danger">Error: ${data.error}</td>
+                </tr>
+              `);
+              return;
+            }
+            
+            if (data.instruments && data.instruments.length > 0) {
+              let tableHtml = '';
+              data.instruments.forEach(function(instrument) {
+                const actionsColumn = read_mode === 'yes' ? '' : `
+                  <td>
+                    <button type="button" class="btn btn-sm btn-danger remove-instrument-btn" 
+                            data-mapping-id="${instrument.mapping_id}"
+                            data-instrument-name="${instrument.instrument_name}">
+                      <i class="mdi mdi-delete"></i> Remove
+                    </button>
+                  </td>
+                `;
+                
+                tableHtml += `
+                  <tr>
+                    <td>${instrument.instrument_type}</td>
+                    <td>${instrument.instrument_name}</td>
+                    <td>${instrument.serial_number}</td>
+                    <td>${instrument.instrument_code}</td>
+                    <td><span class="badge ${instrument.status_class}">${instrument.calibration_status}</span></td>
+                    <td>${instrument.added_date}</td>
+                    <td>${instrument.added_by_name}</td>
+                    ${actionsColumn}
+                  </tr>
+                `;
+              });
+              $('#test_instruments_tbody').html(tableHtml);
+              $('#no_instruments_row').hide();
+            } else {
+              $('#test_instruments_tbody').html(`
+                <tr id="no_instruments_row">
+                  <td colspan="8" class="text-center text-muted">No instruments added yet</td>
+                </tr>
+              `);
+            }
+          },
+          error: function(xhr, status, error) {
+            console.error('Load instruments AJAX error:', {xhr: xhr, status: status, error: error});
+            console.error('Response text:', xhr.responseText);
+            
+            let errorMsg = 'Failed to load instruments. Please refresh the page.';
+            if (xhr.responseText) {
+              try {
+                let errorData = JSON.parse(xhr.responseText);
+                if (errorData.error) {
+                  errorMsg = errorData.error;
+                }
+              } catch (e) {
+                // If not JSON, show first 100 chars of response
+                errorMsg = `Error: ${xhr.responseText.substring(0, 100)}`;
+              }
+            }
+            
+            $('#test_instruments_tbody').html(`
+              <tr>
+                <td colspan="8" class="text-center text-danger">${errorMsg}</td>
+              </tr>
+            `);
+          }
+        });
+      }
+      
+      // Function to show submit buttons after test data finalization
+      function showSubmitButtonsAfterFinalization() {
+        console.log('Showing submit buttons after test finalization...');
+        
+        // Show all submit buttons that were hidden due to paper-on-glass + online mode
+        $('#vendorsubmitassign, #vendorsubmitreassign, #enggsubmit').each(function() {
+          const $button = $(this);
+          if ($button.length > 0) {
+            // Show the button and its parent elements if they exist
+            $button.show();
+            $button.closest('.btn-group, .button-container, .text-center').show();
+            
+            // Also show any wrapper divs or table cells that might be hidden
+            $button.parents().filter(':hidden').show();
+          }
+        });
+        
+        console.log('Submit buttons shown after finalization');
+      }
+      
+      // Function to check if we should show submit buttons based on finalization status
+      function checkAndShowSubmitButtons() {
+        // Check if test data has been finalized
+        if (window.testFinalizationStatus && window.testFinalizationStatus.is_finalized) {
+          showSubmitButtonsAfterFinalization();
+        }
+      }
+      
+      // Global function to handle test finalization completion
+      // This can be called from any included file (like _testdataentry_acph.php)
+      window.onTestFinalizationComplete = function() {
+        console.log('Test finalization completed - updating UI...');
+        
+        // Update global finalization status
+        if (window.testFinalizationStatus) {
+          window.testFinalizationStatus.is_finalized = true;
+        }
+        
+        // Show submit buttons if conditions are met
+        showSubmitButtonsAfterFinalization();
+      };
+      
+      // Listen for custom testDataFinalized event from included files
+      $(document).on('testDataFinalized', function(event, data) {
+        console.log('Received testDataFinalized event with data:', data);
+        
+        // Update global finalization status
+        if (window.testFinalizationStatus) {
+          window.testFinalizationStatus.is_finalized = true;
+          window.testFinalizationStatus.finalized_at = data.finalized_at;
+        }
+        
+        // Show submit buttons
+        showSubmitButtonsAfterFinalization();
+        
+        console.log('Processed testDataFinalized event and updated submit button visibility');
+      });
+      
     });
   </script>
 
@@ -1189,6 +2302,192 @@ function adduserremark(ur, up) {
     /* Debug style to verify CSS is working */
     .file-download-link.viewed:hover {
       color: #218838 !important; /* Darker green on hover */
+    }
+    
+    /* Test Data Entry - Data Entry Mode Styles */
+    .data-entry-mode-card {
+      padding: 0;
+    }
+    
+    .data-entry-mode-card .card-body {
+      padding: 0.25rem;
+    }
+    
+    .mode-toggle-container {
+      margin-bottom: 1rem;
+    }
+    
+    .mode-option {
+      position: relative;
+    }
+    
+    .mode-option input[type="radio"] {
+      display: none;
+    }
+    
+    .mode-label {
+      display: flex;
+      align-items: center;
+      padding: 0.875rem;
+      border: 2px solid #dee2e6;
+      border-radius: 0.35rem;
+      background-color: #fff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 0;
+    }
+    
+    .mode-label:hover {
+      border-color: #b6d7ff;
+      background-color: #f8fbff;
+      text-decoration: none;
+      color: inherit;
+    }
+    
+    .mode-option input[type="radio"]:checked + .mode-label {
+      border-color: #007bff;
+      background-color: #e3f2fd;
+      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    }
+    
+    .mode-icon {
+      font-size: 1.4rem;
+      margin-right: 0.7rem;
+      color: #6c757d;
+      transition: color 0.3s ease;
+    }
+    
+    .mode-option input[type="radio"]:checked + .mode-label .mode-icon {
+      color: #007bff;
+    }
+    
+    .mode-text h6 {
+      margin-bottom: 0.15rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    
+    .mode-text small {
+      font-size: 0.7rem;
+    }
+    
+    /* Disabled mode styles */
+    .disabled-mode .mode-label {
+      opacity: 0.6;
+      cursor: not-allowed !important;
+      background-color: #f8f9fa;
+      border-color: #dee2e6;
+    }
+    
+    .disabled-mode .mode-label:hover {
+      border-color: #dee2e6 !important;
+      transform: none !important;
+    }
+    
+    .disabled-mode input[type="radio"]:checked + .mode-label {
+      background-color: #e9ecef !important;
+      border-color: #adb5bd !important;
+    }
+
+    /* Test Data Entry - Instrument Search Styles */
+    .input-group {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: stretch;
+      width: 100%;
+    }
+    
+    .input-group-append {
+      margin-left: -1px;
+      display: flex;
+    }
+    
+    .input-group-append .btn {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+    
+    #instrument_search {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    
+    #instrument_dropdown {
+      position: absolute;
+      z-index: 1000;
+      border: 1px solid #dee2e6;
+      border-top: none;
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+      top: 100%;
+      left: 0;
+      right: 0;
+      background-color: #fff;
+    }
+    
+    .instrument-option {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #f8f9fa;
+      display: block;
+      width: 100%;
+      clear: both;
+      font-weight: 400;
+      color: #212529;
+      text-align: inherit;
+      white-space: nowrap;
+      background-color: transparent;
+      border: 0;
+    }
+    
+    .instrument-option:hover {
+      background-color: #f8f9fa;
+      text-decoration: none;
+      color: #212529;
+    }
+    
+    .instrument-option:last-child {
+      border-bottom: none;
+    }
+    
+    .position-relative {
+      position: relative;
+    }
+    
+    #test_instruments_table {
+      font-size: 0.875rem;
+    }
+    
+    #test_instruments_table th {
+      background-color: #f8f9fa;
+      border-top: 1px solid #dee2e6;
+    }
+    
+    .badge-success {
+      background-color: #28a745;
+    }
+    
+    .badge-warning {
+      background-color: #ffc107;
+      color: #212529;
+    }
+    
+    .badge-danger {
+      background-color: #dc3545;
+    }
+    
+    .badge-secondary {
+      background-color: #6c757d;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .mode-label {
+        padding: 0.7rem;
+      }
+      
+      .mode-icon {
+        font-size: 1.05rem;
+        margin-right: 0.5rem;
+      }
     }
   </style>
 
@@ -1352,6 +2651,23 @@ function adduserremark(ur, up) {
 
                       </tr>
 
+                      <!-- Remarks section shown here when upload/submit are visible -->
+                     
+                      <tr>
+                        <td>
+                          <h6 class="text-muted">Approver Remarks</h6>
+                        </td>
+                        <td colspan="3">
+
+                          <div id="showappremarks"><?php include("core/data/get/getremarks.php") ?></div>
+
+                        </td>
+
+                      </tr>
+                      
+
+
+                      
 
                       <tr>
 
@@ -1361,12 +2677,21 @@ function adduserremark(ur, up) {
                         <td colspan="3">
 
                           <?php
-                          if (!empty($test_conducted_date) || !empty(secure_get('mode', 'string'))) {
-
-                            echo '<input type="text" id="test_conducted_date" name="test_conducted_date" class="form-control" value="' . date('d.m.Y', strtotime($test_conducted_date)) . '" disabled/></td>';
+                          // Get the test workflow current stage
+                          $test_wf_current_stage = $result['test_wf_current_stage'] ?? null;
+                          $is_read_mode = !empty(secure_get('mode', 'string'));
+                          
+                          // Enable editing if test_wf_current_stage is '3B' and not in read mode
+                          $enable_editing_for_3b = ($test_wf_current_stage === '3B' && !$is_read_mode);
+                          
+                          if ((!empty($test_conducted_date) || $is_read_mode) && !$enable_editing_for_3b) {
+                            // Show as disabled field with existing date
+                            $display_date = !empty($test_conducted_date) ? date('d.m.Y', strtotime($test_conducted_date)) : '';
+                            echo '<input type="text" id="test_conducted_date" name="test_conducted_date" class="form-control" value="' . htmlspecialchars($display_date, ENT_QUOTES, 'UTF-8') . '" disabled/></td>';
                           } else {
-
-                            echo '<input type="text" class="form-control" id="test_conducted_date" name="test_conducted_date" Required></td>';
+                            // Show as editable field - either no date exists OR stage is 3B
+                            $display_date = !empty($test_conducted_date) ? date('d.m.Y', strtotime($test_conducted_date)) : '';
+                            echo '<input type="text" class="form-control" id="test_conducted_date" name="test_conducted_date" value="' . htmlspecialchars($display_date, ENT_QUOTES, 'UTF-8') . '" Required></td>';
                           }
 
                           ?>
@@ -1375,8 +2700,6 @@ function adduserremark(ur, up) {
 
 
                       </tr>
-
-
 
                       <tr>
 
@@ -1474,18 +2797,41 @@ function adduserremark(ur, up) {
 
 
 
-
+                      <?php if (($result['paper_on_glass_enabled'] ?? 'No') == 'Yes') { ?>
                       <tr>
-                        <td>
-                          <h6 class="text-muted">Remarks</h6>
-                        </td>
-                        <td colspan="3">
+                      <td colspan="4" style="text-align: left;">
+  <h6 class="text-muted mb-1">Test Data Entry</h6>
+  
+  <!-- Test Finalization Status for JavaScript -->
+  <script type="text/javascript">
+    // Global variable for test finalization status
+    window.testFinalizationStatus = <?php echo $finalization_js_data; ?>;
+  </script>
+  
+  <!-- Common Sections (Data Entry Mode + Instruments Details) -->
+  <?php include 'assets/inc/_testdataentry_common.php'; ?>
+  
+  <!-- Test-Specific Sections (manually coded per test) -->
+  <?php include 'assets/inc/_testdataentry_specific.php'; ?>
+</td>
 
-                          <div id="showappremarks"><?php include("core/data/get/getremarks.php") ?></div>
 
-                        </td>
 
+
+                      
                       </tr>
+                      <?php } ?>
+
+                      
+
+
+
+
+
+
+
+
+                      
 
 
 
@@ -1506,13 +2852,15 @@ function adduserremark(ur, up) {
                                                                         {
                                                                       ?>
 
-                                <button id="vendorsubmitassign" class='upload-check-required btn btn-primary btn-small'>Submit</button>
+                                <!-- Always render submit button but conditionally hide it -->
+                                <button id="vendorsubmitassign" class='upload-check-required btn btn-primary btn-small' <?php echo $hide_upload_and_submit ? 'style="display: none;" data-finalization-hidden="true"' : ''; ?>>Submit Test Details</button>
 
                               <?php
                                                                         } else if ($current_wf_stage == STAGE_REASSIGNED_B or $current_wf_stage == STAGE_REASSIGNED_4B) // Task is re-assigned
                                                                         {
                               ?>
-                                <button id="vendorsubmitreassign" class='upload-check-required btn btn-primary btn-small'>Submit</button>
+                                <!-- Always render submit button but conditionally hide it -->
+                                <button id="vendorsubmitreassign" class='upload-check-required btn btn-primary btn-small' <?php echo $hide_upload_and_submit ? 'style="display: none;" data-finalization-hidden="true"' : ''; ?>>Submit Test Details</button>
 
 
                               <?php
@@ -1524,7 +2872,8 @@ function adduserremark(ur, up) {
                                                                           //$text = "<script>document.writeln(document.getElementById('user_remark').innerHTML);</script>";
                                                                           //echo $text;
                               ?>
-                                <button id="enggsubmit" class='upload-check-required btn btn-primary btn-small'>Submit</button>
+                                <!-- Always render submit button but conditionally hide it -->
+                                <button id="enggsubmit" class='upload-check-required btn btn-primary btn-small' <?php echo $hide_upload_and_submit ? 'style="display: none;" data-finalization-hidden="true"' : ''; ?>>Submit</button>
 
 
                               <?php

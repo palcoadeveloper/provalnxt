@@ -60,6 +60,9 @@ try {
     $equipment = DB::queryFirstField("SELECT equipment_code FROM equipments WHERE equipment_id IN 
     (SELECT equip_id FROM tbl_test_schedules_tracking WHERE test_wf_id=%s AND unit_id=%i)", $test_val_wf_id, $_SESSION['unit_id']);
     
+    // Get paper_on_glass_enabled status for Test Data Entry functionality
+    $paper_on_glass_result = DB::queryFirstRow("SELECT paper_on_glass_enabled FROM tests WHERE test_id=%i", $test_id);
+    
 } catch (Exception $e) {
     SecurityUtils::logSecurityEvent('database_error', 'Database query failed in viewtestwindow.php', [
         'error' => $e->getMessage(),
@@ -328,6 +331,21 @@ $('#imagepdfviewerModal').on('show.bs.modal', function (e) {
 
 
       $("#vendorsubmitassign").click(function() {
+        // Check if ACPH data is complete before proceeding
+        if (typeof window.validateACPHDataComplete === 'function') {
+          const validationResult = window.validateACPHDataComplete();
+          if (!validationResult.isComplete && !validationResult.validationSkipped) {
+            window.showACPHValidationError(validationResult);
+            return false; // Prevent submission
+          }
+          
+          // Log validation status for debugging
+          if (validationResult.validationSkipped) {
+            console.log('ACPH validation skipped:', validationResult.skipReason);
+          } else if (validationResult.isComplete) {
+            console.log('ACPH validation passed: All', validationResult.totalFilters, 'filters completed');
+          }
+        }
 
         // alert(current_wf_stage);      
         url = "core/data/update/updatewfstage.php?test_conducted_date=" + convertDateFormat($('#test_conducted_date').val()) + "&val_wf_id=" + val_wf_id + "&test_val_wf_id=" + test_val_wf_id + "&current_wf_stage=" + current_wf_stage + "&action=assign";
@@ -357,6 +375,22 @@ $('#imagepdfviewerModal').on('show.bs.modal', function (e) {
 
 
       $("#vendorsubmitreassign").click(function() {
+        // Check if ACPH data is complete before proceeding
+        if (typeof window.validateACPHDataComplete === 'function') {
+          const validationResult = window.validateACPHDataComplete();
+          if (!validationResult.isComplete && !validationResult.validationSkipped) {
+            window.showACPHValidationError(validationResult);
+            return false; // Prevent submission
+          }
+          
+          // Log validation status for debugging
+          if (validationResult.validationSkipped) {
+            console.log('ACPH validation skipped:', validationResult.skipReason);
+          } else if (validationResult.isComplete) {
+            console.log('ACPH validation passed: All', validationResult.totalFilters, 'filters completed');
+          }
+        }
+        
         //alert(current_wf_stage);
         if (current_wf_stage == '3B') {
           url = "core/data/update/updatewfstage.php?test_conducted_date=" + convertDateFormat($('#test_conducted_date').val()) + "&val_wf_id=" + val_wf_id + "&test_val_wf_id=" + test_val_wf_id + "&current_wf_stage=" + current_wf_stage + "&action=assign_back_engg_vendor";
@@ -371,6 +405,21 @@ $('#imagepdfviewerModal').on('show.bs.modal', function (e) {
 
 
       $("#enggsubmit").click(function() {
+        // Check if ACPH data is complete before proceeding
+        if (typeof window.validateACPHDataComplete === 'function') {
+          const validationResult = window.validateACPHDataComplete();
+          if (!validationResult.isComplete && !validationResult.validationSkipped) {
+            window.showACPHValidationError(validationResult);
+            return false; // Prevent submission
+          }
+          
+          // Log validation status for debugging
+          if (validationResult.validationSkipped) {
+            console.log('ACPH validation skipped:', validationResult.skipReason);
+          } else if (validationResult.isComplete) {
+            console.log('ACPH validation passed: All', validationResult.totalFilters, 'filters completed');
+          }
+        }
 
         url = "core/data/update/updatewfstage.php?test_conducted_date=" + convertDateFormat($('#test_conducted_date').val()) + "&test_type=internal&val_wf_id=" + val_wf_id + "&test_val_wf_id=" + test_val_wf_id + "&current_wf_stage=" +
           current_wf_stage + "&action=assign";
@@ -440,6 +489,22 @@ $('#imagepdfviewerModal').on('show.bs.modal', function (e) {
       });
 
       $("#enggapproval1").click(function() {
+        // Check if ACPH data is complete before proceeding
+        if (typeof window.validateACPHDataComplete === 'function') {
+          const validationResult = window.validateACPHDataComplete();
+          if (!validationResult.isComplete && !validationResult.validationSkipped) {
+            window.showACPHValidationError(validationResult);
+            return false; // Prevent submission
+          }
+          
+          // Log validation status for debugging
+          if (validationResult.validationSkipped) {
+            console.log('ACPH validation skipped:', validationResult.skipReason);
+          } else if (validationResult.isComplete) {
+            console.log('ACPH validation passed: All', validationResult.totalFilters, 'filters completed');
+          }
+        }
+        
         url = "core/data/update/updatewfstage.php?test_conducted_date=" + convertDateFormat($('#test_conducted_date').val()) + "&val_wf_id=" + val_wf_id + "&test_val_wf_id=" + test_val_wf_id + "&current_wf_stage=" + current_wf_stage + "&action=engg_approve_final";
         if ($(".navlink-approve")[0]) {
           Swal.fire({
@@ -1035,6 +1100,20 @@ function adduserremark(ur, up) {
 
 
                       </tr>
+
+                      <?php if (($paper_on_glass_result['paper_on_glass_enabled'] ?? 'No') == 'Yes') { ?>
+                      <tr>
+                        <td colspan="4" style="text-align: left;">
+                          <h6 class="text-muted mb-1">Test Data Entry</h6>
+                          
+                          <!-- Common Sections (Data Entry Mode + Instruments Details) -->
+                          <?php include 'assets/inc/_testdataentry_common.php'; ?>
+                          
+                          <!-- Test-Specific Sections (manually coded per test) -->
+                          <?php include 'assets/inc/_testdataentry_specific.php'; ?>
+                        </td>
+                      </tr>
+                      <?php } ?>
 
 
 

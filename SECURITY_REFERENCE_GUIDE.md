@@ -618,7 +618,234 @@ if ($filename !== false && file_exists("files/" . $filename)) {
 
 ---
 
-## 12. EMERGENCY SECURITY PROCEDURES
+## 12. TEST DATA ENTRY SECURITY IMPLEMENTATION ✨ NEW
+
+### A. API Endpoint Security Pattern
+
+The Test Data Entry system demonstrates comprehensive security implementation:
+
+```php
+<?php
+// Example from core/data/save/savetestspecificdata.php
+require_once('../../config/config.php');
+
+// Validate session timeout
+require_once('../../security/session_timeout_middleware.php');
+validateActiveSession();
+
+// Use centralized session validation
+require_once('../../security/session_validation.php');
+validateUserSession();
+
+// Set content type to JSON
+header('Content-Type: application/json');
+
+// Additional security validation - validate user type
+$userType = $_SESSION['logged_in_user'] ?? '';
+if (!in_array($userType, ['employee', 'vendor'])) {
+    http_response_code(403);
+    echo json_encode(['error' => 'Unauthorized access']);
+    exit();
+}
+
+// Only allow POST requests for data modification
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['error' => 'Method not allowed']);
+    exit();
+}
+
+try {
+    // Validate required parameters
+    if (empty($test_val_wf_id) || empty($section_type)) {
+        throw new InvalidArgumentException("Missing required parameters");
+    }
+    
+    // Validate section_type against whitelist
+    $allowed_sections = ['airflow', 'temperature', 'pressure', 'humidity', 'particlecount'];
+    if (!in_array($section_type, $allowed_sections)) {
+        throw new InvalidArgumentException("Invalid section type: " . $section_type);
+    }
+    
+    // Sanitize and validate data
+    $cleaned_data = [];
+    if (is_array($data)) {
+        foreach ($data as $key => $value) {
+            // Only allow alphanumeric keys with underscores
+            if (preg_match('/^[a-zA-Z0-9_]+$/', $key)) {
+                $cleaned_data[$key] = htmlspecialchars(trim($value), ENT_QUOTES, 'UTF-8');
+            }
+        }
+    }
+    
+    // Use parameterized queries for database operations
+    $workflow_check = DB::queryFirstRow(
+        "SELECT test_wf_id FROM tbl_test_schedules_tracking 
+         WHERE test_wf_id = %s AND unit_id = %i",
+        $test_val_wf_id,
+        $user_unit_id
+    );
+    
+} catch (InvalidArgumentException $e) {
+    error_log("Test-specific data validation error: " . $e->getMessage());
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+} catch (Exception $e) {
+    error_log("Test-specific data save error: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['status' => 'error', 'message' => 'Failed to save data']);
+}
+?>
+```
+
+### B. Input Validation & Sanitization
+
+```php
+// Comprehensive data validation pattern
+function validateTestSpecificData($data, $section_type) {
+    $cleaned_data = [];
+    $validation_rules = [
+        'airflow' => [
+            'room_pressure' => ['type' => 'float', 'min' => 0, 'max' => 1000],
+            'air_velocity' => ['type' => 'float', 'min' => 0, 'max' => 10],
+            'flow_pattern' => ['type' => 'string', 'allowed' => ['laminar', 'turbulent', 'mixed']]
+        ],
+        'temperature' => [
+            'target_temperature' => ['type' => 'float', 'min' => 0, 'max' => 100],
+            'tolerance_range' => ['type' => 'float', 'min' => 0, 'max' => 20]
+        ]
+    ];
+    
+    $rules = $validation_rules[$section_type] ?? [];
+    
+    foreach ($data as $key => $value) {
+        // Validate key format
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $key)) {
+            continue;
+        }
+        
+        // Apply type-specific validation
+        if (isset($rules[$key])) {
+            $rule = $rules[$key];
+            $cleaned_value = validateFieldValue($value, $rule);
+            if ($cleaned_value !== false) {
+                $cleaned_data[$key] = $cleaned_value;
+            }
+        } else {
+            // Default sanitization for unknown fields
+            $cleaned_data[$key] = htmlspecialchars(trim($value), ENT_QUOTES, 'UTF-8');
+        }
+    }
+    
+    return $cleaned_data;
+}
+```
+
+### C. Authorization & Access Control
+
+```php
+// Multi-level authorization check
+function validateTestDataAccess($test_val_wf_id, $user_id, $user_unit_id) {
+    // 1. Verify user has access to the test workflow
+    $workflow_check = DB::queryFirstRow(
+        "SELECT test_wf_id FROM tbl_test_schedules_tracking 
+         WHERE test_wf_id = %s AND unit_id = %i",
+        $test_val_wf_id,
+        $user_unit_id
+    );
+    
+    if (!$workflow_check) {
+        throw new InvalidArgumentException("Invalid test workflow or access denied");
+    }
+    
+    // 2. Check user type permissions
+    $userType = $_SESSION['logged_in_user'] ?? '';
+    if (!in_array($userType, ['employee', 'vendor'])) {
+        throw new InvalidArgumentException("Insufficient user privileges");
+    }
+    
+    // 3. Verify Paper on Glass is enabled for this test
+    $test_id = DB::queryFirstField(
+        "SELECT test_id FROM tbl_test_schedules_tracking WHERE test_wf_id = %s",
+        $test_val_wf_id
+    );
+    
+    $paper_on_glass = DB::queryFirstField(
+        "SELECT paper_on_glass_enabled FROM tests WHERE test_id = %i",
+        $test_id
+    );
+    
+    if ($paper_on_glass !== 'Yes') {
+        throw new InvalidArgumentException("Test Data Entry not enabled for this test");
+    }
+    
+    return true;
+}
+```
+
+### D. Audit Logging
+
+```php
+// Comprehensive audit logging for test data operations
+DB::insert('log', [
+    'change_type' => 'test_specific_data_save',
+    'table_name' => 'test_specific_data',
+    'change_description' => sprintf(
+        'Test-specific data saved for %s section, Test Workflow ID: %s',
+        ucfirst($section_type),
+        $test_val_wf_id
+    ),
+    'change_by' => $user_id,
+    'unit_id' => $user_unit_id
+]);
+```
+
+### E. Frontend Security Integration
+
+```php
+<!-- CSRF Token Integration -->
+<meta name="csrf-token" content="<?php echo $_SESSION['csrf_token']; ?>">
+
+<script>
+// Secure AJAX implementation
+function saveTestSpecificData(section_type, data) {
+    $.ajax({
+        url: 'core/data/save/savetestspecificdata.php',
+        type: 'POST',
+        data: {
+            test_val_wf_id: test_val_wf_id,
+            section_type: section_type,
+            data: data,
+            csrf_token: $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function(response) {
+            try {
+                const result = typeof response === 'string' ? JSON.parse(response) : response;
+                if (result.status === 'success') {
+                    // Handle success
+                } else {
+                    console.error('Save failed:', result.message);
+                }
+            } catch (e) {
+                console.error('Invalid JSON response:', e);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', error);
+            if (xhr.status === 403) {
+                alert('Access denied. Please refresh and try again.');
+            } else if (xhr.status === 400) {
+                alert('Invalid data submitted.');
+            }
+        }
+    });
+}
+</script>
+```
+
+---
+
+## 13. EMERGENCY SECURITY PROCEDURES
 
 ### A. Security Incident Response
 

@@ -208,6 +208,14 @@ if (!defined('HSTS_PRELOAD')) {
     define('HSTS_PRELOAD', false);
 }
 
+// Right-click disable configuration
+if (!defined('DISABLE_RIGHT_CLICK')) {
+    define('DISABLE_RIGHT_CLICK', false); // Set to false to allow right-click context menu
+}
+if (!defined('RIGHT_CLICK_ALERT_MESSAGE')) {
+    define('RIGHT_CLICK_ALERT_MESSAGE', 'Right-click is disabled on this page.'); // Customizable alert message
+}
+
 
 // EmailReminder System Configuration
 // SMTP settings for automated email reminders
@@ -359,6 +367,17 @@ if ($remaining_time < 30) {
 
 if (!defined('SHOW_SESSION_DEBUG_TIMERS')) {
     define('SHOW_SESSION_DEBUG_TIMERS', true); // Set to false to hide debug timers in navbar
+}
+
+// Enhanced session debugging configuration
+if (!defined('SESSION_DEBUG_ENABLED')) {
+    define('SESSION_DEBUG_ENABLED', ENVIRONMENT === 'dev'); // Enable detailed session debugging
+}
+if (!defined('SESSION_TIMEOUT_LOGGING_ENABLED')) {
+    define('SESSION_TIMEOUT_LOGGING_ENABLED', true); // Log session timeout events
+}
+if (!defined('SESSION_ACTIVITY_LOGGING_ENABLED')) {
+    define('SESSION_ACTIVITY_LOGGING_ENABLED', ENVIRONMENT === 'dev'); // Log session activity updates
 }
 
 // Helper function for redirects using BASE_URL

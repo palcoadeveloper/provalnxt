@@ -717,6 +717,348 @@ function secureValidationWorkflow() {
     }
 }
 
+// =======================================================================================
+// 9. TEST DATA ENTRY VALIDATION EXAMPLES ✨ NEW
+// =======================================================================================
+
+/**
+ * Test Data Entry API Validation Pattern
+ * Used in core/data/save/savetestspecificdata.php and core/data/get/gettestspecificdata.php
+ */
+function validateTestDataEntryInput() {
+    // Validate API endpoint inputs
+    $validationRules = [
+        'test_val_wf_id' => [
+            'required' => true,
+            'validator' => 'validateText',
+            'params' => [50, true, false] // Max 50 chars, required, no HTML
+        ],
+        'section_type' => [
+            'required' => true,
+            'validator' => 'validateEnum',
+            'params' => [['airflow', 'temperature', 'pressure', 'humidity', 'particlecount']]
+        ],
+        'data' => [
+            'required' => false,
+            'validator' => 'validateTestSpecificData' // Custom validator
+        ]
+    ];
+    
+    $validation = InputValidator::validatePostData($validationRules, $_POST);
+    
+    if ($validation['valid']) {
+        $data = $validation['data'];
+        
+        // Additional authorization check
+        $user_unit_id = intval($_SESSION['unit_id'] ?? 0);
+        
+        // Verify user has access to the test workflow
+        $workflow_check = DB::queryFirstRow(
+            "SELECT test_wf_id FROM tbl_test_schedules_tracking 
+             WHERE test_wf_id = %s AND unit_id = %i",
+            $data['test_val_wf_id'],
+            $user_unit_id
+        );
+        
+        if (!$workflow_check) {
+            SecurityUtils::logSecurityEvent('unauthorized_test_data_access', 'User attempted to access unauthorized test workflow', [
+                'test_val_wf_id' => $data['test_val_wf_id'],
+                'user_unit_id' => $user_unit_id
+            ]);
+            return ['success' => false, 'message' => 'Access denied'];
+        }
+        
+        // Verify Paper on Glass is enabled
+        $test_id = DB::queryFirstField(
+            "SELECT test_id FROM tbl_test_schedules_tracking WHERE test_wf_id = %s",
+            $data['test_val_wf_id']
+        );
+        
+        $paper_on_glass = DB::queryFirstField(
+            "SELECT paper_on_glass_enabled FROM tests WHERE test_id = %i",
+            $test_id
+        );
+        
+        if ($paper_on_glass !== 'Yes') {
+            return ['success' => false, 'message' => 'Test Data Entry not enabled for this test'];
+        }
+        
+        return ['success' => true, 'data' => $data];
+    } else {
+        return ['success' => false, 'errors' => $validation['errors']];
+    }
+}
+
+/**
+ * Custom validator for test-specific data fields
+ */
+function validateTestSpecificData($data, $section_type = null) {
+    if (!is_array($data)) {
+        return false;
+    }
+    
+    $cleaned_data = [];
+    
+    // Define section-specific validation rules
+    $validation_rules = [
+        'airflow' => [
+            'room_pressure' => ['type' => 'float', 'min' => -100, 'max' => 1000, 'unit' => 'Pa'],
+            'air_velocity' => ['type' => 'float', 'min' => 0, 'max' => 50, 'unit' => 'm/s'],
+            'air_changes_hour' => ['type' => 'integer', 'min' => 0, 'max' => 200, 'unit' => 'ACH'],
+            'flow_pattern' => ['type' => 'enum', 'allowed' => ['laminar', 'turbulent', 'mixed']],
+            'airflow_notes' => ['type' => 'text', 'max_length' => 1000]
+        ],
+        'temperature' => [
+            'target_temperature' => ['type' => 'float', 'min' => -50, 'max' => 200, 'unit' => '°C'],
+            'tolerance_range' => ['type' => 'float', 'min' => 0, 'max' => 50, 'unit' => '°C'],
+            'temp_point_1' => ['type' => 'float', 'min' => -50, 'max' => 200, 'unit' => '°C'],
+            'temp_point_2' => ['type' => 'float', 'min' => -50, 'max' => 200, 'unit' => '°C'],
+            'temp_point_3' => ['type' => 'float', 'min' => -50, 'max' => 200, 'unit' => '°C'],
+            'temp_avg' => ['type' => 'float', 'min' => -50, 'max' => 200, 'unit' => '°C'],
+            'compliance_status' => ['type' => 'enum', 'allowed' => ['pass', 'fail', 'pending']],
+            'temperature_notes' => ['type' => 'text', 'max_length' => 1000]
+        ],
+        'pressure' => [
+            'differential_pressure' => ['type' => 'float', 'min' => -500, 'max' => 500, 'unit' => 'Pa'],
+            'gauge_pressure' => ['type' => 'float', 'min' => -100, 'max' => 1000, 'unit' => 'Pa'],
+            'pressure_stability' => ['type' => 'enum', 'allowed' => ['stable', 'fluctuating', 'unstable']],
+            'pressure_notes' => ['type' => 'text', 'max_length' => 1000]
+        ],
+        'humidity' => [
+            'relative_humidity' => ['type' => 'float', 'min' => 0, 'max' => 100, 'unit' => '%'],
+            'humidity_control' => ['type' => 'enum', 'allowed' => ['controlled', 'uncontrolled', 'monitored']],
+            'humidity_notes' => ['type' => 'text', 'max_length' => 1000]
+        ],
+        'particlecount' => [
+            'particle_size_0_5' => ['type' => 'integer', 'min' => 0, 'max' => 1000000, 'unit' => 'particles/m³'],
+            'particle_size_5_0' => ['type' => 'integer', 'min' => 0, 'max' => 100000, 'unit' => 'particles/m³'],
+            'iso_class' => ['type' => 'enum', 'allowed' => ['ISO 5', 'ISO 6', 'ISO 7', 'ISO 8', 'ISO 9']],
+            'particle_notes' => ['type' => 'text', 'max_length' => 1000]
+        ]
+    ];
+    
+    // Use section-specific rules or allow any field with basic validation
+    $rules = isset($validation_rules[$section_type]) ? $validation_rules[$section_type] : [];
+    
+    foreach ($data as $key => $value) {
+        // Validate field name format (alphanumeric + underscore only)
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $key)) {
+            continue; // Skip invalid field names
+        }
+        
+        // Apply specific validation if rules exist
+        if (isset($rules[$key])) {
+            $rule = $rules[$key];
+            $cleaned_value = validateTestDataField($value, $rule);
+            
+            if ($cleaned_value !== false) {
+                $cleaned_data[$key] = $cleaned_value;
+            }
+        } else {
+            // Default sanitization for unknown fields
+            if (is_string($value)) {
+                $cleaned_data[$key] = htmlspecialchars(trim($value), ENT_QUOTES, 'UTF-8');
+            } elseif (is_numeric($value)) {
+                $cleaned_data[$key] = $value;
+            }
+        }
+    }
+    
+    return $cleaned_data;
+}
+
+/**
+ * Validate individual test data fields based on rules
+ */
+function validateTestDataField($value, $rule) {
+    switch ($rule['type']) {
+        case 'float':
+            $floatValue = filter_var($value, FILTER_VALIDATE_FLOAT);
+            if ($floatValue === false) return false;
+            
+            if (isset($rule['min']) && $floatValue < $rule['min']) return false;
+            if (isset($rule['max']) && $floatValue > $rule['max']) return false;
+            
+            return $floatValue;
+            
+        case 'integer':
+            $intValue = filter_var($value, FILTER_VALIDATE_INT);
+            if ($intValue === false) return false;
+            
+            if (isset($rule['min']) && $intValue < $rule['min']) return false;
+            if (isset($rule['max']) && $intValue > $rule['max']) return false;
+            
+            return $intValue;
+            
+        case 'enum':
+            $value = trim($value);
+            if (!in_array($value, $rule['allowed'])) return false;
+            return $value;
+            
+        case 'text':
+            $value = trim($value);
+            if (isset($rule['max_length']) && strlen($value) > $rule['max_length']) {
+                $value = substr($value, 0, $rule['max_length']);
+            }
+            return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+            
+        default:
+            return htmlspecialchars(trim($value), ENT_QUOTES, 'UTF-8');
+    }
+}
+
+/**
+ * Example: Complete Test Data Entry validation and save workflow
+ * Demonstrates how the Test Data Entry system validates and stores data securely
+ */
+function saveTestSpecificDataExample() {
+    // Example implementation similar to core/data/save/savetestspecificdata.php
+    
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        return ['error' => 'Method not allowed'];
+    }
+    
+    // Step 1: Basic input validation
+    $validation = validateTestDataEntryInput();
+    
+    if (!$validation['success']) {
+        return $validation;
+    }
+    
+    $validatedData = $validation['data'];
+    
+    try {
+        // Step 2: Use secure transaction for data persistence
+        $result = executeSecureTransaction(function() use ($validatedData) {
+            
+            $user_id = intval($_SESSION['user_id'] ?? 1);
+            $user_unit_id = intval($_SESSION['unit_id'] ?? 0);
+            
+            // Clean and validate the specific test data
+            $cleaned_data = validateTestSpecificData(
+                $validatedData['data'], 
+                $validatedData['section_type']
+            );
+            
+            // Convert to JSON for storage
+            $json_data = json_encode($cleaned_data, JSON_UNESCAPED_UNICODE);
+            
+            if ($json_data === false) {
+                throw new Exception("Failed to encode data to JSON");
+            }
+            
+            // Check if record exists (upsert pattern)
+            $existing_record = DB::queryFirstRow(
+                "SELECT id FROM test_specific_data 
+                 WHERE test_val_wf_id = %s AND section_type = %s",
+                $validatedData['test_val_wf_id'],
+                $validatedData['section_type']
+            );
+            
+            if ($existing_record) {
+                // Update existing record
+                DB::update('test_specific_data', [
+                    'data_json' => $json_data,
+                    'modified_by' => $user_id,
+                    'modified_date' => date('Y-m-d H:i:s')
+                ], 'id = %i', $existing_record['id']);
+                
+                $action = 'updated';
+            } else {
+                // Insert new record
+                DB::insert('test_specific_data', [
+                    'test_val_wf_id' => $validatedData['test_val_wf_id'],
+                    'section_type' => $validatedData['section_type'],
+                    'data_json' => $json_data,
+                    'entered_by' => $user_id,
+                    'unit_id' => $user_unit_id
+                ]);
+                
+                $action = 'created';
+            }
+            
+            // Audit logging
+            DB::insert('log', [
+                'change_type' => 'test_specific_data_save',
+                'table_name' => 'test_specific_data',
+                'change_description' => sprintf(
+                    'Test-specific data %s for %s section, Test Workflow ID: %s',
+                    $action,
+                    ucfirst($validatedData['section_type']),
+                    $validatedData['test_val_wf_id']
+                ),
+                'change_by' => $user_id,
+                'unit_id' => $user_unit_id
+            ]);
+            
+            return $action;
+            
+        }, 'test_specific_data_save');
+        
+        // Success response
+        return [
+            'status' => 'success',
+            'message' => 'Test-specific data saved successfully',
+            'action' => $result,
+            'section_type' => $validatedData['section_type'],
+            'timestamp' => date('Y-m-d H:i:s')
+        ];
+        
+    } catch (SecurityException $e) {
+        error_log("Test-specific data save security error: " . $e->getMessage());
+        return ['status' => 'error', 'message' => 'Security validation failed'];
+        
+    } catch (Exception $e) {
+        error_log("Test-specific data save error: " . $e->getMessage());
+        return ['status' => 'error', 'message' => 'Failed to save test-specific data'];
+    }
+}
+
+/**
+ * Security testing for Test Data Entry endpoints
+ */
+function testTestDataEntrySecurity() {
+    echo "<h3>Test Data Entry Security Validation Tests</h3>\n";
+    
+    $testCases = [
+        // Valid inputs
+        ['test_val_wf_id' => 'TEST001', 'section_type' => 'airflow', 'data' => ['room_pressure' => '15.5']],
+        ['test_val_wf_id' => 'TEST002', 'section_type' => 'temperature', 'data' => ['target_temperature' => '22.0']],
+        
+        // Invalid section types
+        ['test_val_wf_id' => 'TEST001', 'section_type' => 'invalid_section', 'data' => []],
+        ['test_val_wf_id' => 'TEST001', 'section_type' => '<script>alert(1)</script>', 'data' => []],
+        
+        // XSS attempts in data fields
+        ['test_val_wf_id' => 'TEST001', 'section_type' => 'airflow', 'data' => ['room_pressure' => '<script>alert("XSS")</script>']],
+        ['test_val_wf_id' => 'TEST001', 'section_type' => 'temperature', 'data' => ['temp_notes' => 'javascript:alert("XSS")']],
+        
+        // SQL injection attempts
+        ['test_val_wf_id' => "'; DROP TABLE test_specific_data; --", 'section_type' => 'airflow', 'data' => []],
+        
+        // Invalid field names
+        ['test_val_wf_id' => 'TEST001', 'section_type' => 'airflow', 'data' => ['../../../etc/passwd' => 'invalid']],
+        ['test_val_wf_id' => 'TEST001', 'section_type' => 'airflow', 'data' => ['field with spaces' => 'invalid']],
+        
+        // Out of range values
+        ['test_val_wf_id' => 'TEST001', 'section_type' => 'airflow', 'data' => ['room_pressure' => '9999999']],
+        ['test_val_wf_id' => 'TEST001', 'section_type' => 'temperature', 'data' => ['target_temperature' => '-999']],
+    ];
+    
+    foreach ($testCases as $index => $testCase) {
+        echo "<div style='margin: 10px; padding: 10px; border: 1px solid #ccc;'>\n";
+        echo "<strong>Test Case " . ($index + 1) . ":</strong><br>\n";
+        echo "<strong>Input:</strong> " . htmlspecialchars(json_encode($testCase)) . "<br>\n";
+        
+        // Simulate validation
+        $cleaned_data = validateTestSpecificData($testCase['data'], $testCase['section_type']);
+        
+        echo "<strong>Cleaned Data:</strong> " . htmlspecialchars(json_encode($cleaned_data)) . "<br>\n";
+        echo "<strong>Valid:</strong> " . (empty($cleaned_data) && !empty($testCase['data']) ? 'NO (Rejected)' : 'YES (Accepted)') . "<br>\n";
+        echo "</div>\n";
+    }
+}
+
 ?>
 
 <!DOCTYPE html>

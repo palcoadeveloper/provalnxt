@@ -204,12 +204,31 @@ $(document).ready(function() {
         absolutePdfUrl = src;
       } else {
         // src is a relative path, construct absolute URL
-        absolutePdfUrl = window.location.origin + '/proval4/public/' + src;
+        // Get the current project path dynamically
+        var currentPath = window.location.pathname;
+        var projectRoot = currentPath.substring(0, currentPath.indexOf('/public/')) + '/public/';
+        if (projectRoot === '/public/') {
+          // Fallback if we can't detect project root
+          projectRoot = '/provalnxt/public/';
+        }
+        
+        // Handle the PDF path - if it starts with 'core/' it's already relative to public/
+        // If it contains '../' patterns, we need to resolve them
+        var cleanSrc = src;
+        if (src.indexOf('../') === 0) {
+          // Remove leading '../' patterns and use the remaining path
+          cleanSrc = src.replace(/^(\.\.\/)+/, '');
+        }
+        
+        absolutePdfUrl = window.location.origin + projectRoot + cleanSrc;
       }
       var pdfUrl = 'assets/js/pdfjs/web/viewer.html?file=' + encodeURIComponent(absolutePdfUrl);
       
       console.log('Modal: Loading PDF with PDF.js viewer:', pdfUrl);
       console.log('Modal: Original PDF source:', src);
+      console.log('Modal: Cleaned PDF source:', cleanSrc);
+      console.log('Modal: Absolute PDF URL:', absolutePdfUrl);
+      console.log('Modal: Project root detected:', projectRoot);
       
       // Set src and show viewer
       pdfViewer.attr('src', pdfUrl).show();
@@ -221,6 +240,12 @@ $(document).ready(function() {
         
         // Hide loading spinner when PDF.js loads
         $('#pdfLoadingSpinner').hide();
+      });
+      
+      // Error handler for PDF.js loading issues
+      pdfViewer.off('error.modalDebug').on('error.modalDebug', function() {
+        console.error('Modal: Error loading PDF.js viewer');
+        handlePDFJSError(absolutePdfUrl, fileTitle);
       });
       
       // Hide spinner after a reasonable time (PDF.js handles its own loading)
