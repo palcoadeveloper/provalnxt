@@ -714,7 +714,7 @@ $totalPages = ceil($totalCount / $limit);
                                             <div class="col-md-4 text-right">
                                                 <button onclick="viewJobDetails(<?php echo $log['job_execution_id']; ?>)" 
                                                         class="btn btn-sm btn-outline-primary">
-                                                    <i class="mdi mdi-eye"></i> View Details
+                                                     View Details
                                                 </button>
                                             </div>
                                         </div>

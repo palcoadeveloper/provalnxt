@@ -28,6 +28,9 @@ require_once 'core/config/db.class.php';
   <head>
      <?php include_once "assets/inc/_header.php";?>
      <meta name="csrf-token" content="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
+    
+    <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
+    
     <script>
     $(document).ready(function(){
    
@@ -126,7 +129,34 @@ e.preventDefault();
 		
 	
 		
-		if(!unit || !equip || !wfstage){
+		// Clear previous validation states
+		$('.forms-sample .form-control').removeClass('is-valid is-invalid');
+		
+		var hasErrors = false;
+
+		// Validate required fields and add visual feedback
+		if(!unit) {
+		    $("#unitid").addClass('is-invalid');
+		    hasErrors = true;
+		} else {
+		    $("#unitid").addClass('is-valid');
+		}
+		
+		if(!equip) {
+		    $("#equipmentid").addClass('is-invalid');
+		    hasErrors = true;
+		} else {
+		    $("#equipmentid").addClass('is-valid');
+		}
+		
+		if(!wfstage) {
+		    $("#wfstageid").addClass('is-invalid');
+		    hasErrors = true;
+		} else {
+		    $("#wfstageid").addClass('is-valid');
+		}
+
+		if(hasErrors){
 			
 			Swal.fire({
     					icon: 'error',
@@ -136,6 +166,22 @@ e.preventDefault();
 		}
 		else if ((psdf && !psdt) || (!psdf && psdt) || (psdf > psdt) || (asdf && !asdt) || (!asdf && asdt) || (asdf > asdt))
 		{
+			// Add invalid styling to date fields with errors
+			if ((psdf && !psdt) || (!psdf && psdt) || (psdf > psdt)) {
+			    $("#planned_start_from").addClass('is-invalid');
+			    $("#planned_start_to").addClass('is-invalid');
+			} else {
+			    $("#planned_start_from").addClass('is-valid');
+			    $("#planned_start_to").addClass('is-valid');
+			}
+			
+			if ((asdf && !asdt) || (!asdf && asdt) || (asdf > asdt)) {
+			    $("#actual_start_from").addClass('is-invalid');
+			    $("#actual_start_to").addClass('is-invalid');
+			} else {
+			    $("#actual_start_from").addClass('is-valid');
+			    $("#actual_start_to").addClass('is-valid');
+			}
 			
 			Swal.fire({
     					icon: 'error',
@@ -147,6 +193,8 @@ e.preventDefault();
 		
 		else
 		{
+			// Mark all fields as valid since validation passed
+			$('.forms-sample .form-control').addClass('is-valid').removeClass('is-invalid');
 		$('#pleasewaitmodal').modal('show');
 					 $.get("core/data/get/getroutinetestwfstatus.php",
                       {
@@ -165,9 +213,36 @@ e.preventDefault();
                       
                       $('#pleasewaitmodal').modal('hide');
                      $("#displayresults").html(data);
-                    		$('#datagrid-report').DataTable({
-  "pagingType": "numbers"
-} );
+                     
+                     // Small delay to ensure DOM is ready, then initialize modern DataTable
+                     setTimeout(function() {
+                         // Destroy existing DataTable if it exists
+                         if ($.fn.DataTable.isDataTable('#datagrid-report')) {
+                             $('#datagrid-report').DataTable().destroy();
+                         }
+                         
+                         // Initialize modern DataTable with enhanced features
+                         $('#datagrid-report').DataTable({
+                             "pagingType": "numbers",
+                             "pageLength": 25,
+                             "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+                             "searching": true,
+                             "ordering": true,
+                             "info": true,
+                             "columnDefs": [
+                                 {
+                                     "targets": -1,
+                                     "orderable": false,
+                                     "searchable": false
+                                 }
+                             ],
+                             "language": {
+                                 "search": "Search routine tests:",
+                                 "lengthMenu": "Show _MENU_ entries",
+                                 "info": "Showing _START_ to _END_ of _TOTAL_ routine test entries"
+                             }
+                         });
+                     }, 100); // 100ms delay
                        
                       });
  
@@ -266,7 +341,7 @@ e.preventDefault();
                        	<?php if ($_SESSION['is_super_admin']=="Yes")
                        	{
                        	    try {
-                       	        $results = DB::query("SELECT unit_id, unit_name FROM units ORDER BY unit_name ASC");
+                       	        $results = DB::query("SELECT unit_id, unit_name FROM units where unit_status='Active' ORDER BY unit_name ASC");
                        	        
                        	        if(!empty($results))
                        	        {
@@ -290,7 +365,7 @@ e.preventDefault();
                        	else 
                        	{
                        	    try {
-                       	        $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %i", intval($_SESSION['unit_id']));
+                       	        $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %i and unit_status='Active'", intval($_SESSION['unit_id']));
                        	        
                        	        echo "<option value='" . htmlspecialchars($_SESSION['unit_id'], ENT_QUOTES, 'UTF-8') . "'>" . htmlspecialchars($unit_name, ENT_QUOTES, 'UTF-8') . "</option>";
                        	    } catch (Exception $e) {
@@ -365,7 +440,7 @@ e.preventDefault();
                
                       
                       
-                      <input type="submit" id="generatereport" class="btn btn-gradient-primary mr-2"/>
+                      <input type="submit" id="generatereport" class="btn btn-gradient-original-success mr-2"/>
                       
                     </form>
                   </div>

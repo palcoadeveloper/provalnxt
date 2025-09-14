@@ -240,16 +240,20 @@ try {
       $("#two_factor_enabled").change(function() {
         if ($(this).val() === 'Yes') {
           $("#tfa-settings").show();
+          $("#tfa-scope-message").show();
         } else {
           $("#tfa-settings").hide();
+          $("#tfa-scope-message").hide();
         }
       });
-      
+
       // Initialize 2FA settings visibility
       if ($("#two_factor_enabled").val() === 'Yes') {
         $("#tfa-settings").show();
+        $("#tfa-scope-message").show();
       } else {
         $("#tfa-settings").hide();
+        $("#tfa-scope-message").hide();
       }
       
       // Secondary Test dependency validation
@@ -293,7 +297,11 @@ try {
     
     </script>
     
-  </head>
+
+    
+      <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
+
+</head>
   <body>
    <?php include_once "assets/inc/_pleasewaitmodal.php"; ?>
     <div class="container-scroller">
@@ -438,6 +446,17 @@ try {
                         <div class="invalid-feedback">Please select Two Factor Authentication setting.</div>
                       </div>
 
+                    </div>
+
+                    <!-- 2FA Scope Information Message (shown when 2FA is enabled) -->
+                    <div id="tfa-scope-message" class="alert alert-info mt-3" style="display: none;">
+                        <i class="mdi mdi-information-outline"></i>
+                        <strong>2FA Security Notice:</strong><br>
+                        When enabled, Two Factor Authentication will apply to:
+                        <ul class="mb-0 mt-2">
+                            <li><strong>All employees</strong> assigned to this unit</li>
+                            <li><strong>All vendor employees</strong> system-wide (since vendor employees can work across any unit)</li>
+                        </ul>
                     </div>
 
                     <!-- 2FA Settings (shown when 2FA is enabled) -->

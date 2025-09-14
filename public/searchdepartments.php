@@ -75,45 +75,28 @@ try {
         
         // Load statistics on page load
         loadDepartmentStatistics();
+        
+        // Initialize DataTable for departments table on page load
+        setTimeout(function() {
+            // Initialize modern DataTable with enhanced features
+            $('#tbl-department-details').DataTable({
+                "pagingType": "numbers",
+                "pageLength": 25,
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+                "searching": true,
+                "ordering": true,
+                "info": true,
+                "language": {
+                    "search": "Search departments:",
+                    "lengthMenu": "Show _MENU_ entries",
+                    "info": "Showing _START_ to _END_ of _TOTAL_ departments"
+                }
+            });
+        }, 100); // 100ms delay to ensure DOM is ready
     });
     </script>
     
-    <style>
-    /* Department Statistics Tiles Styling */
-    .department-stats-tile {
-        height: 70% !important;
-        min-height: 120px !important;
-    }
-    
-    .department-stats-tile .card-body {
-        padding: 15px 15px 8px 15px !important;
-    }
-    
-    .department-stats-tile .display-1 {
-        font-size: 2rem !important;
-        margin-bottom: 5px !important;
-    }
-    
-    .department-stats-tile h4 {
-        font-size: 0.9rem !important;
-        margin-bottom: 8px !important;
-    }
-    
-    .department-stats-tile .card-text {
-        font-size: 0.8rem !important;
-        margin-bottom: 0 !important;
-    }
-    
-    .department-stats-container {
-        margin-top: 15px !important;
-        margin-bottom: -15px !important;
-        padding-bottom: 5px !important;
-    }
-    
-    .department-stats-container .grid-margin {
-        margin-bottom: 10px !important;
-    }
-    </style>
+    <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
     
   </head>
   <body>
@@ -184,16 +167,13 @@ try {
                     
                     <?php 
                     
-                    echo "<table class='table table-bordered'>
+                    echo "<div class='table-responsive-xl'>";
+                    echo "<table id='tbl-department-details' class='table table-bordered'>
                       <thead>
                         <tr>
-                          <th> Department ID </th>
-    
-                          <th> Department Name</th>
-    
-                        
-                            <th> Department Status</th>
-                       
+                          <th>Department ID</th>
+                          <th>Department Name</th>
+                          <th>Department Status</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -207,9 +187,8 @@ try {
                         echo "</tr>";
                     }
                     
-                    
                     echo "  </tbody></table>";
-                    
+                    echo "</div>";
                     
                     ?>
                     

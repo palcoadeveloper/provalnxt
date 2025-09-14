@@ -29,6 +29,348 @@ require_once 'core/config/db.class.php';
     <!-- Required meta tags -->
      <?php include_once "assets/inc/_header.php";?>
      <meta name="csrf-token" content="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
+
+    <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
+
+    <style>
+    /* Modern DataTable Styling */
+    #datagrid-audit-trail {
+        border-collapse: separate;
+        border-spacing: 0;
+        border-radius: 8px !important;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    #datagrid-audit-trail thead th {
+        background: linear-gradient(135deg, #b967db 0%, #9c4ac7 100%) !important;
+        color: white !important;
+        font-weight: 600 !important;
+        text-transform: none !important;
+        font-size: 0.85rem !important;
+        letter-spacing: 0.3px !important;
+        padding: 15px 12px !important;
+        border: none !important;
+        position: relative !important;
+        vertical-align: middle !important;
+        text-align: center !important;
+    }
+    
+    #datagrid-audit-trail thead th:first-child {
+        border-top-left-radius: 8px;
+    }
+    
+    #datagrid-audit-trail thead th:last-child {
+        border-top-right-radius: 8px;
+    }
+    
+    #datagrid-audit-trail tbody td {
+        padding: 12px !important;
+        vertical-align: middle !important;
+        border-bottom: 1px solid #e3e6f0 !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    #datagrid-audit-trail tbody td:last-child {
+        text-align: center !important;
+    }
+    
+    #datagrid-audit-trail tbody tr {
+        transition: all 0.3s ease !important;
+    }
+    
+    #datagrid-audit-trail tbody tr:hover {
+        background-color: #f8f9fe !important;
+        transform: scale(1.02) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    #datagrid-audit-trail tbody tr:nth-child(even) {
+        background-color: #fafbfc !important;
+    }
+    
+    /* DataTable Controls Styling */
+    .dataTables_wrapper .dataTables_length select {
+        padding: 6px 12px !important;
+        border: 2px solid #e3e6f0 !important;
+        border-radius: 6px !important;
+        background-color: white !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .dataTables_wrapper .dataTables_length select:focus {
+        border-color: #b967db !important;
+        outline: none !important;
+        box-shadow: 0 0 0 3px rgba(185, 103, 219, 0.1) !important;
+    }
+    
+    .dataTables_wrapper .dataTables_filter input {
+        padding: 8px 16px !important;
+        border: 2px solid #e3e6f0 !important;
+        border-radius: 25px !important;
+        background-color: white !important;
+        transition: all 0.3s ease !important;
+        width: 250px !important;
+    }
+    
+    .dataTables_wrapper .dataTables_filter input:focus {
+        border-color: #348fe2 !important;
+        outline: none !important;
+        box-shadow: 0 0 0 3px rgba(52, 143, 226, 0.1) !important;
+        width: 300px !important;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 8px 16px !important;
+        margin: 0 2px !important;
+        border: 1px solid #e3e6f0 !important;
+        border-radius: 6px !important;
+        background: white !important;
+        color: #5a5c69 !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background: #b967db !important;
+        color: white !important;
+        border-color: #b967db !important;
+        transform: translateY(-1px) !important;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: linear-gradient(135deg, #b967db 0%, #9c4ac7 100%) !important;
+        color: white !important;
+        border-color: #b967db !important;
+        font-weight: 600 !important;
+    }
+    
+    .dataTables_wrapper .dataTables_info {
+        color: #6c757d !important;
+        font-weight: 500 !important;
+        padding-top: 12px !important;
+    }
+    
+    /* Action Buttons Enhancement */
+    #datagrid-audit-trail .btn {
+        border-radius: 6px !important;
+        font-size: 0.75rem !important;
+        padding: 0.375rem 0.75rem !important;
+        font-weight: 500 !important;
+        transition: all 0.3s ease !important;
+        text-transform: none !important;
+        letter-spacing: 0.3px !important;
+    }
+    
+    #datagrid-audit-trail .btn:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    /* Loading and Processing States */
+    .dataTables_processing {
+        background: rgba(255, 255, 255, 0.9) !important;
+        border: 1px solid #ddd !important;
+        border-radius: 8px !important;
+        color: #348fe2 !important;
+        font-weight: 600 !important;
+        padding: 16px 24px !important;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    /* Form Submit Button Enhancement */
+    .forms-sample .btn-gradient-primary {
+        border-radius: 25px !important;
+        font-size: 0.9rem !important;
+        padding: 12px 24px !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.8px !important;
+        box-shadow: 0 3px 6px rgba(185, 103, 219, 0.3) !important;
+        border: none !important;
+        background: linear-gradient(135deg, #b967db 0%, #9a55ff 100%) !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+    
+    .forms-sample .btn-gradient-primary:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+    }
+    
+    .forms-sample .btn-gradient-primary:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 16px rgba(185, 103, 219, 0.4) !important;
+        background: linear-gradient(135deg, #da8cff 0%, #b967db 100%) !important;
+    }
+    
+    .forms-sample .btn-gradient-primary:hover:before {
+        left: 100%;
+    }
+    
+    .forms-sample .btn-gradient-primary:active {
+        transform: translateY(0) !important;
+        box-shadow: 0 2px 4px rgba(185, 103, 219, 0.4) !important;
+    }
+    
+    .forms-sample .btn-gradient-primary:focus {
+        outline: none !important;
+        box-shadow: 0 0 0 3px rgba(185, 103, 219, 0.3) !important;
+    }
+    
+    /* Export Button Enhancement */
+    .forms-sample .btn-gradient-success {
+        border-radius: 25px !important;
+        font-size: 0.9rem !important;
+        padding: 12px 24px !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.8px !important;
+        box-shadow: 0 3px 6px rgba(40, 167, 69, 0.3) !important;
+        border: none !important;
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+    
+    .forms-sample .btn-gradient-success:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+    }
+    
+    .forms-sample .btn-gradient-success:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4) !important;
+        background: linear-gradient(135deg, #32d667 0%, #28a745 100%) !important;
+    }
+    
+    .forms-sample .btn-gradient-success:hover:before {
+        left: 100%;
+    }
+    
+    .forms-sample .btn-gradient-success:active {
+        transform: translateY(0) !important;
+        box-shadow: 0 2px 4px rgba(40, 167, 69, 0.4) !important;
+    }
+    
+    .forms-sample .btn-gradient-success:focus {
+        outline: none !important;
+        box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.3) !important;
+    }
+    
+    /* Form Spacing and Layout */
+    .forms-sample {
+        margin-bottom: 1.5rem !important;
+    }
+    
+    .forms-sample .form-row {
+        margin-bottom: 1rem !important;
+    }
+    
+    .forms-sample .form-group {
+        margin-bottom: 1.25rem !important;
+    }
+    
+    .forms-sample .form-group:last-child {
+        margin-bottom: 0 !important;
+    }
+    
+    /* Form Controls Enhancement */
+    .forms-sample .form-control {
+        border: 2px solid #e3e6f0 !important;
+        border-radius: 8px !important;
+        padding: 12px 16px !important;
+        font-size: 0.95rem !important;
+        transition: all 0.3s ease !important;
+        background-color: #fafbfc !important;
+    }
+    
+    .forms-sample .form-control:focus {
+        border-color: #348fe2 !important;
+        background-color: white !important;
+        box-shadow: 0 0 0 3px rgba(52, 143, 226, 0.1) !important;
+        outline: none !important;
+    }
+    
+    .forms-sample label {
+        font-weight: 600 !important;
+        color: #5a5c69 !important;
+        margin-bottom: 8px !important;
+        font-size: 0.9rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+    }
+    
+    /* Date Picker Enhancement */
+    .ui-datepicker {
+        border: 2px solid #b967db !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 12px rgba(185, 103, 219, 0.2) !important;
+    }
+    
+    .ui-datepicker .ui-datepicker-header {
+        background: linear-gradient(135deg, #b967db 0%, #9c4ac7 100%) !important;
+        color: white !important;
+        border: none !important;
+        font-weight: 600 !important;
+    }
+    
+    .ui-datepicker .ui-datepicker-title {
+        color: white !important;
+    }
+    
+    .ui-datepicker .ui-datepicker-prev,
+    .ui-datepicker .ui-datepicker-next {
+        border: none !important;
+        background: none !important;
+    }
+    
+    .ui-datepicker .ui-datepicker-prev:hover,
+    .ui-datepicker .ui-datepicker-next:hover {
+        background: rgba(255, 255, 255, 0.2) !important;
+        border-radius: 4px !important;
+    }
+    
+    /* Responsive Improvements */
+    @media (max-width: 768px) {
+        .dataTables_wrapper .dataTables_filter input {
+            width: 200px !important;
+        }
+        
+        .dataTables_wrapper .dataTables_filter input:focus {
+            width: 240px !important;
+        }
+        
+        #datagrid-audit-trail tbody tr:hover {
+            transform: none !important;
+        }
+        
+        .forms-sample .btn-gradient-primary:hover,
+        .forms-sample .btn-gradient-success:hover {
+            transform: none !important;
+        }
+        
+        .forms-sample .btn-gradient-primary,
+        .forms-sample .btn-gradient-success {
+            margin-bottom: 0.5rem !important;
+            width: 100% !important;
+        }
+    }
+    </style>
+    
     <script>
     $(document).ready(function(){
     
@@ -41,8 +383,25 @@ require_once 'core/config/db.class.php';
 
 
 $('#datagrid-audit-trail').DataTable({
-  "pagingType": "numbers"
-});
+                        "pagingType": "numbers",
+                        "pageLength": 25,
+                        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+                        "searching": true,
+                        "ordering": true,
+                        "info": true,
+                        "columnDefs": [
+                            {
+                                "targets": -1,
+                                "orderable": false,
+                                "searchable": false
+                            }
+                        ],
+                        "language": {
+                            "search": "Search audit trail:",
+                            "lengthMenu": "Show _MENU_ entries",
+                            "info": "Showing _START_ to _END_ of _TOTAL_ audit trail entries"
+                        }
+                    });
     
 
   
@@ -76,9 +435,36 @@ e.preventDefault();
                       function(data, status){
                        $('#pleasewaitmodal').modal('hide');
                     $("#displayresults").html(data);
-                    		$('#datagrid-audit-trail').DataTable({
-  "pagingType": "numbers"
-} );
+                    
+                    // Small delay to ensure DOM is ready, then initialize modern DataTable
+                    setTimeout(function() {
+                        // Destroy existing DataTable if it exists
+                        if ($.fn.DataTable.isDataTable('#datagrid-audit-trail')) {
+                            $('#datagrid-audit-trail').DataTable().destroy();
+                        }
+                        
+                        // Initialize modern DataTable with enhanced features
+                        $('#datagrid-audit-trail').DataTable({
+                            "pagingType": "numbers",
+                            "pageLength": 25,
+                            "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+                            "searching": true,
+                            "ordering": true,
+                            "info": true,
+                            "columnDefs": [
+                                {
+                                    "targets": -1,
+                                    "orderable": false,
+                                    "searchable": false
+                                }
+                            ],
+                            "language": {
+                                "search": "Search audit trail:",
+                                "lengthMenu": "Show _MENU_ entries",
+                                "info": "Showing _START_ to _END_ of _TOTAL_ audit trail entries"
+                            }
+                        });
+                    }, 100); // 100ms delay
                        
                       });
  
@@ -270,7 +656,7 @@ $("#start_to").datepicker({
                           <?php if ($_SESSION['is_super_admin']=="Yes")
                        	{
                        	    try {
-                       	        $results = DB::query("SELECT unit_id, unit_name FROM units ORDER BY unit_name ASC");
+                       	        $results = DB::query("SELECT unit_id, unit_name FROM units where unit_status='Active' ORDER BY unit_name ASC");
                        	        
                        	        if(!empty($results))
                        	        {
@@ -287,7 +673,7 @@ $("#start_to").datepicker({
                        	else 
                        	{
                        	    try {
-                       	        $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %i", intval($_SESSION['unit_id']));
+                       	        $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %i and unit_status='Active'", intval($_SESSION['unit_id']));
                        	        
                        	        echo "<option value='" . htmlspecialchars($_SESSION['unit_id'], ENT_QUOTES, 'UTF-8') . "'>" . htmlspecialchars($unit_name, ENT_QUOTES, 'UTF-8') . "</option>";
                        	    } catch (Exception $e) {
@@ -307,9 +693,9 @@ $("#start_to").datepicker({
   </div>      
                       
                       
-                      <input type="submit" id="generatereport" class="btn btn-gradient-primary mr-2" value="Generate Report"/>
+                      <input type="submit" id="generatereport" class="btn btn-gradient-original-success mr-2" value="Generate Report"/>
 
-                      <input type="button" id="downloadreport" class="btn btn-gradient-success mr-2" value="Export Report (PDF)"/>
+                      <input type="button" id="downloadreport" class="btn btn-gradient-original-danger mr-2" value="Export Report (PDF)"/>
                     </form>
                   </div>
                 </div>

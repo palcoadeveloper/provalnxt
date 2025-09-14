@@ -29,7 +29,9 @@ define('STAGE_REASSIGNED_A', '3A');
 define('STAGE_REASSIGNED_B', '3B');
 define('STAGE_REASSIGNED_4B', '4B');
 define('STAGE_REASSIGNED_4A', '4A');
-
+define('STAGE_OFFLINE_PROVISIONAL', '1PRV');
+define('STAGE_OFFLINE_REJECTED', '1RRV');
+define('STAGE_OFFLINE_REJECTED_ENGG', '3BPRV');
 require_once("core/config/db.class.php");
 require_once 'core/security/secure_query_wrapper.php';
 
@@ -56,6 +58,7 @@ $test_id = secure_get('test_id', 'int');
 $current_wf_stage = secure_get('current_wf_stage', 'string');
 
 // Enhanced parameter validation with performance considerations
+// NOTE: Parameters are also validated client-side via URL parsing for offline actions
 if (!$test_val_wf_id || !$test_id || !$current_wf_stage) {
     // Log security event and redirect
     error_log('Invalid parameters for task details: ' . json_encode([
@@ -77,7 +80,10 @@ $validStages = [
     STAGE_COMPLETED,
     STAGE_REASSIGNED_A,
     STAGE_REASSIGNED_B,
-    STAGE_REASSIGNED_4B
+    STAGE_REASSIGNED_4B,
+    STAGE_OFFLINE_PROVISIONAL,
+    STAGE_OFFLINE_REJECTED,
+    STAGE_OFFLINE_REJECTED_ENGG
 ];
 
 if (!in_array($current_wf_stage, $validStages)) {
@@ -93,6 +99,9 @@ $workflow_details = ['wf_stage_description' => 'Error Loading Stage'];
 $test_conducted_date = null;
 $equipment = 'Error Loading Equipment';
 
+// Initialize variables to avoid undefined variable issues
+$show_same_user_error = false;
+
 // Optimized database queries with performance improvements
 try {
     // Handle different query logic for vendor vs employee users
@@ -102,7 +111,8 @@ try {
             SELECT 
                 t.test_name,
                 t.test_purpose,
-                t.test_performed_by,
+                t.test_performed_by as test_type_performed_by,
+                ts.test_performed_by,
                 t.paper_on_glass_enabled,
                 w.wf_stage_description,
                 ts.test_conducted_date,
@@ -122,7 +132,8 @@ try {
             SELECT 
                 t.test_name,
                 t.test_purpose,
-                t.test_performed_by,
+                t.test_performed_by as test_type_performed_by,
+                ts.test_performed_by,
                 t.paper_on_glass_enabled,
                 w.wf_stage_description,
                 ts.test_conducted_date,
@@ -152,11 +163,25 @@ try {
         ];
         $test_conducted_date = $mainData['test_conducted_date'];
         $equipment = $mainData['equipment_code'] ?? 'Unknown Equipment';
+        
+        // Validation: Check if same user is trying to access their own offline test
+        if ($mainData['test_wf_current_stage'] === '1PRV' && 
+            $mainData['test_performed_by'] == $_SESSION['user_id']) {
+            $show_same_user_error = true;
+            // Debug logging
+            error_log("Same user offline test access detected: Stage=" . $mainData['test_wf_current_stage'] . 
+                     ", Performed by=" . $mainData['test_performed_by'] . 
+                     ", Current user=" . $_SESSION['user_id']);
+        }
+    } else {
+        // Debug logging when no main data
+        error_log("No main data found for test_wf_id: " . $test_val_wf_id . ", test_id: " . $test_id);
     }
     
 } catch (Exception $e) {
     // Log error and use fallback values already set above
     error_log("Database error in updatetaskdetails.php (main_data): " . $e->getMessage());
+    $show_same_user_error = false; // Initialize error flag for exception case
 }
 
 try {
@@ -181,8 +206,9 @@ try {
 // Check test finalisation status for conditional UI logic
 $hide_upload_and_submit = false;
 try {
-    // Check if paper-on-glass is enabled AND data entry mode is online AND test is not finalised
-    if (($result['paper_on_glass_enabled'] ?? 'No') == 'Yes' && ($result['data_entry_mode'] ?? '') == 'online') {
+    // Check if paper-on-glass is enabled AND data entry mode is online OR offline AND test is not finalised
+    if (($result['paper_on_glass_enabled'] ?? 'No') == 'Yes' && 
+        (($result['data_entry_mode'] ?? '') == 'online' || ($result['data_entry_mode'] ?? '') == 'offline')) {
         $finalisation_check = DB::queryFirstRow("
             SELECT test_finalised_on, test_finalised_by 
             FROM tbl_test_finalisation_details 
@@ -217,18 +243,23 @@ if (isset($finalisation_check) && $finalisation_check &&
         $finalization_js_data = json_encode([
             'is_finalized' => true,
             'finalized_on' => date('d/m/Y H:i', strtotime($finalisation_check['test_finalised_on'])),
-            'finalized_by' => $finalised_by_user['user_name'] ?? 'Unknown User'
+            'finalized_by' => $finalised_by_user['user_name'] ?? 'Unknown User',
+            'data_entry_mode' => $result['data_entry_mode'] ?? 'online'
         ]);
     } catch (Exception $e) {
         error_log("Error fetching finalization user details: " . $e->getMessage());
         $finalization_js_data = json_encode([
             'is_finalized' => true,
             'finalized_on' => date('d/m/Y H:i', strtotime($finalisation_check['test_finalised_on'])),
-            'finalized_by' => 'Unknown User'
+            'finalized_by' => 'Unknown User',
+            'data_entry_mode' => $result['data_entry_mode'] ?? 'online'
         ]);
     }
 } else {
-    $finalization_js_data = json_encode(['is_finalized' => false]);
+    $finalization_js_data = json_encode([
+        'is_finalized' => false,
+        'data_entry_mode' => $result['data_entry_mode'] ?? 'online'
+    ]);
 }
 
 // Prepare user role information for JavaScript
@@ -515,6 +546,28 @@ function restoreViewedDocumentStates() {
       department_id = "<?php echo htmlspecialchars(!empty($_SESSION['department_id']) ? $_SESSION['department_id'] : '', ENT_QUOTES, 'UTF-8'); ?>";
       read_mode = "<?php echo htmlspecialchars((!empty(secure_get('mode', 'string')) ? 'yes' : 'no'), ENT_QUOTES, 'UTF-8'); ?>";
 
+      // Check for same user offline test access error on page load
+      console.log('Debug: show_same_user_error = <?php echo isset($show_same_user_error) ? ($show_same_user_error ? "true" : "false") : "undefined"; ?>');
+      <?php if (isset($show_same_user_error) && $show_same_user_error): ?>
+      console.log('Debug: Showing same user error popup');
+      Swal.fire({
+        icon: 'error',
+        title: 'Access Denied',
+        text: 'The test data of this test was entered by you in an offline mode which needs to be reviewed by any other team member. You cannot take any action on this test.',
+        confirmButtonText: 'OK',
+        allowOutsideClick: false,
+        allowEscapeKey: false
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = 'assignedcases.php';
+        }
+      });
+      
+      // Disable all interface elements except SweetAlert buttons
+      $('input, button:not(.swal2-confirm):not(.swal2-cancel), select, textarea').prop('disabled', true);
+      $('a:not(.swal2-confirm):not(.swal2-cancel)').addClass('disabled').attr('style', 'pointer-events: none; color: #ccc;');
+      <?php endif; ?>
+
       // PDF Regeneration Spinner Functions
       function showPDFRegenerationSpinner() {
         // Create spinner overlay if it doesn't exist
@@ -559,6 +612,50 @@ function restoreViewedDocumentStates() {
         $('body').css('overflow', '');
       }
 
+      // QA Approval Spinner Functions
+      function showQAApprovalSpinner() {
+        // Create spinner overlay if it doesn't exist
+        if ($('#qa-approval-spinner').length === 0) {
+          const spinnerHTML = `
+            <div id="qa-approval-spinner" style="
+              position: fixed;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              background: rgba(0, 0, 0, 0.7);
+              z-index: 9999;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              flex-direction: column;
+            ">
+              <div class="spinner-border text-success" style="width: 3rem; height: 3rem; margin-bottom: 1rem;" role="status">
+                <span class="sr-only">Loading...</span>
+              </div>
+              <div style="color: white; font-size: 18px; font-weight: 500;">
+                Regenerating certificates with approval details...
+              </div>
+              <div style="color: #ccc; font-size: 14px; margin-top: 0.5rem;">
+                Please wait, this may take a few moments
+              </div>
+            </div>
+          `;
+          $('body').append(spinnerHTML);
+        }
+        $('#qa-approval-spinner').fadeIn(200);
+        // Disable scrolling
+        $('body').css('overflow', 'hidden');
+      }
+
+      function hideQAApprovalSpinner() {
+        $('#qa-approval-spinner').fadeOut(200, function() {
+          $(this).remove();
+        });
+        // Re-enable scrolling
+        $('body').css('overflow', '');
+      }
+
       $(document).on('click', '.navlink-approve', async function(e) {
         e.preventDefault();
 
@@ -587,6 +684,7 @@ function restoreViewedDocumentStates() {
               // Step 1: Try PDF regeneration first (only if conditions are met)
               const pdfResponse = await $.post("core/data/save/regenerate_pdfs_for_approval.php", {
                 test_wf_id: testWfId,
+                upload_id: uploadId,
                 csrf_token: csrfToken
               });
               
@@ -602,6 +700,8 @@ function restoreViewedDocumentStates() {
                 // If PDF regeneration fails due to conditions not met, continue with approval
                 if (pdfResponse.error.includes('conditions not met')) {
                   pdfMessage = ' (PDF regeneration skipped - conditions not met)';
+                } else if (pdfResponse.error.includes('PDF regeneration not applicable')) {
+                  pdfMessage = ' (PDF regeneration skipped - no test documents to regenerate)';
                 } else {
                   throw new Error(pdfResponse.error);
                 }
@@ -786,9 +886,51 @@ function restoreViewedDocumentStates() {
             text: 'Kindly input the Test Conducted Date.'
           });
         } else {
-
-          
-          $('#enterPasswordRemark').modal('show');
+          // Add offline mode file validation before showing password modal
+          validateOfflineModeFiles().then(function(validationResult) {
+            if (!validationResult.isValid) {
+              Swal.fire({
+                icon: 'error',
+                title: 'Missing Required Files',
+                text: validationResult.message,
+                confirmButtonText: 'OK'
+              });
+              return;
+            }
+            
+            // If validation passes, configure and show the password modal
+            configureRemarksModal(
+              'assign', // action
+              'core/data/update/updatewfstage.php', // endpoint
+              {
+                test_conducted_date: convertDateFormat($('#test_conducted_date').val()),
+                val_wf_id: val_wf_id,
+                test_val_wf_id: test_val_wf_id,
+                current_wf_stage: current_wf_stage,
+                action: 'assign'
+              },
+              function(response) {
+                // Success callback
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Success',
+                  text: response.message || 'Test submitted successfully'
+                }).then(() => {
+                  window.location.href = 'assignedcases.php';
+                });
+              }
+            );
+            
+            $('#enterPasswordRemark').modal('show');
+          }).catch(function(error) {
+            console.error('Validation failed:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Validation Error',
+              text: 'Unable to validate file uploads. Please try again.',
+              confirmButtonText: 'OK'
+            });
+          });
         }
 
       });
@@ -805,13 +947,51 @@ function restoreViewedDocumentStates() {
           }
         }
         
-        //alert(current_wf_stage);
+        // Configure modal for the appropriate stage
         if (current_wf_stage == '<?php echo STAGE_REASSIGNED_B; ?>') {
-          url = "core/data/update/updatewfstage.php?test_conducted_date=" + convertDateFormat($('#test_conducted_date').val()) + "&val_wf_id=" + val_wf_id + "&test_val_wf_id=" + test_val_wf_id + "&current_wf_stage=" + current_wf_stage + "&action=assign_back_engg_vendor";
+          configureRemarksModal(
+            'assign_back_engg_vendor', // action
+            'core/data/update/updatewfstage.php', // endpoint
+            {
+              test_conducted_date: convertDateFormat($('#test_conducted_date').val()),
+              val_wf_id: val_wf_id,
+              test_val_wf_id: test_val_wf_id,
+              current_wf_stage: current_wf_stage,
+              action: 'assign_back_engg_vendor'
+            },
+            function(response) {
+              // Success callback
+              Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: response.message || 'Test resubmitted successfully'
+              }).then(() => {
+                window.location.href = 'assignedcases.php';
+              });
+            }
+          );
         } else if (current_wf_stage == '<?php echo STAGE_REASSIGNED_4B; ?>') {
-
-          url = "core/data/update/updatewfstage.php?test_conducted_date=" + convertDateFormat($('#test_conducted_date').val()) + "&val_wf_id=" + val_wf_id + "&test_val_wf_id=" + test_val_wf_id + "&current_wf_stage=" + current_wf_stage + "&action=assign_back_qa_vendor";
-
+          configureRemarksModal(
+            'assign_back_qa_vendor', // action
+            'core/data/update/updatewfstage.php', // endpoint
+            {
+              test_conducted_date: convertDateFormat($('#test_conducted_date').val()),
+              val_wf_id: val_wf_id,
+              test_val_wf_id: test_val_wf_id,
+              current_wf_stage: current_wf_stage,
+              action: 'assign_back_qa_vendor'
+            },
+            function(response) {
+              // Success callback
+              Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: response.message || 'Test resubmitted successfully'
+              }).then(() => {
+                window.location.href = 'assignedcases.php';
+              });
+            }
+          );
         }
 
         $('#enterPasswordRemark').modal('show');
@@ -848,6 +1028,30 @@ function restoreViewedDocumentStates() {
           });
 
         } else {
+          // Configure the remarks modal for internal test submission
+          configureRemarksModal(
+            'assign', // action
+            'core/data/update/updatewfstage.php', // endpoint
+            {
+              test_conducted_date: convertDateFormat($('#test_conducted_date').val()),
+              test_type: 'internal',
+              val_wf_id: val_wf_id,
+              test_val_wf_id: test_val_wf_id,
+              current_wf_stage: current_wf_stage,
+              action: 'assign'
+            },
+            function(response) {
+              // Success callback
+              Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: response.message || 'Internal test submitted successfully'
+              }).then(() => {
+                window.location.href = 'assignedcases.php';
+              });
+            }
+          );
+          
           $('#enterPasswordRemark').modal('show');
         }
 
@@ -881,6 +1085,29 @@ function restoreViewedDocumentStates() {
           });
 
         } else {
+          // Configure the remarks modal for engineering approval
+          configureRemarksModal(
+            'engg_approve', // action
+            'core/data/update/updatewfstage.php', // endpoint
+            {
+              test_conducted_date: convertDateFormat($('#test_conducted_date').val()),
+              val_wf_id: val_wf_id,
+              test_val_wf_id: test_val_wf_id,
+              current_wf_stage: current_wf_stage,
+              action: 'engg_approve'
+            },
+            function(response) {
+              // Custom success callback for engineering approval
+              Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: response.message || 'Test approved successfully'
+              }).then(() => {
+                window.location.href = 'assignedcases.php';
+              });
+            }
+          );
+          
           $('#enterPasswordRemark').modal('show');
         }
 
@@ -906,6 +1133,29 @@ function restoreViewedDocumentStates() {
             text: 'You have one or more files to be approved.'
           });
         } else {
+          // Configure the remarks modal for engineering rejection
+          configureRemarksModal(
+            'engg_reject', // action
+            'core/data/update/updatewfstage.php', // endpoint
+            {
+              test_conducted_date: convertDateFormat($('#test_conducted_date').val()),
+              val_wf_id: val_wf_id,
+              test_val_wf_id: test_val_wf_id,
+              current_wf_stage: current_wf_stage,
+              action: 'engg_reject'
+            },
+            function(response) {
+              // Custom success callback for engineering rejection
+              Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: response.message || 'Test rejected successfully'
+              }).then(() => {
+                window.location.href = 'assignedcases.php';
+              });
+            }
+          );
+          
           $('#enterPasswordRemark').modal('show');
         }
       });
@@ -920,7 +1170,6 @@ function restoreViewedDocumentStates() {
           }
         }
         
-        url = "core/data/update/updatewfstage.php?test_conducted_date=" + convertDateFormat($('#test_conducted_date').val()) + "&val_wf_id=" + val_wf_id + "&test_val_wf_id=" + test_val_wf_id + "&current_wf_stage=" + current_wf_stage + "&action=engg_approve_final";
         if ($(".navlink-approve")[0]) {
           Swal.fire({
             icon: 'error',
@@ -928,11 +1177,34 @@ function restoreViewedDocumentStates() {
             text: 'You have one or more files to be approved.'
           });
         } else {
+          // Configure the remarks modal for final engineering approval
+          configureRemarksModal(
+            'engg_approve_final', // action
+            'core/data/update/updatewfstage.php', // endpoint
+            {
+              test_conducted_date: convertDateFormat($('#test_conducted_date').val()),
+              val_wf_id: val_wf_id,
+              test_val_wf_id: test_val_wf_id,
+              current_wf_stage: current_wf_stage,
+              action: 'engg_approve_final'
+            },
+            function(response) {
+              // Success callback
+              Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: response.message || 'Test approved successfully'
+              }).then(() => {
+                window.location.href = 'assignedcases.php';
+              });
+            }
+          );
+          
           $('#enterPasswordRemark').modal('show');
         }
       });
 
-      $("#qaapprove").click(function() {
+      $("#qaapprove").click(async function() {
         // Check ACPH validation first if functions are available
         if (typeof window.validateACPHDataComplete === 'function') {
           const validationResult = window.validateACPHDataComplete();
@@ -963,7 +1235,75 @@ function restoreViewedDocumentStates() {
             text: 'You have one or more files to be approved.'
           });
         } else {
-          $('#enterPasswordRemark').modal('show');
+          
+          // Check if we need PDF regeneration for stage 3A + paper on glass + online mode
+          if (current_wf_stage === '<?php echo STAGE_REASSIGNED_A; ?>' && department_id === '<?php echo DEPT_QA; ?>') {
+            
+            // Show confirmation dialog first
+            const result = await Swal.fire({
+              title: 'QA Approval Confirmation',
+              text: 'Do you want to approve this test? Certificate files will be regenerated with approval details.',
+              icon: 'question',
+              showCancelButton: true,
+              confirmButtonText: 'Yes, Approve',
+              cancelButtonText: 'Cancel'
+            });
+
+            if (result.isConfirmed) {
+              const csrfToken = $('meta[name="csrf-token"]').attr('content');
+              
+              // Show spinner for PDF regeneration
+              showQAApprovalSpinner();
+              
+              try {
+                // Step 1: Regenerate PDFs with QA approval details (only for stage 3A)
+                const pdfResponse = await $.post("core/data/save/regenerate_qa_approval_pdfs.php", {
+                  test_wf_id: test_val_wf_id,
+                  csrf_token: csrfToken
+                });
+                
+                let pdfMessage = '';
+                
+                if (pdfResponse.success) {
+                  pdfMessage = ' Certificates regenerated with approval details.';
+                  console.log('QA PDF regeneration successful:', pdfResponse.message);
+                } else {
+                  // If PDF regeneration fails, still continue with approval but log the error
+                  console.log('QA PDF regeneration failed:', pdfResponse.error);
+                  pdfMessage = ' (Certificate regeneration failed - approval will proceed)';
+                }
+                
+                // Hide spinner
+                hideQAApprovalSpinner();
+                
+                // Step 2: Proceed with normal approval workflow via modal
+                $('#enterPasswordRemark').modal('show');
+                
+              } catch (error) {
+                // Hide spinner on error
+                hideQAApprovalSpinner();
+                
+                console.error('QA PDF regeneration error:', error);
+                
+                await Swal.fire({
+                  icon: 'warning',
+                  title: 'PDF Regeneration Failed',
+                  text: 'Certificate regeneration failed, but you can still proceed with approval. Continue?',
+                  showCancelButton: true,
+                  confirmButtonText: 'Continue Approval',
+                  cancelButtonText: 'Cancel'
+                }).then((continueResult) => {
+                  if (continueResult.isConfirmed) {
+                    $('#enterPasswordRemark').modal('show');
+                  }
+                });
+              }
+            }
+            
+          } else {
+            // For non-3A stages or other conditions, proceed normally
+            $('#enterPasswordRemark').modal('show');
+          }
         }
       });
 
@@ -1641,6 +1981,39 @@ function adduserremark(ur, up) {
         });
       }
       
+      // Function to validate offline mode file uploads
+      function validateOfflineModeFiles() {
+        // Check if in offline mode
+        const currentMode = window.testFinalizationStatus && window.testFinalizationStatus.data_entry_mode 
+            ? window.testFinalizationStatus.data_entry_mode : 'online';
+        
+        if (currentMode !== 'offline') {
+            return Promise.resolve({ isValid: true, message: 'Not offline mode - validation skipped' });
+        }
+        
+        // Make AJAX call to check uploaded files
+        return $.ajax({
+          url: 'core/data/get/validateofflinefiles.php',
+          type: 'GET',
+          data: {
+            test_val_wf_id: test_val_wf_id
+          },
+          dataType: 'json'
+        }).then(function(response) {
+          return {
+            isValid: response.isValid,
+            message: response.message,
+            missing_files: response.missing_files || []
+          };
+        }).catch(function(xhr, status, error) {
+          console.error('Validation error:', error);
+          return {
+            isValid: false,
+            message: 'Failed to validate files. Please try again.'
+          };
+        });
+      }
+      
       // Function to search instruments
       function searchInstruments(searchTerm) {
         
@@ -2230,6 +2603,49 @@ function adduserremark(ur, up) {
           }
         });
         
+        // Handle 1RRV stage - show Submit to Checker button after finalization
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentStage = urlParams.get('current_wf_stage');
+        
+        if (currentStage === '1RRV') {
+          // Find the warning message and replace it with the Submit to Checker button
+          const warningAlert = $('.alert-warning').filter(':contains("Test data must be finalized")');
+          if (warningAlert.length > 0) {
+            warningAlert.replaceWith(`
+              <button id="resubmit_to_checker" class='btn btn-primary btn-small'>Submit to Checker</button>
+            `);
+            
+            // Re-bind the click event for the new button to use the modal
+            $("#resubmit_to_checker").off('click').on('click', function() {
+              // Configure the remarks modal for resubmission
+              configureRemarksModal(
+                'resubmit', // action
+                'core/data/update/resubmit_offline_test.php', // endpoint
+                {
+                  test_wf_id: urlParams.get('test_val_wf_id') || '',
+                  val_wf_id: urlParams.get('val_wf_id') || '',
+                  test_id: urlParams.get('test_id') || ''
+                },
+                function(response) {
+                  // Custom success callback for resubmission
+                  Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: response.message || 'Test resubmitted successfully'
+                  }).then(() => {
+                    window.location.reload();
+                  });
+                }
+              );
+              
+              // Show the Add Remarks modal
+              $('#enterPasswordRemark').modal('show');
+            });
+            
+            console.log('Submit to Checker button shown after finalization for 1RRV stage');
+          }
+        }
+        
         console.log('Submit buttons shown after finalization');
       }
       
@@ -2269,6 +2685,65 @@ function adduserremark(ur, up) {
         showSubmitButtonsAfterFinalization();
         
         console.log('Processed testDataFinalized event and updated submit button visibility');
+      });
+      
+      // Offline test review handlers
+      $("#offline_approve").click(function() {
+        url = "core/data/update/offline_test_review.php";
+        offline_action = "approve";
+        
+        if ($(".navlink-approve")[0]) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'You have one or more files to be approved.'
+          });
+        } else {
+          $('#enterPasswordRemark').modal('show');
+        }
+      });
+      
+      $("#offline_reject").click(function() {
+        url = "core/data/update/offline_test_review.php";
+        offline_action = "reject";
+        
+        if ($(".navlink-approve")[0]) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'You have one or more files to be approved.'
+          });
+        } else {
+          $('#enterPasswordRemark').modal('show');
+        }
+      });
+      
+      $("#resubmit_to_checker").click(function() {
+        // Configure the remarks modal for resubmission
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        configureRemarksModal(
+          'resubmit', // action
+          'core/data/update/resubmit_offline_test.php', // endpoint
+          {
+            test_wf_id: urlParams.get('test_val_wf_id') || '',
+            val_wf_id: urlParams.get('val_wf_id') || '',
+            test_id: urlParams.get('test_id') || ''
+          },
+          function(response) {
+            // Custom success callback for resubmission
+            Swal.fire({
+              icon: 'success',
+              title: 'Success',
+              text: response.message || 'Test resubmitted successfully'
+            }).then(() => {
+              window.location.reload();
+            });
+          }
+        );
+        
+        // Show the Add Remarks modal
+        $('#enterPasswordRemark').modal('show');
       });
       
     });
@@ -2864,6 +3339,40 @@ function adduserremark(ur, up) {
 
 
                               <?php
+                                                                        } else if (($current_wf_stage == STAGE_OFFLINE_PROVISIONAL || $current_wf_stage == STAGE_OFFLINE_REJECTED_ENGG) && !$show_same_user_error) // Offline test awaiting checker review
+                                                                        {
+                              ?>
+                                <!-- Approve/Reject buttons for offline test review -->
+                                <button id="offline_approve" class='btn btn-success btn-small'>Approve</button>
+                                &nbsp;&nbsp;
+                                <button id="offline_reject" class='btn btn-danger btn-small'>Reject</button>
+
+                              <?php
+                                                                        } else if ($current_wf_stage == STAGE_OFFLINE_REJECTED) // Offline test rejected, ready for resubmission
+                                                                        {
+                                                                          // Check if test data has been finalized before showing Submit to Checker button
+                                                                          $finalization_check = DB::queryFirstRow(
+                                                                            "SELECT test_finalised_by FROM tbl_test_finalisation_details 
+                                                                            WHERE test_wf_id = %s AND status = 'Active'",
+                                                                            $test_val_wf_id
+                                                                          );
+                                                                          
+                                                                          if ($finalization_check) {
+                              ?>
+                                <!-- Submit to Checker button for rejected offline test (only shown if finalized) -->
+                                <button id="resubmit_to_checker" class='btn btn-primary btn-small'>Submit to Checker</button>
+
+                              <?php
+                                                                          } else {
+                              ?>
+                                <!-- Message when test data is not finalized yet -->
+                                <div class="alert alert-warning py-2 mb-2">
+                                  <i class="mdi mdi-information"></i>
+                                  <small>Test data must be finalized before it can be submitted to checker.</small>
+                                </div>
+
+                              <?php
+                                                                          }
                                                                         }
                                                                       } else if ($_SESSION['logged_in_user'] == "employee" and $_SESSION['department_id'] == 1 and empty(secure_get('mode', 'string'))) // Logged in user is from the engineering team
                                                                       {

@@ -125,13 +125,13 @@ try {
     <table class="table table-striped table-hover" id="tbl-filter-details">
         <thead>
             <tr>
-                <th>Filter Code</th>
-                <th>Filter Name</th>
+                <th>Filter code</th>
+                <th>Filter name</th>
                 <th>Type</th>
                 <th>Size</th>
                 <th>Manufacturer</th>
-                <th>Installation Date</th>
-                <th>Due Date</th>
+                <th>Installation date</th>
+                <th>Due date</th>
                 <th>Status</th>
                 <th>Actions</th>
             </tr>
@@ -183,7 +183,7 @@ try {
                     <a href="managefilterdetails.php?m=m&filter_id=' . intval($row['filter_id']) . '" 
                        class="btn btn-gradient-primary btn-sm" 
                        title="Edit Filter">
-                        <i class="mdi mdi-pencil"></i> Edit
+                         Edit
                     </a>
                 </td>
             </tr>';

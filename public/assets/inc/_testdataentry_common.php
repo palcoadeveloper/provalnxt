@@ -12,10 +12,11 @@
  * Required variables in parent scope:
  * - $result (array containing test data)
  * - $test_val_wf_id (string)
+ * - $current_wf_stage (string) - current workflow stage
  */
 
 // Ensure required variables are available
-if (!isset($result) || !isset($test_val_wf_id)) {
+if (!isset($result) || !isset($test_val_wf_id) || !isset($current_wf_stage)) {
     error_log("Test Data Entry Common: Required variables not available");
     return;
 }
@@ -23,6 +24,15 @@ if (!isset($result) || !isset($test_val_wf_id)) {
 // Check if data entry mode is already set to offline
 $data_entry_mode = $result['data_entry_mode'] ?? 'online';
 $is_offline_mode = ($data_entry_mode === 'offline');
+
+// Check if offline mode switching is allowed based on workflow stage
+// Only allow offline mode switching when test_wf_current_stage is 1, 3B, or 4B AND currently online
+$allowed_offline_stages = ['1', '3B', '4B'];
+$current_stage = $result['test_wf_current_stage'] ?? $current_wf_stage;
+$can_switch_to_offline = in_array($current_stage, $allowed_offline_stages) && ($data_entry_mode === 'online');
+
+// For radio button states: offline mode is "allowed" if currently offline OR can switch to offline
+$offline_mode_allowed = $is_offline_mode || $can_switch_to_offline;
 ?>
 
 <!-- Test Data Entry - Instruments Management -->
@@ -129,12 +139,18 @@ $is_offline_mode = ($data_entry_mode === 'offline');
                  id="mode_offline" 
                  value="offline" 
                  <?php echo ($data_entry_mode === 'offline') ? 'checked' : ''; ?>
-                 <?php echo $is_offline_mode ? 'disabled' : ''; ?>>
-          <label for="mode_offline" class="mode-label">
+                 <?php echo ($is_offline_mode || !$can_switch_to_offline) ? 'disabled' : ''; ?>>
+          <label for="mode_offline" class="mode-label <?php echo !$offline_mode_allowed ? 'text-muted' : ''; ?>">
             <i class="mdi mdi-file-document mode-icon"></i>
             <div class="mode-text">
               <h6>Offline Mode (Paper First)</h6>
-              <small class="text-muted">Record on paper, then upload & enter data</small>
+              <small class="text-muted">
+                <?php if ($offline_mode_allowed || $is_offline_mode): ?>
+                  Record on paper, then upload & enter data
+                <?php else: ?>
+                  Not available for current workflow stage
+                <?php endif; ?>
+              </small>
             </div>
           </label>
         </div>

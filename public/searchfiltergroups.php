@@ -143,166 +143,7 @@ e.preventDefault();
     });
     </script>
     
-    <style>
-    /* Modern DataTable Styling */
-    #tbl-filtergroup-details {
-        border-collapse: separate;
-        border-spacing: 0;
-        border-radius: 8px !important;
-        overflow: hidden;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    
-    #tbl-filtergroup-details thead th {
-        background: linear-gradient(135deg, #b967db 0%, #9c4ac7 100%) !important;
-        color: white !important;
-        font-weight: 600 !important;
-        text-transform: uppercase !important;
-        font-size: 0.85rem !important;
-        letter-spacing: 0.5px !important;
-        padding: 15px 12px !important;
-        border: none !important;
-        position: relative !important;
-        vertical-align: middle !important;
-        text-align: center !important;
-    }
-    
-    #tbl-filtergroup-details thead th:first-child {
-        border-top-left-radius: 8px;
-    }
-    
-    #tbl-filtergroup-details thead th:last-child {
-        border-top-right-radius: 8px;
-    }
-    
-    #tbl-filtergroup-details tbody td {
-        padding: 12px !important;
-        vertical-align: middle !important;
-        border-bottom: 1px solid #e3e6f0 !important;
-        transition: all 0.3s ease !important;
-    }
-    
-    #tbl-filtergroup-details tbody td:last-child {
-        text-align: center !important;
-    }
-    
-    #tbl-filtergroup-details tbody tr {
-        transition: all 0.3s ease !important;
-    }
-    
-    #tbl-filtergroup-details tbody tr:hover {
-        background-color: #f8f9fe !important;
-        transform: scale(1.02) !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-    }
-    
-    #tbl-filtergroup-details tbody tr:nth-child(even) {
-        background-color: #fafbfc !important;
-    }
-    
-    /* DataTable Controls Styling */
-    .dataTables_wrapper .dataTables_length select {
-        padding: 6px 12px !important;
-        border: 2px solid #e3e6f0 !important;
-        border-radius: 6px !important;
-        background-color: white !important;
-        transition: all 0.3s ease !important;
-    }
-    
-    .dataTables_wrapper .dataTables_length select:focus {
-        border-color: #b967db !important;
-        outline: none !important;
-        box-shadow: 0 0 0 3px rgba(185, 103, 219, 0.1) !important;
-    }
-    
-    .dataTables_wrapper .dataTables_filter input {
-        padding: 8px 16px !important;
-        border: 2px solid #e3e6f0 !important;
-        border-radius: 25px !important;
-        background-color: white !important;
-        transition: all 0.3s ease !important;
-        width: 250px !important;
-    }
-    
-    .dataTables_wrapper .dataTables_filter input:focus {
-        border-color: #348fe2 !important;
-        outline: none !important;
-        box-shadow: 0 0 0 3px rgba(52, 143, 226, 0.1) !important;
-        width: 300px !important;
-    }
-    
-    .dataTables_wrapper .dataTables_paginate .paginate_button {
-        padding: 8px 16px !important;
-        margin: 0 2px !important;
-        border: 1px solid #e3e6f0 !important;
-        border-radius: 6px !important;
-        background: white !important;
-        color: #5a5c69 !important;
-        transition: all 0.3s ease !important;
-    }
-    
-    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-        background: #b967db !important;
-        color: white !important;
-        border-color: #b967db !important;
-        transform: translateY(-1px) !important;
-    }
-    
-    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-        background: linear-gradient(135deg, #b967db 0%, #9c4ac7 100%) !important;
-        color: white !important;
-        border-color: #b967db !important;
-        font-weight: 600 !important;
-    }
-    
-    .dataTables_wrapper .dataTables_info {
-        color: #6c757d !important;
-        font-weight: 500 !important;
-        padding-top: 12px !important;
-    }
-    
-    /* Action Buttons Enhancement */
-    #tbl-filtergroup-details .btn {
-        border-radius: 20px !important;
-        font-size: 0.8rem !important;
-        padding: 6px 14px !important;
-        font-weight: 500 !important;
-        transition: all 0.3s ease !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.5px !important;
-    }
-    
-    #tbl-filtergroup-details .btn:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-    }
-    
-    /* Loading and Processing States */
-    .dataTables_processing {
-        background: rgba(255, 255, 255, 0.9) !important;
-        border: 1px solid #ddd !important;
-        border-radius: 8px !important;
-        color: #348fe2 !important;
-        font-weight: 600 !important;
-        padding: 16px 24px !important;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
-    }
-    
-    /* Responsive Improvements */
-    @media (max-width: 768px) {
-        .dataTables_wrapper .dataTables_filter input {
-            width: 200px !important;
-        }
-        
-        .dataTables_wrapper .dataTables_filter input:focus {
-            width: 240px !important;
-        }
-        
-        #tbl-filtergroup-details tbody tr:hover {
-            transform: none !important;
-        }
-    }
-    </style>
+    <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
     
   </head>
   <body>
@@ -369,7 +210,7 @@ e.preventDefault();
                     
                     <form class="forms-sample" id="formreport">
                       <div class="form-row">
-                        <div class="form-group col-md-4">
+                        <div class="form-group col-md-12">
                           <label for="status">Status</label>
                           <select class="form-control" id="status" name="status">
                             <option value="">All Status</option>
@@ -377,11 +218,11 @@ e.preventDefault();
                             <option value="Inactive">Inactive</option>
                           </select>
                         </div>
-                        <div class="form-group col-md-8 d-flex align-items-end">
-                          <input type="submit" id="searchfiltergroups" class="btn btn-gradient-primary mr-2" value="Search Filter Groups"/>
-                          <button type="button" class="btn btn-light" onclick="window.location.reload();">Reset</button>
-                        </div>
+                        
+                         
                       </div>
+                       <input type="submit" id="searchfiltergroups" class="btn btn-gradient-original-success mr-2" value="Search Filter Groups"/>
+                          
                     </form>
                   </div>
                 </div>

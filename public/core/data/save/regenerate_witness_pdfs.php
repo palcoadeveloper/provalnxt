@@ -19,9 +19,10 @@ require_once(__DIR__ . '/../../pdf/acph_pdf_generator.php');
  * Main function to regenerate ACPH PDFs with witness details
  * @param string $testWfId Test workflow ID
  * @param array $witnessDetails Witness/approver details
+ * @param int $uploadId Upload ID to target specific record
  * @return bool Success status
  */
-function regeneratePDFsWithWitness($testWfId, $witnessDetails) {
+function regeneratePDFsWithWitness($testWfId, $witnessDetails, $uploadId) {
     try {
         error_log("Starting ACPH PDF regeneration with witness details for test_wf_id: $testWfId");
         
@@ -60,52 +61,132 @@ function regeneratePDFsWithWitness($testWfId, $witnessDetails) {
         
         error_log("Witness data prepared: " . json_encode($witnessData));
         
+        // 4. Check which document types exist in the original upload
+        $existingDocTypes = getExistingDocumentTypes($testWfId);
+        
+        if (empty($existingDocTypes)) {
+            error_log("ERROR: No existing document types found for test_wf_id: $testWfId");
+            return false;
+        }
+        
         $regenerationResults = [];
         
-        // 4. Generate new Raw Data PDF with witness details
-        error_log("Generating new ACPH Raw Data PDF with witness details");
-        $rawDataResult = generateACPHRawDataPDF($testWfId, $witnessData, $testConductedDate);
+        // 5. Selectively generate PDFs based on existing document types
         
-        if ($rawDataResult['success']) {
-            // Update database with new Raw Data PDF path
-            updateUploadRecord($testWfId, 'raw_data', $rawDataResult['upload_path']);
-            $regenerationResults['raw_data'] = true;
-            error_log("SUCCESS: ACPH Raw Data PDF regenerated: " . $rawDataResult['filename']);
+        // Generate Raw Data PDF only if it existed originally
+        if (in_array('raw_data', $existingDocTypes)) {
+            error_log("Generating new ACPH Raw Data PDF with witness details (original exists)");
+            $rawDataResult = generateACPHRawDataPDF($testWfId, $witnessData, $testConductedDate);
+            
+            if ($rawDataResult['success']) {
+                // Update database with new Raw Data PDF path
+                updateUploadRecord($testWfId, 'raw_data', $rawDataResult['upload_path'], $uploadId);
+                $regenerationResults['raw_data'] = true;
+                error_log("SUCCESS: ACPH Raw Data PDF regenerated: " . $rawDataResult['filename']);
+            } else {
+                error_log("ERROR: Failed to regenerate ACPH Raw Data PDF: " . ($rawDataResult['error'] ?? 'Unknown error'));
+                $regenerationResults['raw_data'] = false;
+            }
         } else {
-            error_log("ERROR: Failed to regenerate ACPH Raw Data PDF: " . ($rawDataResult['error'] ?? 'Unknown error'));
-            $regenerationResults['raw_data'] = false;
+            error_log("SKIPPING: Raw Data PDF regeneration (no original Raw Data PDF found)");
         }
         
-        // 5. Generate new Test Certificate PDF with witness details
-        error_log("Generating new ACPH Test Certificate PDF with witness details");
-        $certificateResult = generateACPHTestCertificatePDF($testWfId, $witnessData, $testConductedDate);
-        
-        if ($certificateResult['success']) {
-            // Update database with new Test Certificate PDF path
-            updateUploadRecord($testWfId, 'test_certificate', $certificateResult['upload_path']);
-            $regenerationResults['test_certificate'] = true;
-            error_log("SUCCESS: ACPH Test Certificate PDF regenerated: " . $certificateResult['filename']);
+        // Generate Test Certificate PDF only if it existed originally
+        if (in_array('test_certificate', $existingDocTypes)) {
+            error_log("Generating new ACPH Test Certificate PDF with witness details (original exists)");
+            $certificateResult = generateACPHTestCertificatePDF($testWfId, $witnessData, $testConductedDate);
+            
+            if ($certificateResult['success']) {
+                // Update database with new Test Certificate PDF path
+                updateUploadRecord($testWfId, 'test_certificate', $certificateResult['upload_path'], $uploadId);
+                $regenerationResults['test_certificate'] = true;
+                error_log("SUCCESS: ACPH Test Certificate PDF regenerated: " . $certificateResult['filename']);
+            } else {
+                error_log("ERROR: Failed to regenerate ACPH Test Certificate PDF: " . ($certificateResult['error'] ?? 'Unknown error'));
+                $regenerationResults['test_certificate'] = false;
+            }
         } else {
-            error_log("ERROR: Failed to regenerate ACPH Test Certificate PDF: " . ($certificateResult['error'] ?? 'Unknown error'));
-            $regenerationResults['test_certificate'] = false;
+            error_log("SKIPPING: Test Certificate PDF regeneration (no original Test Certificate PDF found)");
         }
         
-        // Check if at least one PDF was successfully regenerated
-        $hasSuccess = in_array(true, $regenerationResults, true);
-        if (!$hasSuccess) {
-            error_log("ERROR: No ACPH PDFs were successfully regenerated for test_wf_id: $testWfId");
+        // Check if all attempted PDF regenerations were successful
+        // We consider it successful if we either regenerated all intended documents or skipped appropriately
+        $hasSuccess = !empty($regenerationResults) && !in_array(false, $regenerationResults, true);
+        
+        if (!$hasSuccess && !empty($regenerationResults)) {
+            error_log("ERROR: One or more ACPH PDF regenerations failed for test_wf_id: $testWfId");
+            error_log("Regeneration results: " . json_encode($regenerationResults));
+            return false;
+        }
+        
+        if (empty($regenerationResults)) {
+            error_log("INFO: No ACPH PDFs needed regeneration for test_wf_id: $testWfId (no matching document types found)");
             return false;
         }
         
         // 6. Log successful regeneration
-        logPDFRegeneration($testWfId, $witnessDetails);
+        logPDFRegeneration($testWfId, $witnessDetails, array_keys($regenerationResults));
         
-        error_log("ACPH PDF regeneration completed successfully for test_wf_id: $testWfId");
+        $regeneratedTypes = implode(', ', array_keys($regenerationResults));
+        error_log("ACPH PDF regeneration completed successfully for test_wf_id: $testWfId. Regenerated types: $regeneratedTypes");
         return true;
         
     } catch (Exception $e) {
         error_log("Error in ACPH PDF regeneration for test_wf_id $testWfId: " . $e->getMessage());
         return false;
+    }
+}
+
+/**
+ * Get existing document types from upload record
+ * @param string $testWfId Test workflow ID
+ * @return array Array of document types that exist in the upload record
+ */
+function getExistingDocumentTypes($testWfId) {
+    try {
+        $uploadRecord = DB::queryFirstRow("
+            SELECT upload_path_raw_data, upload_path_test_certificate, upload_path_master_certificate, upload_path_other_doc, upload_type
+            FROM tbl_uploads 
+            WHERE test_wf_id = %s 
+            AND (upload_type = 'acph_test_documents' OR upload_type = 'raw_data' OR upload_type = 'test_certificate')
+            ORDER BY uploaded_datetime DESC
+            LIMIT 1
+        ", $testWfId);
+        
+        if (!$uploadRecord) {
+            error_log("No upload record found for test_wf_id: $testWfId");
+            return [];
+        }
+        
+        $existingTypes = [];
+        
+        // Check which document types exist (have non-empty paths and files exist)
+        if (!empty($uploadRecord['upload_path_raw_data']) && 
+            (strpos($uploadRecord['upload_path_raw_data'], 'uploads/') !== false || file_exists($uploadRecord['upload_path_raw_data']))) {
+            $existingTypes[] = 'raw_data';
+        }
+        
+        if (!empty($uploadRecord['upload_path_test_certificate']) && 
+            (strpos($uploadRecord['upload_path_test_certificate'], 'uploads/') !== false || file_exists($uploadRecord['upload_path_test_certificate']))) {
+            $existingTypes[] = 'test_certificate';
+        }
+        
+        if (!empty($uploadRecord['upload_path_master_certificate']) && 
+            (strpos($uploadRecord['upload_path_master_certificate'], 'uploads/') !== false || file_exists($uploadRecord['upload_path_master_certificate']))) {
+            $existingTypes[] = 'master_certificate';
+        }
+        
+        if (!empty($uploadRecord['upload_path_other_doc']) && 
+            (strpos($uploadRecord['upload_path_other_doc'], 'uploads/') !== false || file_exists($uploadRecord['upload_path_other_doc']))) {
+            $existingTypes[] = 'other_doc';
+        }
+        
+        error_log("Existing document types for test_wf_id $testWfId: " . implode(', ', $existingTypes));
+        return $existingTypes;
+        
+    } catch (Exception $e) {
+        error_log("Error getting existing document types: " . $e->getMessage());
+        return [];
     }
 }
 
@@ -155,9 +236,10 @@ function shouldRegeneratePDFs($testWfId) {
  * @param string $testWfId Test workflow ID
  * @param string $type Type of PDF ('raw_data' or 'test_certificate')
  * @param string $uploadPath New upload path
+ * @param int $uploadId Upload ID to target specific record
  * @return bool Success status
  */
-function updateUploadRecord($testWfId, $type, $uploadPath) {
+function updateUploadRecord($testWfId, $type, $uploadPath, $uploadId) {
     try {
         $columnMap = [
             'raw_data' => 'upload_path_raw_data',
@@ -174,12 +256,12 @@ function updateUploadRecord($testWfId, $type, $uploadPath) {
         // Try to update existing record first
         $updated = DB::update('tbl_uploads', 
             [$column => $uploadPath], 
-            'test_wf_id=%s', 
-            $testWfId
+            'upload_id=%i', 
+            $uploadId
         );
         
         if ($updated > 0) {
-            error_log("SUCCESS: Updated existing upload record for test_wf_id: $testWfId, type: $type");
+            error_log("SUCCESS: Updated existing upload record for upload_id: $uploadId, type: $type");
             return true;
         }
         
@@ -212,11 +294,12 @@ function updateUploadRecord($testWfId, $type, $uploadPath) {
 /**
  * Test function to manually trigger ACPH PDF regeneration for debugging
  * @param string $testWfId Test workflow ID to test with
+ * @param int $uploadId Upload ID to test with
  * @return bool Success status
  */
-function testPDFRegeneration($testWfId) {
+function testPDFRegeneration($testWfId, $uploadId = 0) {
     error_log("=== MANUAL ACPH PDF REGENERATION TEST START ===");
-    error_log("Test WF ID: $testWfId");
+    error_log("Test WF ID: $testWfId, Upload ID: $uploadId");
     
     // Mock witness details for testing
     $witnessDetails = [
@@ -228,7 +311,7 @@ function testPDFRegeneration($testWfId) {
         'approval_timestamp' => date('Y-m-d H:i:s')
     ];
     
-    $result = regeneratePDFsWithWitness($testWfId, $witnessDetails);
+    $result = regeneratePDFsWithWitness($testWfId, $witnessDetails, $uploadId);
     
     error_log("=== MANUAL ACPH PDF REGENERATION TEST END ===");
     error_log("Result: " . ($result ? 'SUCCESS' : 'FAILED'));
@@ -240,18 +323,21 @@ function testPDFRegeneration($testWfId) {
  * Log ACPH PDF regeneration event
  * @param string $testWfId Test workflow ID
  * @param array $witnessDetails Witness details
+ * @param array $regeneratedTypes Array of document types that were regenerated
  */
-function logPDFRegeneration($testWfId, $witnessDetails) {
+function logPDFRegeneration($testWfId, $witnessDetails, $regeneratedTypes = []) {
     try {
+        $typesString = !empty($regeneratedTypes) ? implode(', ', $regeneratedTypes) : 'none';
+        
         DB::insert('log', [
             'change_type' => 'acph_pdf_regeneration_witness',
             'table_name' => 'tbl_test_schedules_tracking',
-            'change_description' => "ACPH PDFs regenerated with witness details for test_wf_id: $testWfId. Witness: " . ($witnessDetails['name'] ?? 'N/A'),
+            'change_description' => "ACPH PDFs regenerated with witness details for test_wf_id: $testWfId. Document types: $typesString. Witness: " . ($witnessDetails['name'] ?? 'N/A'),
             'change_by' => $_SESSION['user_id'] ?? 0,
             'unit_id' => $_SESSION['unit_id'] ?? null
         ]);
         
-        error_log("ACPH PDF regeneration logged for test_wf_id: $testWfId");
+        error_log("ACPH PDF regeneration logged for test_wf_id: $testWfId (types: $typesString)");
         
     } catch (Exception $e) {
         error_log("Error logging ACPH PDF regeneration: " . $e->getMessage());

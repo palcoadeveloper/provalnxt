@@ -108,11 +108,11 @@ function getUserDetails($userType, $username) {
     } elseif ($userType === "V") { // Vendor
         try{
         $user = DB::queryFirstRow(
-            "SELECT user_id, employee_id, user_name, vendor_name, is_account_locked, 
+            "SELECT user_id, employee_id, user_name, user_email, vendor_name, is_account_locked,
                     user_password, is_default_password, user_status, user_domain_id, u.vendor_id
-             FROM users u, vendors v 
-             WHERE u.vendor_id = v.vendor_id 
-               AND u.user_type = 'vendor' 
+             FROM users u, vendors v
+             WHERE u.vendor_id = v.vendor_id
+               AND u.user_type = 'vendor'
                AND user_domain_id = %s",
             $username
         );

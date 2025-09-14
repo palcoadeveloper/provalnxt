@@ -71,61 +71,9 @@ $vendor_details = DB::query("SELECT vendor_id, vendor_name FROM vendors WHERE ve
     <link rel="stylesheet" href="assets/css/jquery-ui.css">
     <script src="assets/js/jquery-ui.min.js"></script>
     
-    <style>
-    .form-control:focus {
-        border-color: #b967db;
-        box-shadow: 0 0 0 0.2rem rgba(185, 103, 219, 0.25);
-    }
     
-    .card {
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-        border: 1px solid rgba(0, 0, 0, 0.125);
-    }
-    
-    .required {
-        color: #dc3545;
-    }
-    
-    .form-control-file {
-        border: 2px dashed #ddd;
-        border-radius: 4px;
-        padding: 10px;
-        background-color: #f9f9f9;
-        transition: border-color 0.3s ease;
-        width: 100%;
-    }
-    
-    .form-control-file:hover {
-        border-color: #007bff;
-        background-color: #f0f8ff;
-    }
-    
-    .form-control-file:focus {
-        border-color: #007bff;
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-    }
-    
-    .form-control-file.is-invalid {
-        border-color: #dc3545;
-        background-color: #fff5f5;
-    }
-    
-    /* Certificate History Table Borders */
-    #certificateHistoryTable {
-        border: 1px solid #dee2e6 !important;
-    }
-    
-    #certificateHistoryTable th,
-    #certificateHistoryTable td {
-        border: 1px solid #dee2e6 !important;
-    }
-    
-    #certificateHistoryTable thead th {
-        border-top: 1px solid #dee2e6 !important;
-        border-bottom: 2px solid #dee2e6 !important;
-        background-color: #f8f9fa;
-    }
-    </style>
+    <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
+
 </head>
 <body>
     <?php include_once "assets/inc/_pleasewaitmodal.php"; ?>
@@ -252,11 +200,14 @@ $vendor_details = DB::query("SELECT vendor_id, vendor_name FROM vendors WHERE ve
                                                 <label for="master_certificate_file">Master Certificate File <span class="required">*</span></label>
                                                 <input type="file" class="form-control-file" 
                                                        name="master_certificate_file" id="master_certificate_file" 
-                                                       accept=".pdf" <?php echo ($mode === 'a') ? 'required' : ''; ?>>
+                                                       accept=".pdf">
                                                 <div class="invalid-feedback">
                                                     Please select a PDF certificate file.
                                                 </div>
                                                 <small class="form-text text-muted">Upload PDF calibration certificate (max 10MB)</small>
+                                                <small class="form-text text-danger font-weight-bold">
+                                                    <i class="mdi mdi-alert-circle"></i> This field is mandatory (except when only changing status from Active to Inactive)
+                                                </small>
                                             </div>
                                             
                                             <div class="form-group col-md-6">
@@ -390,17 +341,20 @@ $vendor_details = DB::query("SELECT vendor_id, vendor_name FROM vendors WHERE ve
             }
         });
 
-        // File upload validation
+        // File upload validation with enhanced feedback
         $("#master_certificate_file").change(function() {
             var file = this.files[0];
+            
             if (file) {
                 // Clear validation styling
                 $(this).removeClass('is-invalid');
+                $(this).siblings('.invalid-feedback').hide();
                 
                 // Check file type
                 if (file.type !== 'application/pdf') {
                     alert('Please select a PDF file only.');
                     $(this).val('').addClass('is-invalid');
+                    updateSubmitButtonState();
                     return;
                 }
                 
@@ -409,10 +363,60 @@ $vendor_details = DB::query("SELECT vendor_id, vendor_name FROM vendors WHERE ve
                 if (file.size > maxSize) {
                     alert('File size must be less than 10MB.');
                     $(this).val('').addClass('is-invalid');
+                    updateSubmitButtonState();
                     return;
                 }
+                
+                // File is valid
+                updateSubmitButtonState();
+            } else {
+                // No file selected - show validation (required for both modes)
+                $(this).addClass('is-invalid');
+                $(this).siblings('.invalid-feedback').text('Master Certificate File is required.').show();
+                updateSubmitButtonState();
             }
         });
+        
+        // Function to update submit button state based on file requirements
+        function updateSubmitButtonState() {
+            var fileInput = $('#master_certificate_file')[0];
+            var hasFile = fileInput.files && fileInput.files.length > 0;
+            var submitBtn = $('#add_instrument, #modify_instrument');
+            var isStatusChangeToInactive = isOnlyStatusChangeToInactive();
+            
+            // Allow submission without file only if changing status from Active to Inactive
+            if (!hasFile && !isStatusChangeToInactive) {
+                submitBtn.prop('disabled', true).addClass('btn-secondary').removeClass('btn-gradient-primary');
+                submitBtn.attr('title', 'Please upload a Master Certificate File before submitting');
+            } else {
+                submitBtn.prop('disabled', false).removeClass('btn-secondary').addClass('btn-gradient-primary');
+                submitBtn.removeAttr('title');
+            }
+        }
+        
+        // Function to check if this is only a status change from Active to Inactive
+        function isOnlyStatusChangeToInactive() {
+            var mode = $('input[name="mode"]').val();
+            
+            // Only applicable in edit mode
+            if (mode !== 'e') {
+                return false;
+            }
+            
+            // Check if current status is Active and new status is Inactive
+            var currentStatus = '<?php echo htmlspecialchars($instrument_data['instrument_status'] ?? '', ENT_QUOTES, 'UTF-8'); ?>';
+            var newStatus = $('#instrument_status').val();
+            
+            return (currentStatus === 'Active' && newStatus === 'Inactive');
+        }
+        
+        // Update button state when instrument status changes
+        $('#instrument_status').change(function() {
+            updateSubmitButtonState();
+        });
+        
+        // Initialize button state
+        updateSubmitButtonState();
         
         // Form submission for both add and modify
         $('#instrumentForm').submit(function(e) {
@@ -421,15 +425,27 @@ $vendor_details = DB::query("SELECT vendor_id, vendor_name FROM vendors WHERE ve
             var form = this;
             var isValid = true;
             
-            // Check if file is required (add mode) and not provided
-            if ($('#instrumentForm input[name="mode"]').val() === 'a') {
-                var fileInput = $('#master_certificate_file')[0];
-                if (!fileInput.files || fileInput.files.length === 0) {
-                    $('#master_certificate_file').addClass('is-invalid');
-                    isValid = false;
-                } else {
-                    $('#master_certificate_file').removeClass('is-invalid');
-                }
+            // Check if file is required and not provided (with status change exception)
+            var fileInput = $('#master_certificate_file')[0];
+            var isStatusChangeToInactive = isOnlyStatusChangeToInactive();
+            
+            if ((!fileInput.files || fileInput.files.length === 0) && !isStatusChangeToInactive) {
+                $('#master_certificate_file').addClass('is-invalid');
+                $('#master_certificate_file').siblings('.invalid-feedback').text('Master Certificate File is required (except when only changing status to Inactive).');
+                $('#master_certificate_file').siblings('.invalid-feedback').show();
+                
+                // Show alert to make it more prominent
+                Swal.fire({
+                    title: 'Required Field Missing!',
+                    text: 'Master Certificate File is mandatory for all instruments, except when only changing status from Active to Inactive.',
+                    icon: 'warning',
+                    confirmButtonText: 'OK'
+                });
+                
+                isValid = false;
+            } else {
+                $('#master_certificate_file').removeClass('is-invalid');
+                $('#master_certificate_file').siblings('.invalid-feedback').hide();
             }
             
             if (form.checkValidity() === false || !isValid) {
@@ -578,7 +594,7 @@ $vendor_details = DB::query("SELECT vendor_id, vendor_name FROM vendors WHERE ve
                 <button type="button" class="btn btn-sm btn-outline-primary" 
                         onclick="viewCertificate('${cert.certificate_file_path}', '${cert.display_filename}')"
                         title="View Certificate">
-                    <i class="mdi mdi-eye"></i>
+                    
                 </button>
                 <button type="button" class="btn btn-sm btn-outline-success" 
                         onclick="downloadCertificate('${cert.certificate_file_path}', '${cert.display_filename}')"

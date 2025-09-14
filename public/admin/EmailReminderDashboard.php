@@ -291,7 +291,7 @@ try {
                                                     <td>
                                                         <button onclick="viewJobDetails('<?php echo $job['job_name']; ?>')" 
                                                                 class="btn btn-sm btn-outline-primary">
-                                                            <i class="mdi mdi-eye"></i>
+                                                            
                                                         </button>
                                                     </td>
                                                 </tr>

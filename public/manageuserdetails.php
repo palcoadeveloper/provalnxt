@@ -451,7 +451,8 @@ try {
 
     </script>
     
-    
+    <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
+
     
   </head>
   <body>
@@ -469,9 +470,7 @@ try {
 	
 			           <div class="page-header">
 						<h3 class="page-title">
-							<span class="page-title-icon bg-gradient-primary text-white mr-2">
-								<i class="mdi mdi-home"></i>
-							</span> User Details
+							User Details
 						</h3>
 						<nav aria-label="breadcrumb">
 							<ul class="breadcrumb">
@@ -596,7 +595,7 @@ try {
                        	    }
                        	} else {
                        	    // For non-super admin, show only their unit
-                       	    $unit_name = DB::queryFirstField("select unit_name from units where unit_id=".$_SESSION['unit_id']);
+                       	    $unit_name = DB::queryFirstField("select unit_name from units where unit_id=".$_SESSION['unit_id']." and unit_status='Active'");
                        	    $selected = '';
                        	    
                        	    // If editing a user, check if their unit matches the session unit

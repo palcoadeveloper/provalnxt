@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Button Size Test</title>
+    <link rel="stylesheet" href="assets/vendors/mdi/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="assets/vendors/css/vendor.bundle.base.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
+</head>
+<body style="padding: 50px;">
+    <h3>Original Buttons (from getvendordetails.php output)</h3>
+    <table class="table table-bordered" id="tbl-vendor-details">
+        <tbody>
+            <tr>
+                <td>
+                    <a href='managevendordetails.php?vendor_id=123&m=r' class='btn btn-sm btn-gradient-danger btn-icon-text' role='button' aria-pressed='true'>
+                        View
+                    </a>
+                    &nbsp;&nbsp;
+                    <a href='managevendordetails.php?vendor_id=123&m=m' class='btn btn-sm btn-gradient-info btn-icon-text' role='button' aria-pressed='true'>
+                        Modify
+                    </a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Test outside table</h3>
+    <a href='managevendordetails.php?vendor_id=123&m=r' class='btn btn-sm btn-gradient-danger btn-icon-text' role='button' aria-pressed='true'>
+        View
+    </a>
+    &nbsp;&nbsp;
+    <a href='managevendordetails.php?vendor_id=123&m=m' class='btn btn-sm btn-gradient-info btn-icon-text' role='button' aria-pressed='true'>
+        Modify
+    </a>
+
+    <script>
+        console.log('=== View Button Computed Styles ===');
+        const viewBtn = document.querySelector('.btn-gradient-danger');
+        const viewStyles = window.getComputedStyle(viewBtn);
+        console.log('View - Height:', viewStyles.height);
+        console.log('View - Width:', viewStyles.width);
+        console.log('View - Padding:', viewStyles.padding);
+        console.log('View - Font Size:', viewStyles.fontSize);
+        console.log('View - Line Height:', viewStyles.lineHeight);
+        console.log('View - Border Radius:', viewStyles.borderRadius);
+
+        console.log('=== Modify Button Computed Styles ===');
+        const modifyBtn = document.querySelector('.btn-gradient-info');
+        const modifyStyles = window.getComputedStyle(modifyBtn);
+        console.log('Modify - Height:', modifyStyles.height);
+        console.log('Modify - Width:', modifyStyles.width);
+        console.log('Modify - Padding:', modifyStyles.padding);
+        console.log('Modify - Font Size:', modifyStyles.fontSize);
+        console.log('Modify - Line Height:', modifyStyles.lineHeight);
+        console.log('Modify - Border Radius:', modifyStyles.borderRadius);
+    </script>
+</body>
+</html>

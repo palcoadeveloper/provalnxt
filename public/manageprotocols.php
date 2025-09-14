@@ -813,19 +813,9 @@ $('#addEntryBtn').click(function() {
     });
   </script>
 
-  <style>
-    #prgDocsUpload {
-      display: none;
-    }
+  
 
-    #prgAddRemarks {
-      display: none;
-    }
-
-    #prgmodaladd {
-      display: none;
-    }
-  </style>
+    <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
 
 </head>
 

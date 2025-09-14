@@ -23,6 +23,42 @@ if (!$rateLimitResult['allowed']) {
 // Generate CSRF token
 generateCSRFToken();
 
+/**
+ * Mask email address for privacy while keeping it recognizable
+ * @param string $email The email address to mask
+ * @return string Masked email address
+ */
+function maskEmailAddress($email) {
+    if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return $email; // Return as-is if invalid
+    }
+
+    list($localPart, $domain) = explode('@', $email, 2);
+
+    // Mask local part (before @)
+    $localLength = strlen($localPart);
+    if ($localLength <= 2) {
+        $maskedLocal = $localPart . '***';
+    } else {
+        $maskedLocal = substr($localPart, 0, 2) . str_repeat('*', max(1, $localLength - 2));
+    }
+
+    // Mask domain part (after @)
+    $domainParts = explode('.', $domain);
+    $domainName = $domainParts[0];
+    $domainLength = strlen($domainName);
+
+    if ($domainLength <= 2) {
+        $maskedDomain = $domainName . '**';
+    } else {
+        $maskedDomain = substr($domainName, 0, 2) . str_repeat('*', max(1, $domainLength - 2));
+    }
+
+    // Reconstruct with TLD
+    $tld = implode('.', array_slice($domainParts, 1));
+    return $maskedLocal . '@' . $maskedDomain . '.' . $tld;
+}
+
 // Check if user has pending 2FA session
 if (!isset($_SESSION['pending_2fa']) || !isset($_SESSION['otp_session_token'])) {
     // No pending 2FA session, redirect to login
@@ -235,7 +271,7 @@ $resendEligibility = TwoFactorAuth::canResendOTP($otpSessionToken, $ipAddress);
                                 <div class="row">
                                     <div class="col-sm-6">
                                         <small><strong>User:</strong> <?php echo htmlspecialchars($pendingUser['user_name']); ?></small><br>
-                                        <small><strong>Email:</strong> <?php echo htmlspecialchars($pendingUser['user_email']); ?></small>
+                                        <small><strong>Email:</strong> <?php echo htmlspecialchars(maskEmailAddress($pendingUser['user_email'])); ?></small>
                                     </div>
                                     <div class="col-sm-6">
                                         <small><strong>Time Remaining:</strong></small><br>

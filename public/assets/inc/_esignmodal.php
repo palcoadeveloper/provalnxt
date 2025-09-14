@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 ?>
 
-<!-- Modal -->
+<!-- Add Remarks Modal - Unified Implementation -->
 <div class="modal fade" id="enterPasswordRemark" tabindex="-1" role="dialog" aria-labelledby="passwordModalTitle" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-dialog-responsive" role="document">
     <div class="modal-content">
@@ -16,13 +16,6 @@ if (session_status() === PHP_SESSION_NONE) {
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-
-      <!-- Spinner loader -->
-      <!-- <div class="d-flex justify-content-center" id="prgmodaladd" style="display: none;">
-        <div class="spinner-grow text-primary" style="width: 3rem; height: 3rem;" role="status">
-          <span class="sr-only">Loading...</span>
-        </div>
-      </div> -->
 
       <form id="formmodalvalidation" class="needs-validation" novalidate>
         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
@@ -62,14 +55,142 @@ if (session_status() === PHP_SESSION_NONE) {
 
 <!-- JavaScript -->
 <script>
-  // Variable to store success callback function
-  var onSuccessCallback = null;
+  // Global variables to store action context
+  var remarksModalContext = {
+    action: null,
+    endpoint: null,
+    data: {},
+    successCallback: null
+  };
   
-  // Function to set the success callback
-  function setSuccessCallback(callback) {
-    onSuccessCallback = callback;
+  /**
+   * Configure the modal for a specific action
+   * @param {string} action - The action type (e.g., 'offline_approve', 'offline_reject')
+   * @param {string} endpoint - The PHP endpoint to call
+   * @param {Object} data - Additional data to send
+   * @param {Function} successCallback - Callback for successful operations
+   */
+  function configureRemarksModal(action, endpoint, data = {}, successCallback = null) {
+    remarksModalContext.action = action;
+    remarksModalContext.endpoint = endpoint;
+    remarksModalContext.data = data;
+    remarksModalContext.successCallback = successCallback;
+    
+    console.log('Modal configured for action:', action, 'with data:', data);
   }
   
+  /**
+   * Unified response handler for all modal operations
+   * @param {Object} response - The server response
+   * @param {Function} customSuccessCallback - Optional custom success callback
+   */
+  function handleRemarksResponse(response, customSuccessCallback = null) {
+    // Update CSRF token if provided
+    if (response.csrf_token) {
+      $("input[name='csrf_token']").val(response.csrf_token);
+    }
+    
+    // Handle force redirect (account locked)
+    if (response.forceRedirect && response.redirect) {
+      $('#enterPasswordRemark').modal('hide');
+      Swal.fire({
+        icon: 'error',
+        title: 'Account Locked',
+        text: "Your account has been locked. Please contact admin.",
+        showConfirmButton: true
+      }).then(() => window.location.href = response.redirect);
+      return;
+    }
+
+    // Handle regular redirect
+    if (response.redirect && !response.forceRedirect) {
+      $('#enterPasswordRemark').modal('hide');
+      Swal.fire({
+        icon: 'info',
+        title: 'Redirecting',
+        text: "Click OK to continue.",
+        showConfirmButton: true
+      }).then(() => window.location.href = response.redirect);
+      return;
+    }
+
+    // Handle success
+    if (response.status === "success") {
+      $('#enterPasswordRemark').modal('hide');
+
+      if (typeof customSuccessCallback === 'function') {
+        customSuccessCallback(response);
+      } else if (typeof remarksModalContext.successCallback === 'function') {
+        remarksModalContext.successCallback(response);
+      } else if (typeof onSuccessCallback === 'function') {
+        // Legacy callback support
+        onSuccessCallback(response);
+        onSuccessCallback = null; // Clear after use
+      } else {
+        // Default success behavior
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: response.message || "Operation completed successfully."
+        }).then(() => {
+          window.location.reload();
+        });
+      }
+
+      resetModalUI(true); // Clear everything on success
+    } else {
+      // Handle errors
+      let msg = "An error occurred.";
+      let shouldCloseModal = true; // Default to closing modal
+      
+      if (response.message === "invalid_credentials") {
+        msg = "Incorrect password. " + (response.attempts_left ? `Attempts left: ${response.attempts_left}` : "");
+        shouldCloseModal = false; // Keep modal open for retry
+      } else if (response.message === "account_locked") {
+        msg = "Account locked. Please contact administrator.";
+        shouldCloseModal = true;
+      } else if (response.message === "security_error") {
+        msg = "Security error. Refresh the page and try again.";
+        shouldCloseModal = true;
+      } else {
+        msg = response.message || "An error occurred while processing the request";
+        shouldCloseModal = true;
+      }
+      
+      if (shouldCloseModal) {
+        $('#enterPasswordRemark').modal('hide');
+      }
+      
+      Swal.fire({ icon: 'error', title: 'Error', text: msg });
+      
+      // Reset UI appropriately
+      resetModalUI(shouldCloseModal);
+    }
+  }
+  
+  /**
+   * Reset the modal UI
+   * @param {boolean} clearRemarks - Whether to clear the remarks field
+   */
+  function resetModalUI(clearRemarks = true) {
+    // Always clear password for security
+    const passwordInput = document.getElementById('user_password');
+    passwordInput.value = '';
+    passwordInput.blur();
+    
+    // Re-enable buttons
+    $("#mdlbtnsubmit").html("Proceed").prop('disabled', false);
+    $("#mdlbtnclose, #modalbtncross").prop('disabled', false);
+    
+    // Only clear remarks if specified (preserve on retry for invalid credentials)
+    if (clearRemarks) {
+      $("#user_remark").val("");
+    }
+  }
+  
+  /**
+   * Submit the modal form
+   */
   $("#mdlbtnsubmit").on('click', function(e) {
     e.preventDefault();
     
@@ -79,176 +200,79 @@ if (session_status() === PHP_SESSION_NONE) {
     // Check if the form is valid
     if (form.checkValidity() === false) {
       e.stopPropagation();
-      // Add the was-validated class to show Bootstrap's validation feedback
       form.classList.add('was-validated');
       return;
     }
     
-    // If we get here, the form is valid
+    // Get form data
     const remark = $("#user_remark").val().trim();
     const password = $("#user_password").val().trim();
-
-    adduserremark(remark, password);
-  });
-
-  function adduserremark(ur, up) {
-    console.log('adduserremark called with remark:', ur ? 'present' : 'missing');
-    console.log('Workflow IDs available:', {
-      val_wf_id: typeof val_wf_id !== 'undefined' ? val_wf_id : 'undefined',
-      val_wf_id_modal: typeof val_wf_id_modal !== 'undefined' ? val_wf_id_modal : 'undefined',
-      test_val_wf_id: typeof test_val_wf_id !== 'undefined' ? test_val_wf_id : 'undefined'
-    });
-    
     const csrfToken = $("input[name='csrf_token']").val();
     
-    // Immediately clear the password from the input field
+    if (!remarksModalContext.action || !remarksModalContext.endpoint) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Modal not properly configured. Please try again.'
+      });
+      return;
+    }
+    
+    // Immediately clear the password from the input field for security
     const passwordInput = document.getElementById('user_password');
-    const password = passwordInput.value;
     passwordInput.value = '';
     passwordInput.blur();
     
-    // Disable UI
-    //$("#prgmodaladd").show();
+    // Disable UI during processing
     $("#mdlbtnsubmit").html("Please wait...").prop('disabled', true);
     $("#mdlbtnclose, #modalbtncross").prop('disabled', true);
 
-    // Create a temporary variable that will be cleared after use
-    let tempPassword = password;
+    // Prepare request data
+    const requestData = {
+      csrf_token: csrfToken,
+      action: remarksModalContext.action,
+      user_remark: remark,
+      user_password: password,
+      ...remarksModalContext.data // Merge additional data
+    };
     
+    console.log('Submitting modal request:', {
+      endpoint: remarksModalContext.endpoint,
+      action: remarksModalContext.action,
+      dataKeys: Object.keys(requestData)
+    });
+    
+    // Make AJAX request
     $.ajax({
-      url: "core/validation/addremarks.php",
+      url: remarksModalContext.endpoint,
       type: "POST",
       dataType: "json",
-      data: {
-        csrf_token: csrfToken,
-        user_remark: ur,
-        user_password: tempPassword,
-        wf_id: typeof val_wf_id !== 'undefined' ? val_wf_id : (typeof val_wf_id_modal !== 'undefined' ? val_wf_id_modal : ''),
-        test_wf_id: typeof test_val_wf_id !== 'undefined' ? test_val_wf_id : '',
-        operation_context: typeof operation_context !== 'undefined' ? operation_context : '',
-        status_from: typeof window.statusChangeData !== 'undefined' && window.statusChangeData.status_from ? window.statusChangeData.status_from : '',
-        status_to: typeof window.statusChangeData !== 'undefined' && window.statusChangeData.status_to ? window.statusChangeData.status_to : ''
-      },
+      data: requestData,
       success: function(response) {
-        // Clear the temporary password variable first
-        tempPassword = null;
-        
         // Parse JSON response if it's a string
         let parsedResponse;
         try {
           parsedResponse = typeof response === 'string' ? JSON.parse(response) : response;
         } catch (e) {
           console.error("JSON parse error:", e, response);
-          // Handle non-JSON response for backward compatibility
-          if (response.trim() === "success") {
-            parsedResponse = { status: 'success' };
-          } else {
-            parsedResponse = { status: 'error', message: 'invalid_credentials' };
-          }
+          parsedResponse = { status: 'error', message: 'Invalid response format' };
         }
         
-        // Update CSRF token in all forms if a new one was provided
-        if (parsedResponse.csrf_token) {
-          $("input[name='csrf_token']").val(parsedResponse.csrf_token);
-        }
-        
-        try {
-          if (parsedResponse.forceRedirect && parsedResponse.redirect) {
-            $('#enterPasswordRemark').modal('hide');
-            Swal.fire({
-              icon: 'error',
-              title: 'Account Locked',
-              text: "Your account has been locked. Please contact admin.",
-              showConfirmButton: true
-            }).then(() => window.location.href = parsedResponse.redirect);
-            return;
-          }
-
-          if (parsedResponse.redirect) {
-            $('#enterPasswordRemark').modal('hide');
-            Swal.fire({
-              icon: 'info',
-              title: 'Redirecting',
-              text: "Click OK to continue.",
-              showConfirmButton: true
-            }).then(() => window.location.href = parsedResponse.redirect);
-            return;
-          }
-
-          if (parsedResponse.status === "success") {
-            // Call the success callback if it exists
-            if (typeof onSuccessCallback === 'function') {
-              $('#enterPasswordRemark').modal('hide');
-              onSuccessCallback(parsedResponse);
-            } else {
-              // Default behavior if no callback is set
-              Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: "Data saved successfully."
-              }).then(() => {
-                if (typeof url !== 'undefined') {
-                  window.location.href = url;
-                }
-              });
-            }
-          } else {
-            let msg = "An error occurred.";
-            let shouldCloseModal = false;
-            
-            if (parsedResponse.message === "invalid_credentials") {
-              msg = "Incorrect password. " + (parsedResponse.attempts_left ? `Attempts left: ${parsedResponse.attempts_left}` : "");
-              shouldCloseModal = true; // Close modal for incorrect password
-            } else if (parsedResponse.message === "account_locked") {
-              msg = "Account locked. Please contact administrator.";
-              shouldCloseModal = true; // Close modal for account locked
-            } else if (parsedResponse.message === "security_error") {
-              msg = "Security error. Refresh the page and try again.";
-              shouldCloseModal = true; // Close modal for security errors
-            }
-            
-            if (shouldCloseModal) {
-              $('#enterPasswordRemark').modal('hide');
-            }
-            
-            Swal.fire({ icon: 'error', title: 'Error', text: msg });
-          }
-        } catch (e) {
-          console.error("Parse error:", e, response);
-          if (response.trim() === "success") {
-            // Call the success callback if it exists
-            if (typeof onSuccessCallback === 'function') {
-              $('#enterPasswordRemark').modal('hide');
-              onSuccessCallback({ status: 'success' });
-            } else {
-              // Default behavior if no callback is set
-              Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: "Data saved successfully."
-              }).then(() => {
-                if (typeof url !== 'undefined') {
-                  window.location.href = url;
-                }
-              });
-            }
-          } else {
-            // Close modal for authentication failures
-            $('#enterPasswordRemark').modal('hide');
-            Swal.fire({
-              icon: 'error',
-              title: 'Oops...',
-              text: "Please enter the correct password and try again."
-            });
-          }
-        }
-
-        resetModalUI();
+        handleRemarksResponse(parsedResponse);
       },
       error: function(xhr, status, error) {
-        // Handle error
-        $("#mdlbtnsubmit").html("Proceed").prop('disabled', false);
-        $("#mdlbtnclose, #modalbtncross").prop('disabled', false);
+        console.error('AJAX Error Details:', {
+          status: status,
+          error: error,
+          responseText: xhr.responseText,
+          responseStatus: xhr.status,
+          endpoint: remarksModalContext.endpoint,
+          requestData: {
+            endpoint: remarksModalContext.endpoint,
+            action: remarksModalContext.action,
+            dataKeys: Object.keys(remarksModalContext.data)
+          }
+        });
         
         // Try to parse error response for CSRF token
         try {
@@ -256,47 +280,199 @@ if (session_status() === PHP_SESSION_NONE) {
           if (errorResponse.csrf_token) {
             $("input[name='csrf_token']").val(errorResponse.csrf_token);
           }
+          
+          // Handle parsed error response
+          handleRemarksResponse(errorResponse);
         } catch (e) {
-          console.error("Error parsing response:", e);
+          // Fallback for unparseable errors
+          console.error('Failed to parse error response:', e);
+          console.error('Raw error response:', xhr.responseText);
+          
+          resetModalUI(true);
+          $('#enterPasswordRemark').modal('hide');
+          
+          // Show more detailed error message in development
+          let errorMsg = 'An error occurred while processing your request.';
+          if (xhr.status === 0) {
+            errorMsg += ' (Network error - please check your connection)';
+          } else if (xhr.status >= 500) {
+            errorMsg += ' (Server error - please try again later)';
+          } else if (xhr.status === 404) {
+            errorMsg += ' (Endpoint not found)';
+          } else if (xhr.status === 403) {
+            errorMsg += ' (Access denied)';
+          }
+          
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: errorMsg + ' Please check the console for details.'
+          });
         }
-        
-        // Show error message
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'An error occurred while processing your request. Please try again.'
-        });
       }
     });
-  }
+  });
 
-  function resetModalUI() {
-    // Clear password field and ensure it's not stored in memory
-    const passwordInput = document.getElementById('user_password');
-    passwordInput.value = '';
-    passwordInput.blur();
-    
-    $("#mdlbtnsubmit").html("Proceed").prop('disabled', false);
-    $("#mdlbtnclose, #modalbtncross").prop('disabled', false);
-    $("#user_remark").val("");
-  }
-
-  // Add event listener to clear password on modal close
+  // Clear password on modal close for security
   $('#enterPasswordRemark').on('hidden.bs.modal', function () {
     const passwordInput = document.getElementById('user_password');
     passwordInput.value = '';
     passwordInput.blur();
+    
+    // Reset form validation
+    document.getElementById('formmodalvalidation').classList.remove('was-validated');
   });
 
-  // Prevent password field from being copied
+  // Prevent password field from being copied or pasted
   document.getElementById('user_password').addEventListener('copy', function(e) {
     e.preventDefault();
     return false;
   });
 
-  // Prevent password field from being pasted
   document.getElementById('user_password').addEventListener('paste', function(e) {
     e.preventDefault();
     return false;
   });
+
+  // OFFLINE TEST REVIEW INTEGRATION
+  // Configure modal when offline buttons are clicked
+  $(document).ready(function() {
+    // Only set up offline handlers if the buttons exist
+    if ($("#offline_approve").length || $("#offline_reject").length) {
+      
+      $("#offline_approve").click(function() {
+        // Get parameters from the current URL since GET params aren't available
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        configureRemarksModal(
+          'approve', // action
+          'core/data/update/offline_test_review.php', // endpoint
+          {
+            test_wf_id: urlParams.get('test_val_wf_id') || '',
+            val_wf_id: urlParams.get('val_wf_id') || '',
+            test_id: urlParams.get('test_id') || ''
+          },
+          function(response) {
+            // Custom success callback for offline approve
+            Swal.fire({
+              icon: 'success',
+              title: 'Success',
+              text: response.message || 'Test approved successfully'
+            }).then(() => {
+              // Redirect to assigned cases after approval
+              window.location.href = 'assignedcases.php';
+            });
+          }
+        );
+        
+        // Check for blocking conditions
+        if ($(".navlink-approve")[0]) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'You have one or more files to be approved.'
+          });
+        } else {
+          $('#enterPasswordRemark').modal('show');
+        }
+      });
+      
+      $("#offline_reject").click(function() {
+        // Get parameters from the current URL since GET params aren't available
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        configureRemarksModal(
+          'reject', // action
+          'core/data/update/offline_test_review.php', // endpoint
+          {
+            test_wf_id: urlParams.get('test_val_wf_id') || '',
+            val_wf_id: urlParams.get('val_wf_id') || '',
+            test_id: urlParams.get('test_id') || ''
+          },
+          function(response) {
+            // Custom success callback for offline reject
+            Swal.fire({
+              icon: 'success',
+              title: 'Success',
+              text: response.message || 'Test rejected successfully'
+            }).then(() => {
+              // Redirect to assigned cases after rejection
+              window.location.href = 'assignedcases.php';
+            });
+          }
+        );
+        
+        // Check for blocking conditions
+        if ($(".navlink-approve")[0]) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'You have one or more files to be approved.'
+          });
+        } else {
+          $('#enterPasswordRemark').modal('show');
+        }
+      });
+    }
+  });
+
+  // LEGACY SUCCESS CALLBACK SUPPORT
+  // Variable to store success callback function for backward compatibility
+  var onSuccessCallback = null;
+
+  // Function to set the success callback (legacy support)
+  function setSuccessCallback(callback) {
+    onSuccessCallback = callback;
+
+    // Configure modal context for legacy compatibility
+    // Use the standard addremarks endpoint for password verification and remarks
+    remarksModalContext.action = 'add_remark';
+    remarksModalContext.endpoint = 'core/validation/addremarks.php';
+    remarksModalContext.successCallback = callback;
+
+    // Get URL parameters for legacy data support
+    const urlParams = new URLSearchParams(window.location.search);
+    remarksModalContext.data = {
+      wf_id: urlParams.get('val_wf_id') || '',
+      test_wf_id: urlParams.get('test_val_wf_id') || '',
+      equip_id: urlParams.get('equip_id') || '',
+      operation_context: typeof operation_context !== 'undefined' ? operation_context : '',
+      status_from: typeof window.statusChangeData !== 'undefined' && window.statusChangeData.status_from ? window.statusChangeData.status_from : '',
+      status_to: typeof window.statusChangeData !== 'undefined' && window.statusChangeData.status_to ? window.statusChangeData.status_to : ''
+    };
+
+    console.log('Success callback set via legacy setSuccessCallback function with context:', {
+      action: remarksModalContext.action,
+      endpoint: remarksModalContext.endpoint,
+      dataKeys: Object.keys(remarksModalContext.data)
+    });
+  }
+
+  // LEGACY SUPPORT FUNCTION
+  // Keep the old adduserremark function for backward compatibility
+  function adduserremark(ur, up) {
+    console.log('Legacy adduserremark called - redirecting to new implementation');
+    
+    // For backward compatibility, configure modal with default values
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    configureRemarksModal(
+      'add_remark', // action
+      'core/validation/addremarks.php', // endpoint
+      {
+        wf_id: urlParams.get('val_wf_id') || '',
+        test_wf_id: urlParams.get('test_val_wf_id') || '',
+        operation_context: typeof operation_context !== 'undefined' ? operation_context : '',
+        status_from: typeof window.statusChangeData !== 'undefined' && window.statusChangeData.status_from ? window.statusChangeData.status_from : '',
+        status_to: typeof window.statusChangeData !== 'undefined' && window.statusChangeData.status_to ? window.statusChangeData.status_to : ''
+      }
+    );
+    
+    // Pre-fill the form
+    $("#user_remark").val(ur || '');
+    $("#user_password").val(up || '');
+    
+    // Trigger the submit process
+    $("#mdlbtnsubmit").trigger('click');
+  }
 </script>

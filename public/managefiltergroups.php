@@ -140,7 +140,11 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
       });
     </script>
     
-  </head>
+
+    
+      <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
+
+</head>
   <body>
     <?php include_once "assets/inc/_pleasewaitmodal.php"; ?>
     <div class="container-scroller">

@@ -277,15 +277,10 @@ echo "<table id='datagrid-report' class='table table-bordered'>
 <thead>
 <tr>
 <th> # </th>
-
-
-<th> Equipment Code</th>
-<th> Validation Workflow ID </th>
-
-
-<th> WF Stage</th>
+<th> Equipment code</th>
+<th> Validation workflow ID </th>
+<th> WF stage</th>
 <th> Action</th>
-
 </tr>
 </thead><tbody>";
 
@@ -318,8 +313,8 @@ else
             }
             else
             {
-                echo "<td><a href='#' data-toggle='modal' data-target='#viewProtocolModal' data-load-url='viewtestdetails_modal.php?equipment_id=".$row["equipment_id"]."&val_wf_id=".$row["val_wf_id"]."' class='btn btn-gradient-primary btn-sm btn-rounded' role='button' aria-pressed='true'>View Tests</a>
-<a href='#' data-toggle='modal' data-target='#viewProtocolModal' data-load-url='viewprotocol_modal.php?equipment_id=".$row["equipment_id"]."&val_wf_id=".$row["val_wf_id"]."' class='btn btn-gradient-info btn-sm btn-rounded' role='button' aria-pressed='true'>View Report</a> ";
+                echo "<td><a href='#' data-toggle='modal' data-target='#viewProtocolModal' data-load-url='viewtestdetails_modal.php?equipment_id=".$row["equipment_id"]."&val_wf_id=".$row["val_wf_id"]."' class='btn btn-sm btn-gradient-info btn-icon-text' role='button' aria-pressed='true'>View Tests</a>
+<a href='#' data-toggle='modal' data-target='#viewProtocolModal' data-load-url='viewprotocol_modal.php?equipment_id=".$row["equipment_id"]."&val_wf_id=".$row["val_wf_id"]."' class='btn btn-sm btn-gradient-info btn-icon-text' role='button' aria-pressed='true'>View Report</a> ";
                 
             }
         

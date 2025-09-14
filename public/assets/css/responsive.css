@@ -489,6 +489,15 @@ img {
     }
 }
 
+/* Fix rounded button text alignment across all screen sizes */
+.btn.btn-rounded {
+    line-height: 1.5 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+}
+
 /* Common responsive utilities */
 .text-truncate-mobile {
     @media (max-width: 575.98px) {

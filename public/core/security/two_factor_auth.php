@@ -7,6 +7,61 @@ require_once __DIR__ . '/auth_utils.php';
 class TwoFactorAuth {
     
     /**
+     * Check if 2FA is enabled system-wide (for vendor employees who can work across any unit)
+     * @return bool True if any active unit has 2FA enabled, false otherwise
+     */
+    public static function isSystemWideTwoFactorEnabled() {
+        try {
+            $result = DB::queryFirstField("
+                SELECT 1 FROM units
+                WHERE two_factor_enabled = 'Yes' AND unit_status = 'Active'
+                LIMIT 1
+            ");
+
+            return !empty($result);
+        } catch (Exception $e) {
+            error_log("Error checking system-wide 2FA status: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Get 2FA configuration from any active unit with 2FA enabled (for vendor employees)
+     * @return array 2FA configuration from first active unit with 2FA enabled, or false if none
+     */
+    public static function getSystemWideTwoFactorConfig() {
+        try {
+            $config = DB::queryFirstRow("
+                SELECT unit_id, two_factor_enabled, otp_validity_minutes, otp_digits, otp_resend_delay_seconds
+                FROM units
+                WHERE two_factor_enabled = 'Yes' AND unit_status = 'Active'
+                ORDER BY unit_id ASC
+                LIMIT 1
+            ");
+
+            if (!$config) {
+                return false;
+            }
+
+            // Ensure default values and validate configuration
+            $config['two_factor_enabled'] = $config['two_factor_enabled'] ?? 'No';
+            $config['otp_validity_minutes'] = (int)($config['otp_validity_minutes'] ?? 5);
+            $config['otp_digits'] = (int)($config['otp_digits'] ?? 6);
+            $config['otp_resend_delay_seconds'] = (int)($config['otp_resend_delay_seconds'] ?? 60);
+
+            // Validate configuration values
+            $config['otp_validity_minutes'] = max(1, min(15, $config['otp_validity_minutes']));
+            $config['otp_digits'] = max(4, min(8, $config['otp_digits']));
+            $config['otp_resend_delay_seconds'] = max(30, min(300, $config['otp_resend_delay_seconds']));
+
+            return $config;
+        } catch (Exception $e) {
+            error_log("Error fetching system-wide 2FA config: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Check if 2FA is enabled for a given unit
      * @param int $unitId The unit ID to check
      * @return array Unit's 2FA configuration or false if not found
@@ -16,7 +71,7 @@ class TwoFactorAuth {
             $config = DB::queryFirstRow("
                 SELECT two_factor_enabled, otp_validity_minutes, otp_digits, otp_resend_delay_seconds 
                 FROM units 
-                WHERE unit_id = %i", 
+                WHERE unit_status='Active' and unit_id = %i", 
                 $unitId
             );
             

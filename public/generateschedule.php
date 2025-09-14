@@ -19,7 +19,83 @@ if (empty($_SESSION['csrf_token'])) {
 <!DOCTYPE html>
 <html lang="en">
   <head>
-   <?php include_once "assets/inc/_header.php";?> 
+   <?php include_once "assets/inc/_header.php";?>
+   <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
+
+   <style>
+   /* Force button styling for generateschedule.php */
+   body .btn-gradient-success,
+   form .btn-gradient-success,
+   .btn.btn-gradient-success,
+   button.btn-gradient-success {
+       background: linear-gradient(to right, #84d9d2, #07cdae) !important;
+       border: none !important;
+       color: white !important;
+       transition: all 0.3s ease !important;
+       padding: 0.5rem 1rem !important;
+       font-size: 0.875rem !important;
+       line-height: 1.5 !important;
+       border-radius: 8px !important;
+       font-weight: 500 !important;
+       min-height: 38px !important;
+   }
+
+   body .btn-gradient-success:hover,
+   form .btn-gradient-success:hover,
+   .btn.btn-gradient-success:hover,
+   button.btn-gradient-success:hover {
+       opacity: 0.8 !important;
+       color: white !important;
+   }
+
+   body .btn-gradient-dark,
+   form .btn-gradient-dark,
+   .btn.btn-gradient-dark,
+   button.btn-gradient-dark {
+       background: linear-gradient(89deg, #5e7188, #3e4b5b) !important;
+       border: none !important;
+       color: white !important;
+       transition: all 0.3s ease !important;
+       padding: 0.5rem 1rem !important;
+       font-size: 0.875rem !important;
+       line-height: 1.5 !important;
+       border-radius: 8px !important;
+       font-weight: 500 !important;
+       min-height: 38px !important;
+   }
+
+   body .btn-gradient-dark:hover,
+   form .btn-gradient-dark:hover,
+   .btn.btn-gradient-dark:hover,
+   button.btn-gradient-dark:hover {
+       opacity: 0.8 !important;
+       color: white !important;
+   }
+
+   body .btn-gradient-danger,
+   form .btn-gradient-danger,
+   .btn.btn-gradient-danger,
+   button.btn-gradient-danger {
+       background: linear-gradient(to right, #ffbf96, #fe7096) !important;
+       border: none !important;
+       color: white !important;
+       transition: all 0.3s ease !important;
+       padding: 0.5rem 1rem !important;
+       font-size: 0.875rem !important;
+       line-height: 1.5 !important;
+       border-radius: 8px !important;
+       font-weight: 500 !important;
+       min-height: 38px !important;
+   }
+
+   body .btn-gradient-danger:hover,
+   form .btn-gradient-danger:hover,
+   .btn.btn-gradient-danger:hover,
+   button.btn-gradient-danger:hover {
+       opacity: 0.8 !important;
+       color: white !important;
+   }
+   </style>
 
    <script>
 
@@ -127,6 +203,7 @@ $(document).ready(function(){
 
 
    btnadhocrequests
+
   </head>
   <body>
     <?php include_once "assets/inc/_pleasewaitmodal.php"; ?>
@@ -171,7 +248,7 @@ $(document).ready(function(){
                        	<?php 
                        try {
                            if ($_SESSION['is_super_admin']=="Yes") {
-                               $results = DB::query("SELECT unit_id, unit_name FROM units ORDER BY unit_name");
+                               $results = DB::query("SELECT unit_id, unit_name FROM units where unit_status='Active' ORDER BY unit_name");
                                
                                $output = "";
                                if(!empty($results)) {
@@ -183,7 +260,7 @@ $(document).ready(function(){
                                }
                            } else {
                                $unit_id = intval($_SESSION['unit_id']);
-                               $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %i", $unit_id);
+                               $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %i and unit_status='Active'", $unit_id);
                                
                                if ($unit_name) {
                                    echo "<option value='" . htmlspecialchars($unit_id, ENT_QUOTES) . "'>" . 
@@ -208,8 +285,8 @@ $(document).ready(function(){
   </div>
   
  
-  <button class="btn btn-primary" type="submit">Generate Annual Schedule</button>
-  <button id="btnadhocrequests" class="btn btn-success">View Adhoc Validation Requests</button>
+  <button class="btn btn-gradient-original-success" type="submit">Generate Annual Schedule</button>
+  <button id="btnadhocrequests" class="btn btn-gradient-original-danger">View Adhoc Validation Requests</button>
 </form>
       
           

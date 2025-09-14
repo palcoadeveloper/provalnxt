@@ -85,7 +85,7 @@ try {
 }
 
 try {
-    $unit_details = DB::queryFirstRow("SELECT unit_name, unit_site FROM units WHERE unit_id = %i", $unit_id);
+    $unit_details = DB::queryFirstRow("SELECT unit_name, unit_site FROM units WHERE unit_id = %i and unit_status='Active'", $unit_id);
     
     if (!$unit_details) {
         header('HTTP/1.1 404 Not Found');

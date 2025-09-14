@@ -128,7 +128,7 @@ echo "<table id='tbl-user-details' class='table table-bordered'>
                         <tr>
                           <th> # </th>
                           <th> Employee ID </th>
-                          <th> User Name</th>
+                          <th> User name</th>
                           <th> Email</th>
                           <th> Action</th>
                         </tr>

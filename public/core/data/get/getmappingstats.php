@@ -63,7 +63,7 @@ try {
         $target_unit_id = intval($_SESSION['unit_id']);
     } else {
         // For super admin, try to get the first unit
-        $first_unit = DB::queryFirstField("SELECT unit_id FROM units ORDER BY unit_id LIMIT 1");
+        $first_unit = DB::queryFirstField("SELECT unit_id where unit_status='Active' ORDER BY unit_id LIMIT 1");
         $target_unit_id = intval($first_unit);
     }
     

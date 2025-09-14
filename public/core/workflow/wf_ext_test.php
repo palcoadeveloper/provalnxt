@@ -46,6 +46,10 @@ $GLOBALS['wf_loader'] = new Finite\Loader\ArrayLoader([
             'type'       => Finite\State\StateInterface::TYPE_INITIAL,
             'properties' => ['deletable' => true, 'editable' => true],
         ],
+        '1PRV' => [
+            'type'       => Finite\State\StateInterface::TYPE_NORMAL,
+            'properties' => ['offline_mode' => true, 'provisional' => true],
+        ],
         '2' => [
             'type'       => Finite\State\StateInterface::TYPE_NORMAL,
             'properties' => [],

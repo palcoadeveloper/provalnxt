@@ -20,7 +20,8 @@ if (empty($_SESSION['csrf_token'])) {
 <!DOCTYPE html>
 <html lang="en">
   <head>
-   <?php include_once "assets/inc/_header.php";?> 
+   <?php include_once "assets/inc/_header.php";?>
+   <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
 
  <script type="text/javascript">
 
@@ -362,7 +363,8 @@ function changeAdhocRTStatusAfterAuth() {
 }
 
  </script>
-    
+
+
   </head>
   <body>
     <?php include_once "assets/inc/_pleasewaitmodal.php"; ?>
@@ -408,7 +410,7 @@ function changeAdhocRTStatusAfterAuth() {
                        	<?php 
                        try {
                            if ($_SESSION['is_super_admin']=="Yes") {
-                               $results = DB::query("SELECT unit_id, unit_name FROM units ORDER BY unit_name");
+                               $results = DB::query("SELECT unit_id, unit_name FROM units where unit_status='Active' ORDER BY unit_name");
                                
                                $output = "";
                                if(!empty($results)) {
@@ -420,7 +422,7 @@ function changeAdhocRTStatusAfterAuth() {
                                }
                            } else {
                                $unit_id = intval($_SESSION['unit_id']);
-                               $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %i", $unit_id);
+                               $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_status='Active' and unit_id = %i", $unit_id);
                                
                                if ($unit_name) {
                                    echo "<option value='" . htmlspecialchars($unit_id, ENT_QUOTES) . "'>" . 
@@ -464,8 +466,8 @@ function changeAdhocRTStatusAfterAuth() {
     </div>
   </div>
  
-  <button class="btn btn-primary" type="submit">Generate Annual Schedule</button>
- <button id="btnViewRTRequests" class="btn btn-success">View Routine Test Requests</button>
+  <button class="btn btn-gradient-original-success" type="submit">Generate Annual Schedule</button>
+ <button id="btnViewRTRequests" class="btn btn-gradient-original-danger">View Routine Test Requests</button>
 </form>
       
           

@@ -70,7 +70,7 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 
 // Load dropdown data
 try {
-    $units = DB::query("SELECT unit_id, unit_name FROM units WHERE unit_status = %s ORDER BY unit_name", 'Active');
+    $units = DB::query("SELECT unit_id, unit_name FROM units WHERE unit_status = %s and unit_status='Active' ORDER BY unit_name", 'Active');
     $rooms = DB::query("SELECT room_loc_id, room_loc_name FROM room_locations ORDER BY room_loc_name");
     $filter_groups = DB::query("SELECT filter_group_id, filter_group_name FROM filter_groups WHERE status = %s ORDER BY filter_group_name", 'Active');
 } catch (Exception $e) {
@@ -328,7 +328,11 @@ try {
       });
     </script>
     
-  </head>
+
+    
+      <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
+
+</head>
   <body>
     <?php include_once "assets/inc/_pleasewaitmodal.php"; ?>
     <?php include_once "assets/inc/_esignmodal.php"; ?>

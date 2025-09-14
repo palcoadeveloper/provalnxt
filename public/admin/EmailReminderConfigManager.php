@@ -503,7 +503,7 @@ try {
                                                 <div class="btn-group">
                                                     <button onclick="editConfig(<?php echo $config['email_config_id']; ?>)" 
                                                             class="btn btn-sm btn-outline-primary" title="Edit">
-                                                        <i class="mdi mdi-pencil"></i>
+                                                        
                                                     </button>
                                                     <button onclick="toggleConfig(<?php echo $config['email_config_id']; ?>, <?php echo $config['email_enabled'] ? 0 : 1; ?>)" 
                                                             class="btn btn-sm btn-outline-<?php echo $config['email_enabled'] ? 'warning' : 'success'; ?>" 

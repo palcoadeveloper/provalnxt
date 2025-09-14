@@ -17,7 +17,7 @@ $schedule_year = intval($_GET['schyear']);
 
 // Get the unit's validation scheduling logic
 $validation_logic = DB::queryFirstField(
-    "SELECT validation_scheduling_logic FROM units WHERE unit_id = %d", 
+    "SELECT validation_scheduling_logic FROM units WHERE unit_id = %d and unit_status='Active'", 
     $unit_id
 );
 

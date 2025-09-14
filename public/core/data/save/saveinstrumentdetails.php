@@ -145,11 +145,27 @@ try {
         exit();
     }
     
-    // Validate file upload for add mode
-    if ($action === 'a') {
-        if (!isset($_FILES['master_certificate_file']) || $_FILES['master_certificate_file']['error'] !== UPLOAD_ERR_OK) {
+    // Check if this is only a status change from Active to Inactive (edit mode exception)
+    $isStatusChangeToInactive = false;
+    if ($action === 'e' && !empty($instrument_id)) {
+        // Get current instrument status
+        $currentInstrument = DB::queryFirstRow("
+            SELECT instrument_status 
+            FROM instruments 
+            WHERE instrument_id = %s
+        ", $instrument_id);
+        
+        $currentStatus = $currentInstrument['instrument_status'] ?? '';
+        $newStatus = $instrument_status;
+        
+        $isStatusChangeToInactive = ($currentStatus === 'Active' && $newStatus === 'Inactive');
+    }
+    
+    // Validate file upload (with status change exception)
+    if (!isset($_FILES['master_certificate_file']) || $_FILES['master_certificate_file']['error'] !== UPLOAD_ERR_OK) {
+        if (!$isStatusChangeToInactive) {
             ob_end_clean();
-            echo json_encode(['success' => false, 'message' => 'Master Certificate File is required for new instruments']);
+            echo json_encode(['success' => false, 'message' => 'Master Certificate File is required (except when only changing status from Active to Inactive)']);
             exit();
         }
     }

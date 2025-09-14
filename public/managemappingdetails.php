@@ -394,12 +394,11 @@ $("#modify_mapping").click(async function(e) {
 });
     </script>
     
+
     
-    
-    
-    
-    
-  </head>
+      <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
+
+</head>
   <body>
     <?php include_once "assets/inc/_pleasewaitmodal.php"; ?>
     <div class="container-scroller">
@@ -496,7 +495,7 @@ $("#modify_mapping").click(async function(e) {
                        	    //echo "<option>".$_SESSION['unit_id']."</option>";
                        	    
                        	    try {
-                       	        $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %i", intval($_SESSION['unit_id']));
+                       	        $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %i and unit_status='Active'", intval($_SESSION['unit_id']));
                        	        $selected = (isset($_GET['m']) && $_GET['m'] != 'a') ? 'selected' : '';
                        	        echo "<option value='" . intval($_SESSION['unit_id']) . "' " . $selected . ">" . htmlspecialchars($unit_name, ENT_QUOTES, 'UTF-8') . "</option>";
                        	    } catch (Exception $e) {

@@ -1770,7 +1770,7 @@ $(document).ready(function() {
     
     if (!instrumentId || instrumentId === 'manual') {
       if (instrumentId === 'manual') {
-        $statusDiv.html('<small class="text-info"><i class="mdi mdi-pencil"></i> Manual entry selected for ALL readings</small>');
+        $statusDiv.html('<small class="text-info"> Manual entry selected for ALL readings</small>');
       }
       return;
     }
@@ -1803,7 +1803,7 @@ $(document).ready(function() {
     
     if (!instrumentId || instrumentId === 'manual') {
       if (instrumentId === 'manual') {
-        $statusDiv.html('<small class="text-info"><i class="mdi mdi-pencil"></i> Manual entry for 5 readings</small>');
+        $statusDiv.html('<small class="text-info"> Manual entry for 5 readings</small>');
       }
       return;
     }
@@ -3122,20 +3122,37 @@ $(document).ready(function() {
     const $btn = $(this);
     const originalText = $btn.html();
     
+    // Get current data entry mode for conditional modal text
+    const currentMode = window.testFinalizationStatus && window.testFinalizationStatus.data_entry_mode 
+      ? window.testFinalizationStatus.data_entry_mode : 'online';
+   // alert(currentMode);
+    // Set modal text based on data entry mode
+    let modalText, confirmButtonText;
+    if (currentMode === 'offline') {
+      modalText = 'This will mark the test data as complete for offline processing. This action cannot be undone.';
+      confirmButtonText = 'Yes, Complete Test';
+    } else {
+      modalText = 'This will generate PDF reports and mark the test data as complete. This action cannot be undone.';
+      confirmButtonText = 'Yes, Generate PDFs';
+    }
+    
     // Show confirmation dialog first
     Swal.fire({
       title: 'Finalise Test Data?',
-      text: 'This will generate PDF reports and mark the test data as complete. This action cannot be undone.',
+      text: modalText,
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#28a745',
       cancelButtonColor: '#6c757d',
-      confirmButtonText: 'Yes, Generate PDFs',
+      confirmButtonText: confirmButtonText,
       cancelButtonText: 'Cancel'
     }).then((result) => {
       if (result.isConfirmed) {
-        // Disable button and show loading state
-        $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Generating PDFs...');
+        // Disable button and show loading state with conditional text
+        const loadingText = currentMode === 'offline' 
+          ? '<i class="mdi mdi-loading mdi-spin"></i> Processing...' 
+          : '<i class="mdi mdi-loading mdi-spin"></i> Generating PDFs...';
+        $btn.prop('disabled', true).html(loadingText);
         
         // Generate PDFs
         $.ajax({

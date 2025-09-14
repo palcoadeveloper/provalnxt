@@ -44,7 +44,8 @@ class XSSPrevention {
      */
     public static function cleanInput($input, $allowHtml = false, $strict = true) {
         if (!is_string($input)) {
-            return '';
+            // Preserve non-string values (integers, booleans, etc.) instead of converting to empty string
+            return $input;
         }
         
         // Remove null bytes and control characters

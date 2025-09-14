@@ -293,6 +293,29 @@ if ((($_SESSION['logged_in_user'] == "vendor") ||
     ";
 }
 
+// Function to clean file path for URL generation
+function cleanFilePath($filePath) {
+    if (empty($filePath)) return '';
+    
+    // Remove leading "../../" if present
+    if (strpos($filePath, '../../') === 0) {
+        return substr($filePath, 6);
+    }
+    
+    // Remove leading "./" if present  
+    if (strpos($filePath, './') === 0) {
+        return substr($filePath, 2);
+    }
+    
+    // If path already starts with "uploads/", use as-is
+    if (strpos($filePath, 'uploads/') === 0) {
+        return $filePath;
+    }
+    
+    // Otherwise return as-is (fallback)
+    return $filePath;
+}
+
 if ($_SESSION['logged_in_user'] == "employee" and $_SESSION['department_id'] == 8)
 {
     
@@ -330,10 +353,10 @@ else {
         {
         $output=$output."<tr>";
         
-        $output=$output."<td>". ( (!empty($row['upload_path_raw_data'])) ? "<a href='".BASE_URL.substr($row['upload_path_raw_data'],6)."' data-file-type='raw_data' data-upload-id='".$row['upload_id']."' data-test-wf-id='".$row['test_wf_id']."' class='file-download-link' data-toggle='modal' data-target='#imagepdfviewerModal'>Download</a>" : "-"  ) . "</td>";
-        $output=$output."<td>". ( (!empty($row['upload_path_master_certificate'])) ? "<a href='".BASE_URL.substr($row['upload_path_master_certificate'],6)."' data-file-type='master_certificate' data-upload-id='".$row['upload_id']."' data-test-wf-id='".$row['test_wf_id']."' class='file-download-link' data-toggle='modal' data-target='#imagepdfviewerModal'>Download</a>" : "-"  ) . "</td>";
-        $output=$output."<td>". ( (!empty($row['upload_path_test_certificate'])) ? "<a href='".BASE_URL.substr($row['upload_path_test_certificate'],6)."' data-upload-id='".$row['upload_id']."' data-file-type='test_certificate' data-test-wf-id='".$row['test_wf_id']."' class='file-download-link' data-toggle='modal' data-target='#imagepdfviewerModal'>Download</a>" : "-"  ) . "</td>";
-        $output=$output."<td>". ( (!empty($row['upload_path_other_doc'])) ? "<a href='".BASE_URL.substr($row['upload_path_other_doc'],6)."' data-upload-id='".$row['upload_id']."' data-file-type='other_doc' data-test-wf-id='".$row['test_wf_id']."' class='file-download-link' data-toggle='modal' data-target='#imagepdfviewerModal'>Download</a>" : "-"  ) . "</td>";
+        $output=$output."<td>". ( (!empty($row['upload_path_raw_data'])) ? "<a href='".BASE_URL.cleanFilePath($row['upload_path_raw_data'])."' data-file-type='raw_data' data-upload-id='".$row['upload_id']."' data-test-wf-id='".$row['test_wf_id']."' class='file-download-link' data-toggle='modal' data-target='#imagepdfviewerModal'>Download</a>" : "-"  ) . "</td>";
+        $output=$output."<td>". ( (!empty($row['upload_path_master_certificate'])) ? "<a href='".BASE_URL.cleanFilePath($row['upload_path_master_certificate'])."' data-file-type='master_certificate' data-upload-id='".$row['upload_id']."' data-test-wf-id='".$row['test_wf_id']."' class='file-download-link' data-toggle='modal' data-target='#imagepdfviewerModal'>Download</a>" : "-"  ) . "</td>";
+        $output=$output."<td>". ( (!empty($row['upload_path_test_certificate'])) ? "<a href='".BASE_URL.cleanFilePath($row['upload_path_test_certificate'])."' data-upload-id='".$row['upload_id']."' data-file-type='test_certificate' data-test-wf-id='".$row['test_wf_id']."' class='file-download-link' data-toggle='modal' data-target='#imagepdfviewerModal'>Download</a>" : "-"  ) . "</td>";
+        $output=$output."<td>". ( (!empty($row['upload_path_other_doc'])) ? "<a href='".BASE_URL.cleanFilePath($row['upload_path_other_doc'])."' data-upload-id='".$row['upload_id']."' data-file-type='other_doc' data-test-wf-id='".$row['test_wf_id']."' class='file-download-link' data-toggle='modal' data-target='#imagepdfviewerModal'>Download</a>" : "-"  ) . "</td>";
         
         $output=$output."<td>". $row['user_name'] . "</td>";
         

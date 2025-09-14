@@ -14,6 +14,13 @@ if (!isset($_SESSION['logged_in_user']) || !isset($_SESSION['user_name'])) {
 require_once('core/security/session_timeout_middleware.php');
 validateActiveSession();
 
+// Validate required session variables
+if (!isset($_SESSION['unit_id']) || empty($_SESSION['unit_id'])) {
+    SecurityUtils::logSecurityEvent('session_error', 'Missing unit_id in session for viewtestwindow.php');
+    header('Location: login.php?msg=session_expired&return_url=' . urlencode($_SERVER['REQUEST_URI']));
+    exit;
+}
+
 date_default_timezone_set("Asia/Kolkata");
 
 
@@ -48,17 +55,17 @@ if (!$test_val_wf_id || !$test_id || !$current_wf_stage) {
 try {
     $audit_trails = DB::query("SELECT t1.time_stamp as 'wf-assignedtimestamp', t2.wf_stage_description as 'wf-stages'
     FROM audit_trail t1, workflow_stages t2
-    WHERE t1.wf_stage=t2.wf_stage AND test_wf_id=%s AND t2.wf_type='External Test' AND t1.unit_id=%i
-    ORDER BY t1.time_stamp ASC", $test_val_wf_id, $_SESSION['unit_id']);
+    WHERE t1.wf_stage=t2.wf_stage AND t1.test_wf_id=%s AND t2.wf_type='External Test'
+    ORDER BY t1.time_stamp ASC", $test_val_wf_id);
 
     $result = DB::queryFirstRow("SELECT test_name, test_purpose, test_performed_by FROM tests WHERE test_id=%i", $test_id);
 
     $workflow_details = DB::queryFirstRow("SELECT wf_stage_description FROM workflow_stages WHERE wf_stage=%s", $current_wf_stage);
 
-    $test_conducted_date = DB::queryFirstField("SELECT test_conducted_date FROM tbl_test_schedules_tracking WHERE test_wf_id=%s AND unit_id=%i", $test_val_wf_id, $_SESSION['unit_id']);
+    $test_conducted_date = DB::queryFirstField("SELECT test_conducted_date FROM tbl_test_schedules_tracking WHERE test_wf_id=%s", $test_val_wf_id);
 
     $equipment = DB::queryFirstField("SELECT equipment_code FROM equipments WHERE equipment_id IN 
-    (SELECT equip_id FROM tbl_test_schedules_tracking WHERE test_wf_id=%s AND unit_id=%i)", $test_val_wf_id, $_SESSION['unit_id']);
+    (SELECT equip_id FROM tbl_test_schedules_tracking WHERE test_wf_id=%s)", $test_val_wf_id);
     
     // Get paper_on_glass_enabled status for Test Data Entry functionality
     $paper_on_glass_result = DB::queryFirstRow("SELECT paper_on_glass_enabled FROM tests WHERE test_id=%i", $test_id);
@@ -66,8 +73,20 @@ try {
 } catch (Exception $e) {
     SecurityUtils::logSecurityEvent('database_error', 'Database query failed in viewtestwindow.php', [
         'error' => $e->getMessage(),
-        'test_val_wf_id' => $test_val_wf_id
+        'test_val_wf_id' => $test_val_wf_id,
+        'test_id' => $test_id,
+        'unit_id' => $_SESSION['unit_id'] ?? 'not_set',
+        'user_id' => $_SESSION['user_id'] ?? 'not_set'
     ]);
+    
+    // Better error handling - show more specific error in development
+    if (ENVIRONMENT === 'dev') {
+        die('Database Error in viewtestwindow.php: ' . $e->getMessage() . 
+            '<br>Parameters: test_val_wf_id=' . htmlspecialchars($test_val_wf_id) . 
+            ', test_id=' . htmlspecialchars($test_id) . 
+            ', unit_id=' . htmlspecialchars($_SESSION['unit_id'] ?? 'not_set'));
+    }
+    
     header('Location: assignedcases.php?error=database_error');
     exit;
 }
@@ -1000,8 +1019,8 @@ function adduserremark(ur, up) {
 
                           <?php
                           if (!empty($test_conducted_date) || !empty(secure_get('mode', 'string'))) {
-
-                            echo '<input type="text" id="test_conducted_date" name="test_conducted_date" class="form-control" value="' . date('d.m.Y', strtotime($test_conducted_date)) . '" disabled/></td>';
+                            $formatted_date = !empty($test_conducted_date) ? date('d.m.Y', strtotime($test_conducted_date)) : '';
+                            echo '<input type="text" id="test_conducted_date" name="test_conducted_date" class="form-control" value="' . htmlspecialchars($formatted_date, ENT_QUOTES, 'UTF-8') . '" disabled/></td>';
                           } else {
 
                             echo '<input type="text" class="form-control" id="test_conducted_date" name="test_conducted_date" Required></td>';
@@ -1069,7 +1088,7 @@ function adduserremark(ur, up) {
 
                                 <tr>
 
-                                  <td colspan="2"><input id="btnUploadDocs" class="btn btn-success" type="submit" value="Upload Document" <?php echo (isset(secure_get('mode', 'string')) && secure_get('mode', 'string') == 'read' || ($_SESSION['logged_in_user'] == "employee" && $_SESSION['department_id'] == 1 && $current_wf_stage != '1') || ($_SESSION['logged_in_user'] == "employee" and $_SESSION['department_id'] == 8)) ? "style='display:none'" : '' ?> /></td>
+                                  <td colspan="2"><input id="btnUploadDocs" class="btn btn-success" type="submit" value="Upload Document" <?php echo (null !== secure_get('mode', 'string') && secure_get('mode', 'string') == 'read' || ($_SESSION['logged_in_user'] == "employee" && $_SESSION['department_id'] == 1 && $current_wf_stage != '1') || ($_SESSION['logged_in_user'] == "employee" and $_SESSION['department_id'] == 8)) ? "style='display:none'" : '' ?> /></td>
 
 
                                 </tr>

@@ -179,13 +179,13 @@ try {
             $custom_unit_id = intval($validated_data['unit_id_input']);
             
             // Check for duplicate unit_id
-            $existing_id = DB::queryFirstRow("SELECT unit_id FROM units WHERE unit_id = %i", $custom_unit_id);
+            $existing_id = DB::queryFirstRow("SELECT unit_id FROM units WHERE unit_id = %i and unit_status='Active'", $custom_unit_id);
             if ($existing_id) {
                 throw new InvalidArgumentException("Unit ID already exists. Please choose a different ID.");
             }
             
             // Check for duplicate unit name
-            $existing_name = DB::queryFirstRow("SELECT unit_id FROM units WHERE unit_name = %s", $unit_data['unit_name']);
+            $existing_name = DB::queryFirstRow("SELECT unit_id FROM units WHERE unit_name = %s and unit_status='Active'", $unit_data['unit_name']);
             if ($existing_name) {
                 throw new InvalidArgumentException("Unit with this name already exists");
             }
@@ -214,13 +214,13 @@ try {
             $unit_id = intval($validated_data['unit_id']);
             
             // Check if unit exists
-            $existing = DB::queryFirstRow("SELECT unit_id FROM units WHERE unit_id = %i", $unit_id);
+            $existing = DB::queryFirstRow("SELECT unit_id FROM units WHERE unit_status='Active' and unit_id = %i", $unit_id);
             if (!$existing) {
                 throw new InvalidArgumentException("Unit not found");
             }
             
             // Check for duplicate unit name (excluding current record)
-            $duplicate = DB::queryFirstRow("SELECT unit_id FROM units WHERE unit_name = %s AND unit_id != %i", 
+            $duplicate = DB::queryFirstRow("SELECT unit_id FROM units WHERE unit_name = %s and unit_status='Active' AND unit_id != %i", 
                                          $unit_data['unit_name'], $unit_id);
             if ($duplicate) {
                 throw new InvalidArgumentException("Unit with this name already exists");

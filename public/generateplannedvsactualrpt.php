@@ -141,7 +141,7 @@ FROM
                     ELSE u.secondary_test_id
                 END 
             FROM units u 
-            WHERE u.unit_id = %i
+            WHERE u.unit_status='Active' and u.unit_id = %i
         )
 
 WHERE 

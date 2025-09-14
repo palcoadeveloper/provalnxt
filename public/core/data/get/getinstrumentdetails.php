@@ -111,13 +111,13 @@ try {
                 <thead>
                     <tr>
                         <th>Instrument ID</th>
-                        <th>Serial Number</th>
+                        <th>Serial number</th>
                         <th>Type</th>
                         <th>Vendor</th>
-                        <th>Last Calibration</th>
-                        <th>Next Calibration</th>
+                        <th>Last calibration</th>
+                        <th>Next calibration</th>
                         <th>Status</th>
-                        <th>Days Until</th>
+                        <th>Days until</th>
                         <th>Action</th>
                     </tr>
                 </thead>

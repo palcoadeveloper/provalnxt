@@ -55,6 +55,45 @@ try {
     }
     $user_unit_id = intval($user_unit_id);
     
+    // Get current test data for validation
+    $currentData = DB::queryFirstRow("
+        SELECT ts.data_entry_mode, ts.test_wf_current_stage, t.paper_on_glass_enabled 
+        FROM tbl_test_schedules_tracking ts 
+        INNER JOIN tests t ON t.test_id = ts.test_id
+        WHERE ts.test_wf_id = %s
+    ", $test_val_wf_id);
+    
+    if (!$currentData) {
+        throw new Exception("Test workflow not found: " . $test_val_wf_id);
+    }
+    
+    // Validate workflow stage for offline mode switching
+    if ($data_entry_mode === 'offline') {
+        $allowed_offline_stages = ['1', '3B', '4B'];
+        $current_stage = $currentData['test_wf_current_stage'];
+        
+        if (!in_array($current_stage, $allowed_offline_stages)) {
+            throw new InvalidArgumentException(
+                "Offline mode is only available for workflow stages 1, 3B, or 4B. Current stage: " . $current_stage
+            );
+        }
+        
+        // Ensure paper-on-glass is enabled
+        if (($currentData['paper_on_glass_enabled'] ?? 'No') !== 'Yes') {
+            throw new InvalidArgumentException("Offline mode is only available for tests with Paper-on-Glass enabled");
+        }
+        
+        // Ensure current mode is online (cannot switch if already offline)
+        if (($currentData['data_entry_mode'] ?? 'online') === 'offline') {
+            throw new InvalidArgumentException("Test is already in offline mode and cannot be changed back");
+        }
+    }
+    
+    // Prevent switching back to online if currently offline
+    if ($data_entry_mode === 'online' && ($currentData['data_entry_mode'] ?? 'online') === 'offline') {
+        throw new InvalidArgumentException("Cannot switch back to online mode once offline mode has been selected");
+    }
+    
     // Update the data entry mode in tbl_test_schedules_tracking
     $result = DB::update('tbl_test_schedules_tracking', [
         'data_entry_mode' => $data_entry_mode,

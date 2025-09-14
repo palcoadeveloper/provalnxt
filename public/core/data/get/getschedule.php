@@ -32,12 +32,12 @@ echo "<thead>
 <tr>
 <th> # </th>
 <th> Unit </th>
-<th> Schedule Year </th>
-    
-    
-<th> Schedule Generation Timestamp</th>
-<th> Schedule Status </th>
-<th> View Schedule </th>    
+<th> Schedule year </th>
+
+
+<th> Schedule generation timestamp</th>
+<th> Schedule status </th>
+<th> View schedule </th>    
     
 </tr>
 </thead>";
@@ -84,7 +84,7 @@ foreach ($results as $row) {
     
     $count++;
     try {
-        $unit_name=DB::queryFirstField("SELECT unit_name FROM units where unit_id=%i", $row['unit_id']);
+        $unit_name=DB::queryFirstField("SELECT unit_name FROM units where unit_id=%i and unit_status='Active'", $row['unit_id']);
     } catch (Exception $e) {
         require_once(__DIR__ . '/../../error/error_logger.php');
         logDatabaseError("Error fetching unit name for unit_id {$row['unit_id']}: " . $e->getMessage(), [
@@ -116,14 +116,14 @@ foreach ($results as $row) {
         $pdfPath = 'uploads/schedule-report-'.$unitid.'-'.$row['schedule_id'].'.pdf';
         $pdfUrl = 'core/pdf/view_pdf_with_footer.php?pdf_path='.$pdfPath;
         $pdfTitle = 'Schedule Report - '.$unit_name.' ('.$row['schedule_year'].')';
-        echo "<a href='$pdfUrl' data-toggle='modal' data-target='#imagepdfviewerModal' data-title='$pdfTitle' class='btn btn-primary btn-small' role='button'>View</a>";
+        echo "<a href='$pdfUrl' data-toggle='modal' data-target='#imagepdfviewerModal' data-title='$pdfTitle' class='btn btn-sm btn-gradient-primary btn-icon-text' role='button'>View</a>";
     }
     else 
     {
         $pdfPath = 'uploads/rt-schedule-report-'.$unitid.'-'.$row['schedule_id'].'.pdf';
         $pdfUrl = 'core/pdf/view_pdf_with_footer.php?pdf_path='.$pdfPath;
         $pdfTitle = 'Routine Test Schedule - '.$unit_name.' ('.$row['schedule_year'].')';
-        echo "<a href='$pdfUrl' data-toggle='modal' data-target='#imagepdfviewerModal' data-title='$pdfTitle' class='btn btn-primary btn-small' role='button'>View</a>";
+        echo "<a href='$pdfUrl' data-toggle='modal' data-target='#imagepdfviewerModal' data-title='$pdfTitle' class='btn btn-sm btn-gradient-primary btn-icon-text' role='button'>View</a>";
     }
     
     
@@ -184,7 +184,7 @@ else if($schtype=='paval' )
     curl_close($ch);
     */
      try {
-         $unit_name=DB::queryFirstField("SELECT unit_name FROM units where unit_id=%i", $unitid);
+         $unit_name=DB::queryFirstField("SELECT unit_name FROM units where unit_id=%i and unit_status='Active'", $unitid);
      } catch (Exception $e) {
          error_log("Error fetching unit name for unit_id {$unitid}: " . $e->getMessage());
          $unit_name = "Unknown Unit";
@@ -200,7 +200,7 @@ else if($schtype=='paval' )
  // Generate PDF dynamically
  $pdfUrl = 'generateplannedvsactualrpt.php?unit_id='.$unitid.'&sch_year='.$schyear.'&user_name='.urlencode($_SESSION['user_name']).'&user_id='.urlencode($_SESSION['user_id']);
  $pdfTitle = 'Planned vs Actual Report - '.$unit_name.' ('.$schyear.')';
- echo "<td><a href='$pdfUrl' data-toggle='modal' data-target='#imagepdfviewerModal' data-title='$pdfTitle' class='btn btn-primary btn-small' role='button'>View</a>";
+ echo "<td><a href='$pdfUrl' data-toggle='modal' data-target='#imagepdfviewerModal' data-title='$pdfTitle' class='btn btn-sm btn-gradient-primary btn-icon-text' role='button'>View</a>";
 
   echo " </td>";
    
@@ -276,7 +276,7 @@ if(curl_errno($ch)){
 
     */
      try {
-         $unit_name=DB::queryFirstField("SELECT unit_name FROM units where unit_id=%i", $unitid);
+         $unit_name=DB::queryFirstField("SELECT unit_name FROM units where unit_id=%i and unit_status='Active'", $unitid);
      } catch (Exception $e) {
          error_log("Error fetching unit name for unit_id {$unitid}: " . $e->getMessage());
          $unit_name = "Unknown Unit";
@@ -292,7 +292,7 @@ if(curl_errno($ch)){
  // Generate PDF dynamically
  $pdfUrl = 'generateplannedvsactualrtrpt.php?unit_id='.$unitid.'&sch_year='.$schyear.'&user_name='.urlencode($_SESSION['user_name']).'&user_id='.urlencode($_SESSION['user_id']);
  $pdfTitle = 'Planned vs Actual RT Report - '.$unit_name.' ('.$schyear.')';
- echo "<td><a href='$pdfUrl' data-toggle='modal' data-target='#imagepdfviewerModal' data-title='$pdfTitle' class='btn btn-primary btn-small' role='button'>View</a>";
+ echo "<td><a href='$pdfUrl' data-toggle='modal' data-target='#imagepdfviewerModal' data-title='$pdfTitle' class='btn btn-sm btn-gradient-primary btn-icon-text' role='button'>View</a>";
 
   echo " </td>";
    

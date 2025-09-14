@@ -157,21 +157,40 @@ try {
             // Record successful login for rate limiting (clears previous failures)
             RateLimiter::recordSuccess('login_attempts');
             
-            // Check if 2FA is enabled for this unit
-            $twoFactorConfig = TwoFactorAuth::getUnitTwoFactorConfig($user['unit_id']);
-            
-            if ($twoFactorConfig && $twoFactorConfig['two_factor_enabled'] === 'Yes') {
-                error_log("2FA is enabled for unit: " . $user['unit_id']);
+            // Check if 2FA is required based on user type
+            $twoFactorConfig = null;
+            $requires2FA = false;
+
+            if ($userType === 'E') {
+                // Regular employees: Check their specific unit's 2FA setting
+                $twoFactorConfig = TwoFactorAuth::getUnitTwoFactorConfig($user['unit_id']);
+                if ($twoFactorConfig && $twoFactorConfig['two_factor_enabled'] === 'Yes') {
+                    $requires2FA = true;
+                    error_log("2FA is enabled for employee's unit: " . $user['unit_id']);
+                }
+            } elseif ($userType === 'V') {
+                // Vendor employees: Check if ANY unit has 2FA enabled (since they can work across any unit)
+                $twoFactorConfig = TwoFactorAuth::getSystemWideTwoFactorConfig();
+                if ($twoFactorConfig && $twoFactorConfig['two_factor_enabled'] === 'Yes') {
+                    $requires2FA = true;
+                    error_log("2FA is enabled system-wide for vendor employees (active unit: " . $twoFactorConfig['unit_id'] . ")");
+                }
+            }
+
+            if ($requires2FA && $twoFactorConfig) {
                 
                 // Store complete user data for 2FA process
                 $_SESSION['pending_2fa'] = $user;
                 $_SESSION['pending_2fa']['user_type'] = $userType; // Ensure user_type is included
                 
-                // Create OTP session
+                // Create OTP session (use appropriate unit_id based on user type)
+                $sessionUnitId = ($userType === 'V') ? $twoFactorConfig['unit_id'] : $user['unit_id'];
+                $sessionEmployeeId = $user['employee_id'] ?? $user['user_domain_id'] ?? $user['user_id'];
+
                 $otpSession = TwoFactorAuth::createOTPSession(
                     $user['user_id'],
-                    $user['unit_id'],
-                    $user['employee_id'],
+                    $sessionUnitId,
+                    $sessionEmployeeId,
                     getClientIP(),
                     $_SERVER['HTTP_USER_AGENT'] ?? ''
                 );
@@ -188,8 +207,8 @@ try {
                         $user['user_name'],
                         $otpSession['otp_code'],
                         $otpSession['validity_minutes'],
-                        $user['employee_id'],
-                        $user['unit_id'],
+                        $sessionEmployeeId,
+                        $sessionUnitId,
                         true // isLoginFlow = true for aggressive async sending
                     );
                     

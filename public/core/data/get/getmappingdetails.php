@@ -34,10 +34,10 @@ echo "<table id='tbl-mapping-details' class='table table-bordered'>
                       <thead>
                         <tr>
                           <th> # </th>
-                          <th> Equipment Code </th>
+                          <th> Equipment code </th>
                           <th> Test </th>
-                          <th> Test Performed By</th>
-                          <th> Test Type</th>
+                          <th> Test performed by</th>
+                          <th> Test type</th>
                           <th> Action</th>
                         </tr>
                       </thead>

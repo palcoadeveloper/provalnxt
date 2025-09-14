@@ -116,7 +116,7 @@ try {
 
 
 try {
-    $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %i", intval($wf_details['unit_id']));
+    $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %i and unit_status='Active'", intval($wf_details['unit_id']));
     if (!$unit_name) {
         $unit_name = "Unknown Unit";
     }
@@ -457,7 +457,7 @@ $prev_val_wf_id = DB::queryFirstField("select val_wf_id from  tbl_val_wf_trackin
 and equipment_id=" . intval($equipment_details['equipment_id']) . " and val_wf_current_stage=5 and val_wf_id !='" . $_GET['val_wf_id'] . "' order by actual_wf_start_datetime desc
     Limit 1");
 if (!empty($prev_val_wf_id)) {
-    $principal_test_unit = DB::queryFirstField("select primary_test_id from units where unit_id=" . intval($wf_details['unit_id']));
+    $principal_test_unit = DB::queryFirstField("select primary_test_id from units where unit_id=" . intval($wf_details['unit_id'])." and unit_status='Active'");
 
     $prev_val_completed_on = DB::queryFirstField("select test_conducted_date from tbl_test_schedules_tracking where val_wf_id ='" . $prev_val_wf_id . "' and test_id=" . intval($principal_test_unit));
 } else {

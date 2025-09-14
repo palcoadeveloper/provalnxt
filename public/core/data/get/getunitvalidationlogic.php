@@ -25,7 +25,7 @@ if ($unit_id <= 0) {
 }
 
 try {
-    $unit_details = DB::queryFirstRow("SELECT validation_scheduling_logic FROM units WHERE unit_id = %d", $unit_id);
+    $unit_details = DB::queryFirstRow("SELECT validation_scheduling_logic FROM units WHERE unit_id = %d and unit_status='Active'", $unit_id);
     
     if ($unit_details) {
         echo json_encode([

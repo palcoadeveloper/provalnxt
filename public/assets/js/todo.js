@@ -1,7 +1,7 @@
 (function ($) {
   'use strict';
   var $this = $(".todo-list .todo-item");
-  $(".todo-list .todo-item:not(.edit-mode)").append('<div class="edit-icon"><i class="mdi mdi-pencil"></i></div>');
+  $(".todo-list .todo-item:not(.edit-mode)").append('<div class="edit-icon"></div>');
 
   $(".edit-icon").on("click", function () {
     $(this).parent().addClass("edit-mode");

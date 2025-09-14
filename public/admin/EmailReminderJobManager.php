@@ -359,7 +359,7 @@ try {
                                                         <td>
                                                             <button onclick="viewExecutionDetails('<?php echo $execution['job_name']; ?>', '<?php echo $execution['execution_start_time']; ?>')" 
                                                                     class="btn btn-sm btn-outline-primary">
-                                                                <i class="mdi mdi-eye"></i>
+                                                                
                                                             </button>
                                                         </td>
                                                     </tr>

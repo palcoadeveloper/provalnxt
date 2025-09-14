@@ -141,13 +141,25 @@ try {
         throw new Exception("Test data has already been finalized on {$finalized_on} by {$finalized_by}. Cannot finalize again.");
     }
     
-    // Both conditions met - proceed with PDF generation
+    // Get current data entry mode to determine if PDF generation is needed
+    $current_mode_data = DB::queryFirstRow("
+        SELECT data_entry_mode 
+        FROM tbl_test_schedules_tracking 
+        WHERE test_wf_id = %s
+    ", $test_wf_id);
+    
+    $data_entry_mode = $current_mode_data['data_entry_mode'] ?? 'online';
+    $skip_pdf_generation = ($data_entry_mode === 'offline');
+    
+    // Both conditions met - proceed with finalization
     // Start transaction manually
     DB::query("START TRANSACTION");
     
     try {
-        // Use the new ACPH PDF generation functions
-        require_once('../../pdf/acph_pdf_generator.php');
+        if (!$skip_pdf_generation) {
+            // Only generate PDFs if not in offline mode
+            // Use the new ACPH PDF generation functions
+            require_once('../../pdf/acph_pdf_generator.php');
         
         // Prepare witness data for PDF generation
         $current_user_info = DB::queryFirstRow("
@@ -444,47 +456,56 @@ try {
         // Log success for both PDFs
         error_log("ACPH PDFs generated successfully for finalization: {$filename}, {$certificate_filename}");
 
-        // PDF generation completed successfully using extracted functions
-        // Now proceed with database operations
+            // PDF generation completed successfully using extracted functions
+            // Now proceed with database operations
+            
+            // Add consolidated record to tbl_uploads for both ACPH PDFs
+            $consolidated_upload_data = [
+                'test_wf_id' => $test_wf_id,
+                'val_wf_id' => $test_info['val_wf_id'] ?? null,
+                'test_id' => $test_info['test_id'] ?? null,
+                'upload_path_raw_data' => "../../uploads/{$filename}",
+                'upload_path_test_certificate' => "../../uploads/{$certificate_filename}",
+                'upload_type' => 'acph_test_documents',
+                'uploaded_by' => $_SESSION['user_id'],
+                'uploaded_datetime' => date('Y-m-d H:i:s'),
+                'upload_status' => 'Active'
+            ];
+            
+            $upload_id = DB::insert('tbl_uploads', $consolidated_upload_data);
+            
+            if ($upload_id) {
+                error_log("SUCCESS: Created consolidated upload record (ID: $upload_id) for test_wf_id: $test_wf_id");
+            } else {
+                error_log("ERROR: Failed to create consolidated upload record for test_wf_id: $test_wf_id");
+                throw new Exception("Failed to create upload record");
+            }
+            
+            // Upload instrument calibration certificates for all tagged instruments
+            $cert_upload_results = uploadInstrumentCalibrationCertificates($test_wf_id, $test_info);
+            error_log("Instrument calibration certificate upload results: " . json_encode($cert_upload_results));
         
-        // Add record to tbl_uploads for Raw Data PDF
-        $upload_data = [
-            'test_wf_id' => $test_wf_id,
-            'val_wf_id' => $test_info['val_wf_id'] ?? null,
-            'test_id' => $test_info['test_id'] ?? null,
-            'upload_path_raw_data' => "../../uploads/{$filename}",
-            'upload_type' => 'raw_data',
-            'uploaded_by' => $_SESSION['user_id'],
-            'uploaded_datetime' => date('Y-m-d H:i:s'),
-            'upload_status' => 'Active'
-        ];
+        } else {
+            // In offline mode, skip PDF generation
+            error_log("Skipping PDF generation for offline mode test_wf_id: {$test_wf_id}");
+            
+            // Set default values for variables that would have been set by PDF generation
+            $upload_id = null;
+            $filename = 'N/A (Offline Mode)';
+            $certificate_filename = 'N/A (Offline Mode)';
+            $cert_upload_results = ['message' => 'Skipped in offline mode'];
+        }
         
-        $upload_id = DB::insert('tbl_uploads', $upload_data);
-        
-        // Add Test Certificate record to tbl_uploads
-        $certificate_upload_data = [
-            'test_wf_id' => $test_wf_id,
-            'val_wf_id' => $test_info['val_wf_id'] ?? null,
-            'test_id' => $test_info['test_id'] ?? null,
-            'upload_path_test_certificate' => "../../uploads/{$certificate_filename}",
-            'upload_type' => 'test_certificate',
-            'uploaded_by' => $_SESSION['user_id'],
-            'uploaded_datetime' => date('Y-m-d H:i:s'),
-            'upload_status' => 'Active'
-        ];
-        
-        $certificate_upload_id = DB::insert('tbl_uploads', $certificate_upload_data);
-        
-        // Update test conducted date and data entry mode in tbl_test_schedules_tracking
+        // Update test conducted date and test performer in tbl_test_schedules_tracking
         $update_data = [
             'test_conducted_date' => date('Y-m-d'),
-            'data_entry_mode' => 'online'
+            'test_performed_by' => $_SESSION['user_id']
         ];
         
         $rows_updated = DB::update('tbl_test_schedules_tracking', $update_data, 'test_wf_id=%s', $test_wf_id);
         
         if ($rows_updated > 0) {
-            error_log("Updated test_conducted_date and data_entry_mode for test_wf_id: {$test_wf_id}");
+            error_log("Updated test_conducted_date and test_performed_by for test_wf_id: {$test_wf_id}");
         } else {
             error_log("Warning: No rows updated for test_wf_id: {$test_wf_id}");
         }
@@ -511,9 +532,15 @@ try {
         
         // Clear output buffer and send success response
         ob_end_clean();
+        
+        $success_message = $skip_pdf_generation ? 
+            'Test data finalized successfully (offline mode - PDFs not generated).' :
+            'Test data finalized successfully. Raw data PDF and Test Certificate generated.';
+            
         echo json_encode([
             'success' => true,
-            'message' => 'Test data finalized successfully. Raw data PDF and Test Certificate generated.',
+            'message' => $success_message,
+            'offline_mode' => $skip_pdf_generation,
             'data' => $result
         ]);
         
@@ -529,5 +556,125 @@ try {
         'success' => false,
         'message' => $e->getMessage()
     ]);
+}
+
+/**
+ * Upload instrument calibration certificates for all instruments tagged with the test
+ * @param string $test_wf_id Test workflow ID
+ * @param array $test_info Test information array
+ * @return array Upload results with success/failure counts
+ */
+function uploadInstrumentCalibrationCertificates($test_wf_id, $test_info) {
+    try {
+        $results = [
+            'total_instruments' => 0,
+            'successful_uploads' => 0,
+            'failed_uploads' => 0,
+            'no_certificate' => 0,
+            'details' => []
+        ];
+        
+        // Get all instruments tagged with this test
+        $tagged_instruments = DB::query("
+            SELECT DISTINCT 
+                ti.instrument_id,
+                i.instrument_type,
+                i.serial_number
+            FROM test_instruments ti
+            JOIN instruments i ON ti.instrument_id = i.instrument_id  
+            WHERE ti.test_val_wf_id = %s 
+            AND ti.is_active = 1
+        ", $test_wf_id);
+        
+        if (empty($tagged_instruments)) {
+            error_log("No tagged instruments found for test_wf_id: $test_wf_id");
+            return $results;
+        }
+        
+        $results['total_instruments'] = count($tagged_instruments);
+        error_log("Found {$results['total_instruments']} tagged instruments for test_wf_id: $test_wf_id");
+        
+        foreach ($tagged_instruments as $instrument) {
+            $instrument_id = $instrument['instrument_id'];
+            
+            try {
+                // Get master certificate path from instruments table
+                $instrument_cert = DB::queryFirstRow("
+                    SELECT master_certificate_path
+                    FROM instruments 
+                    WHERE instrument_id = %s
+                ", $instrument_id);
+                
+                if (!$instrument_cert || empty($instrument_cert['master_certificate_path'])) {
+                    error_log("No master certificate path found for instrument: $instrument_id");
+                    $results['no_certificate']++;
+                    $results['details'][] = [
+                        'instrument_id' => $instrument_id,
+                        'status' => 'no_certificate',
+                        'message' => 'No master certificate path found'
+                    ];
+                    continue;
+                }
+                
+                // Create upload record for this instrument's calibration certificate
+                $cert_upload_data = [
+                    'test_wf_id' => $test_wf_id,
+                    'val_wf_id' => $test_info['val_wf_id'] ?? null,
+                    'test_id' => $test_info['test_id'] ?? null,
+                    'upload_path_master_certificate' => $instrument_cert['master_certificate_path'],
+                    'upload_type' => 'instrument_calibration_certificate',
+                    'uploaded_by' => $_SESSION['user_id'],
+                    'uploaded_datetime' => date('Y-m-d H:i:s'),
+                    'upload_status' => 'Active'
+                ];
+                
+                $cert_upload_id = DB::insert('tbl_uploads', $cert_upload_data);
+                
+                if ($cert_upload_id) {
+                    $results['successful_uploads']++;
+                    $results['details'][] = [
+                        'instrument_id' => $instrument_id,
+                        'upload_id' => $cert_upload_id,
+                        'status' => 'success',
+                        'certificate_path' => $instrument_cert['master_certificate_path']
+                    ];
+                    error_log("SUCCESS: Uploaded calibration certificate for instrument $instrument_id (upload_id: $cert_upload_id)");
+                } else {
+                    $results['failed_uploads']++;
+                    $results['details'][] = [
+                        'instrument_id' => $instrument_id,
+                        'status' => 'failed',
+                        'message' => 'Database insert failed'
+                    ];
+                    error_log("ERROR: Failed to create upload record for instrument $instrument_id calibration certificate");
+                }
+                
+            } catch (Exception $e) {
+                $results['failed_uploads']++;
+                $results['details'][] = [
+                    'instrument_id' => $instrument_id,
+                    'status' => 'error',
+                    'message' => $e->getMessage()
+                ];
+                error_log("ERROR: Exception uploading calibration certificate for instrument $instrument_id: " . $e->getMessage());
+            }
+        }
+        
+        error_log("Instrument calibration certificate upload summary for test_wf_id $test_wf_id: " . 
+                  "Total: {$results['total_instruments']}, Success: {$results['successful_uploads']}, " .
+                  "Failed: {$results['failed_uploads']}, No Certificate: {$results['no_certificate']}");
+        
+        return $results;
+        
+    } catch (Exception $e) {
+        error_log("ERROR: Exception in uploadInstrumentCalibrationCertificates: " . $e->getMessage());
+        return [
+            'total_instruments' => 0,
+            'successful_uploads' => 0,
+            'failed_uploads' => 0,
+            'no_certificate' => 0,
+            'error' => $e->getMessage()
+        ];
+    }
 }
 ?>

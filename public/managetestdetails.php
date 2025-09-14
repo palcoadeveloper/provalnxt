@@ -762,96 +762,11 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 
     </script>
     
-    <!-- Template Upload Styles -->
-    <style>
-    .drop-zone {
-        border: 2px dashed #007bff;
-        border-radius: 10px;
-        padding: 50px;
-        text-align: center;
-        cursor: pointer;
-        background-color: #f8f9fa;
-        transition: all 0.3s ease;
-        position: relative;
-        min-height: 150px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
+    <!-- Modern Form Controls and Template Upload Styles -->
     
-    .drop-zone:hover {
-        border-color: #0056b3;
-        background-color: #e3f2fd;
-    }
-    
-    .drop-zone.dragover {
-        border-color: #28a745;
-        background-color: #d4edda;
-        transform: scale(1.02);
-    }
-    
-    .drop-zone-content {
-        pointer-events: none;
-    }
-    
-    .drop-zone-icon {
-        font-size: 3rem;
-        color: #007bff;
-        margin-bottom: 15px;
-        display: block;
-    }
-    
-    .drop-zone-text {
-        font-size: 1.1rem;
-        color: #495057;
-        margin-bottom: 5px;
-    }
-    
-    .drop-zone-subtext {
-        font-size: 0.9rem;
-        color: #6c757d;
-        margin: 0;
-    }
-    
-    .file-input {
-        position: absolute;
-        top: -9999px;
-        left: -9999px;
-        width: 1px;
-        height: 1px;
-        opacity: 0;
-    }
-    
-    .upload-progress {
-        margin-top: 15px;
-        display: none;
-    }
-    
-    .border-left-success {
-        border-left: 4px solid #28a745 !important;
-    }
-    
-    .border-left-info {
-        border-left: 4px solid #17a2b8 !important;
-    }
-    
-    .border-left-warning {
-        border-left: 4px solid #ffc107 !important;
-    }
-    
-    .template-file-selected {
-        border-color: #28a745;
-        background-color: #d4edda;
-    }
-    
-    /* Visual feedback for deactivation button */
-    .deactivate-template.clicked {
-        background-color: #dc3545 !important;
-        border-color: #dc3545 !important;
-        color: white !important;
-    }
-    </style>
-  </head>
+      <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
+
+</head>
   <body>
    <?php include_once "assets/inc/_pleasewaitmodal.php"; ?>
     <div class="container-scroller">

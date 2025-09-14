@@ -45,6 +45,7 @@ if (empty($_SESSION['csrf_token'])) {
     <link rel="stylesheet" href="assets/css/style.css">
     <!-- End layout styles -->
     <link rel="shortcut icon" href="assets/images/favicon.ico" />
+    <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
         <script src="assets/js/jquery.min.js" type="text/javascript"></script> 
     
       <script>
@@ -73,6 +74,9 @@ if (empty($_SESSION['csrf_token'])) {
   "pagingType": "numbers"
 } );
     $('#datagrid-reassignedtasks-vendor').DataTable({
+  "pagingType": "numbers"
+});
+    $('#datagrid-offlinetasks-vendor').DataTable({
   "pagingType": "numbers"
 });
    $('#datagrid-newtasks-engg').DataTable({

@@ -28,8 +28,8 @@ if (empty($_SESSION['csrf_token'])) {
 <!DOCTYPE html>
 <html lang="en">
   <head>
-   <?php include_once "assets/inc/_header.php";?> 
- 
+   <?php include_once "assets/inc/_header.php";?>
+   <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
 
 <style>
   .ui-autocomplete {
@@ -116,6 +116,7 @@ if (empty($_SESSION['csrf_token'])) {
             font-size: 0.95rem;
         }
     }
+
 
 </style>
     <script>
@@ -384,7 +385,7 @@ $( "#equipmentid" ).autocomplete({
                        try {
 						  if ($_SESSION['is_super_admin']=="Yes")
                        		{
-                       	    $results = DB::query("SELECT unit_id, unit_name FROM units ORDER BY unit_name");
+                       	    $results = DB::query("SELECT unit_id, unit_name FROM units where unit_status='Active' ORDER BY unit_name");
                        	    
                        	    $output="";
                        	    if(!empty($results))
@@ -400,7 +401,7 @@ $( "#equipmentid" ).autocomplete({
                        	else 
                        	{
                        	    $unit_id = intval($_SESSION['unit_id']);
-                       	    $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %i", $unit_id);
+                       	    $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %i and unit_status='Active'", $unit_id);
                        	    
                        	    if ($unit_name) {
                        	        echo "<option value='" . htmlspecialchars($unit_id, ENT_QUOTES) . "'>" . 

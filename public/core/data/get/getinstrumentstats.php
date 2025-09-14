@@ -39,9 +39,9 @@ try {
         "SELECT COUNT(*) FROM instruments WHERE instrument_status = 'Active'"
     ));
     
-    // Query for expired instruments (calibration due date passed)
+    // Query for expired instruments (calibration due date passed) - all instruments regardless of status
     $stats['expired_instruments'] = intval(DB::queryFirstField(
-        "SELECT COUNT(*) FROM instruments WHERE calibration_due_on < CURDATE() AND instrument_status = 'Active'"
+        "SELECT COUNT(*) FROM instruments WHERE calibration_due_on < CURDATE()"
     ));
     
     // Query for instruments due for calibration soon (within 30 days)

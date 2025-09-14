@@ -230,44 +230,9 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
         });
     </script>
 
-    <style>
-        /* Custom CSS to show red borders for invalid select dropdowns with higher specificity */
-        .needs-validation.was-validated .form-control:invalid,
-        .was-validated .form-control:invalid {
-            border-color: #dc3545 !important;
-            box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 0 3px rgba(220, 53, 69, 0.1) !important;
-        }
-        
-        .needs-validation.was-validated .form-control:invalid:focus,
-        .was-validated .form-control:invalid:focus {
-            border-color: #dc3545 !important;
-            box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
-        }
-        
-        /* Specific styling for select dropdowns */
-        .needs-validation.was-validated select.form-control:invalid,
-        .was-validated select.form-control:invalid {
-            border: 1px solid #dc3545 !important;
-            border-color: #dc3545 !important;
-            background-color: #fff !important;
-        }
-        
-        .needs-validation.was-validated select.form-control:invalid:focus,
-        .was-validated select.form-control:invalid:focus {
-            border-color: #dc3545 !important;
-            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
-            outline: 0 !important;
-        }
+    
 
-        /* Additional specific selectors for different dropdown IDs */
-        .was-validated #filter_size:invalid,
-        .was-validated #filter_type_id:invalid,
-        .was-validated #status:invalid,
-        .was-validated #unit_id:invalid {
-            border: 1px solid #dc3545 !important;
-            border-color: #dc3545 !important;
-        }
-    </style>
+    <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
 
 </head>
 
@@ -333,7 +298,7 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                                                             }
                                                         } else {
                                                             $unit_id = intval($_SESSION['unit_id']);
-                                                            $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %i", $unit_id);
+                                                            $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %i and unit_status='Active'", $unit_id);
                                                             if ($unit_name) {
                                                                 echo "<option value='" . htmlspecialchars($unit_id, ENT_QUOTES) . "'>" . htmlspecialchars($unit_name, ENT_QUOTES) . "</option>";
                                                             }

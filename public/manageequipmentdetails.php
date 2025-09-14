@@ -36,7 +36,7 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
         }
         
         // Get the unit's validation scheduling logic
-        $unit_details = DB::queryFirstRow("SELECT validation_scheduling_logic FROM units WHERE unit_id = %d", intval($equipment_details['unit_id']));
+        $unit_details = DB::queryFirstRow("SELECT validation_scheduling_logic FROM units WHERE unit_id = %d and unit_status='Active'", intval($equipment_details['unit_id']));
         if (!$unit_details) {
             $unit_details = ['validation_scheduling_logic' => 'dynamic']; // default fallback
         }
@@ -431,49 +431,7 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 
 
     
-    <style>
-        /* Custom CSS to show red borders for invalid select dropdowns with higher specificity */
-        .needs-validation.was-validated .form-control:invalid,
-        .was-validated .form-control:invalid {
-            border-color: #dc3545 !important;
-            box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 0 3px rgba(220, 53, 69, 0.1) !important;
-        }
-        
-        .needs-validation.was-validated .form-control:invalid:focus,
-        .was-validated .form-control:invalid:focus {
-            border-color: #dc3545 !important;
-            box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
-        }
-        
-        /* Specific styling for select dropdowns */
-        .needs-validation.was-validated select.form-control:invalid,
-        .was-validated select.form-control:invalid {
-            border: 1px solid #dc3545 !important;
-            border-color: #dc3545 !important;
-            background-color: #fff !important;
-        }
-        
-        .needs-validation.was-validated select.form-control:invalid:focus,
-        .was-validated select.form-control:invalid:focus {
-            border-color: #dc3545 !important;
-            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
-            outline: 0 !important;
-        }
-
-        /* Additional specific selectors for different dropdown IDs */
-        .was-validated #unit_id:invalid,
-        .was-validated #department_id:invalid,
-        .was-validated #equipment_category:invalid,
-        .was-validated #validation_frequency:invalid,
-        .was-validated #first_validation_date:invalid,
-        .was-validated #frequency_type:invalid,
-        .was-validated #single_freq_select:invalid,
-        .was-validated #combined_freq_select:invalid,
-        .was-validated #equipment_status:invalid {
-            border: 1px solid #dc3545 !important;
-            border-color: #dc3545 !important;
-        }
-    </style>
+    <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
 
 </head>
 
@@ -564,7 +522,7 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                                                             }
                                                         } else {
                                                             $unit_id = intval($_SESSION['unit_id']);
-                                                            $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %i", $unit_id);
+                                                            $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %i and unit_status='Active'", $unit_id);
                                                             
                                                             if ($unit_name) {
                                                                 echo "<option value='" . htmlspecialchars($unit_id, ENT_QUOTES) . "'>" . htmlspecialchars($unit_name, ENT_QUOTES) . "</option>";

@@ -44,10 +44,10 @@ echo "<table id='tbl-test-details' class='table table-bordered'>
                         <tr>
                           <th> # </th>
                           
-                          <th> Test Name</th>
-                          
-                          <th> Test Performed By</th>
-                            <th> Test Status</th>
+                          <th> Test name</th>
+
+                          <th> Test performed by</th>
+                            <th> Test status</th>
                           <th> Action</th>
                         </tr>
                       </thead>

@@ -29,6 +29,7 @@ require_once('core/config/db.class.php');
       <?php include_once "assets/inc/_header.php";?>
       <meta name="csrf-token" content="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
    
+    <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
     
   </head>
   <body>
@@ -108,7 +109,7 @@ require_once('core/config/db.class.php');
                        	<?php if ($_SESSION['is_super_admin']=="Yes")
                        	{
                        	    try {
-                       	        $results = DB::query("SELECT unit_id, unit_name FROM units ORDER BY unit_name ASC");
+                       	        $results = DB::query("SELECT unit_id, unit_name FROM units where unit_status='Active' ORDER BY unit_name ASC");
                        	        
                        	        if(!empty($results))
                        	        {
@@ -125,7 +126,7 @@ require_once('core/config/db.class.php');
                        	}
                        	else {
                        	    try {
-                       	        $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %i", intval($_SESSION['unit_id']));
+                       	        $unit_name = DB::queryFirstField("SELECT unit_name FROM units WHERE unit_id = %i and unit_status='Active'", intval($_SESSION['unit_id']));
                        	        
                        	        echo "<option value='" . htmlspecialchars($_SESSION['unit_id'], ENT_QUOTES, 'UTF-8') . "'>" . htmlspecialchars($unit_name, ENT_QUOTES, 'UTF-8') . "</option>";
                        	    } catch (Exception $e) {
@@ -159,7 +160,7 @@ require_once('core/config/db.class.php');
   </div>
   
  
-  <button class="btn btn-primary" type="submit">Search Schedule</button>
+  <button class="btn btn-gradient-original-success" type="submit">Search Schedule</button>
 </form>
       
           
@@ -199,7 +200,36 @@ require_once('core/config/db.class.php');
  $("#displayresults").html(data);
 
 		  $('#mymodal').modal('hide');
-    $('#datagrid').DataTable();
+		  
+		  // Small delay to ensure DOM is ready, then initialize modern DataTable
+		  setTimeout(function() {
+		      // Destroy existing DataTable if it exists
+		      if ($.fn.DataTable.isDataTable('#datagrid')) {
+		          $('#datagrid').DataTable().destroy();
+		      }
+		      
+		      // Initialize modern DataTable with enhanced features
+		      $('#datagrid').DataTable({
+		          "pagingType": "numbers",
+		          "pageLength": 25,
+		          "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+		          "searching": true,
+		          "ordering": true,
+		          "info": true,
+		          "columnDefs": [
+		              {
+		                  "targets": -1,
+		                  "orderable": false,
+		                  "searchable": false
+		              }
+		          ],
+		          "language": {
+		              "search": "Search schedules:",
+		              "lengthMenu": "Show _MENU_ entries",
+		              "info": "Showing _START_ to _END_ of _TOTAL_ schedule entries"
+		          }
+		      });
+		  }, 100); // 100ms delay
   });
           
           

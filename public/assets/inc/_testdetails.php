@@ -52,7 +52,7 @@ include_once (__DIR__."/../../core/config/db.class.php");
 
                 $url="viewtestwindow.php?test_id=".$row['test_id']."&val_wf_id=".$_GET['val_wf_id']."&test_val_wf_id=".
     $row['test_wf_id']."&current_wf_stage=".$row['test_wf_current_stage']."&mode=read";
-echo "<td> <a href='javascript:void(0)' onclick='return viewDocument(\"" . $url . "\", \"" . $row['test_description'] . "\")'>" . $row['test_description'] . "</a></td>";
+echo "<td> <a href='javascript:void(0)' onclick='openTestWindow(\"" . $url . "\", \"" . htmlspecialchars($row['test_description'], ENT_QUOTES) . "\")'>" . $row['test_description'] . "</a></td>";
 
               echo "<td>".(!empty($row['test_conducted_date']) ? date_format(date_create($row['test_conducted_date']),"d.m.Y") : "Not Conducted")."</td>";
               echo "<td>".$row['wf_stage_description']."</td>";
@@ -74,6 +74,25 @@ echo "<td> <a href='javascript:void(0)' onclick='return viewDocument(\"" . $url 
           $query2=DB::query("select test_wf_id, upload_path_raw_data,upload_path_master_certificate,upload_path_test_certificate,upload_path_other_doc,t2.user_name, upload_action,test_description
 from tbl_uploads t1, users t2, tests t3
 where t1.uploaded_by=t2.user_id and t1.test_id=t3.test_id and t1.val_wf_id=%s", $_GET['val_wf_id']);
+          
+          // Function to normalize file paths
+          function normalizeUploadPath($path) {
+              if (empty($path)) return '';
+              
+              // Remove leading ../../ or ../ prefixes
+              if (strpos($path, '../../') === 0) {
+                  return substr($path, 6); // Remove ../../
+              } else if (strpos($path, '../') === 0) {
+                  return substr($path, 3); // Remove ../
+              }
+              
+              // If path doesn't start with uploads/, add it
+              if (strpos($path, 'uploads/') !== 0) {
+                  return 'uploads/' . $path;
+              }
+              
+              return $path;
+          }
           
           
           echo "<table class='table table-border'>";
@@ -107,10 +126,10 @@ where t1.uploaded_by=t2.user_id and t1.test_id=t3.test_id and t1.val_wf_id=%s", 
                  // echo ( (!empty($row['upload_path_test_certificate'])) ? "<br/><br/><a target='_blank' href='".substr($row['upload_path_test_certificate'],3)."'>Test Certificate</a>" : ""  ) ;
                  // echo ( (!empty($row['upload_path_other_doc'])) ? "<br/><br/><a target='_blank' href='".substr($row['upload_path_other_doc'],3)."'>Other Document</a>" : ""  ) . "</td>";
                   
-                  echo "<td>". ( (!empty($row['upload_path_raw_data'])) ? "<a href='javascript:void(0)' onclick='return viewDocument(\"".substr($row['upload_path_raw_data'],3)."\", \"Test Raw Data\")'>Test Raw Data</a>" : ""  ) ;
-echo ( (!empty($row['upload_path_master_certificate'])) ? "<br/><br/><a href='javascript:void(0)' onclick='return viewDocument(\"".substr($row['upload_path_master_certificate'],3)."\", \"Master Certificate\")'>Master Certificate</a>" : ""  ) ;
-echo ( (!empty($row['upload_path_test_certificate'])) ? "<br/><br/><a href='javascript:void(0)' onclick='return viewDocument(\"".substr($row['upload_path_test_certificate'],3)."\", \"Test Certificate\")'>Test Certificate</a>" : ""  ) ;
-echo ( (!empty($row['upload_path_other_doc'])) ? "<br/><br/><a href='javascript:void(0)' onclick='return viewDocument(\"".substr($row['upload_path_other_doc'],3)."\", \"Other Document\")'>Other Document</a>" : ""  ) . "</td>";
+                  echo "<td>". ( (!empty($row['upload_path_raw_data'])) ? "<a href='javascript:void(0)' onclick='return viewDocument(\"".htmlspecialchars(normalizeUploadPath($row['upload_path_raw_data']), ENT_QUOTES)."\", \"Test Raw Data\")' title='Original: ".htmlspecialchars($row['upload_path_raw_data'], ENT_QUOTES)."'>Test Raw Data</a>" : ""  ) ;
+echo ( (!empty($row['upload_path_master_certificate'])) ? "<br/><br/><a href='javascript:void(0)' onclick='return viewDocument(\"".htmlspecialchars(normalizeUploadPath($row['upload_path_master_certificate']), ENT_QUOTES)."\", \"Master Certificate\")' title='Original: ".htmlspecialchars($row['upload_path_master_certificate'], ENT_QUOTES)."'>Master Certificate</a>" : ""  ) ;
+echo ( (!empty($row['upload_path_test_certificate'])) ? "<br/><br/><a href='javascript:void(0)' onclick='return viewDocument(\"".htmlspecialchars(normalizeUploadPath($row['upload_path_test_certificate']), ENT_QUOTES)."\", \"Test Certificate\")' title='Original: ".htmlspecialchars($row['upload_path_test_certificate'], ENT_QUOTES)."'>Test Certificate</a>" : ""  ) ;
+echo ( (!empty($row['upload_path_other_doc'])) ? "<br/><br/><a href='javascript:void(0)' onclick='return viewDocument(\"".htmlspecialchars(normalizeUploadPath($row['upload_path_other_doc']), ENT_QUOTES)."\", \"Other Document\")' title='Original: ".htmlspecialchars($row['upload_path_other_doc'], ENT_QUOTES)."'>Other Document</a>" : ""  ) . "</td>";
                   
                   
                   echo "<td>". $row['upload_action'] . "</td>";
@@ -224,6 +243,18 @@ function viewDocument(url, title) {
   
   newWindow.document.write('</body></html>');
   newWindow.document.close();
+  
+  return false;
+}
+
+// Function to open test window in a popup
+function openTestWindow(url, title) {
+  var testWindow = window.open(url, 'testViewer', 'width=1200,height=800,resizable=yes,scrollbars=yes,location=no,menubar=no,toolbar=no,status=no');
+  
+  // Focus the new window
+  if (testWindow) {
+    testWindow.focus();
+  }
   
   return false;
 }

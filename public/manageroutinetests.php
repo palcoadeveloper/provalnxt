@@ -193,7 +193,11 @@ $("#btnSubmitData").click(function() {
     
     </script>
     
-  </head>
+
+    
+      <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
+
+</head>
   <body>
      <?php include_once "assets/inc/_pleasewaitmodal.php"; ?>
      <?php  include "assets/inc/_viewprotocolmodal.php";?> 

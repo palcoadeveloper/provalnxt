@@ -120,6 +120,7 @@ $dashboardCache = [];
 <link rel="stylesheet" href="assets/css/style.css">
 <!-- End layout styles -->
 <link rel="shortcut icon" href="assets/images/favicon.ico" />
+<link rel="stylesheet" href="assets/css/modern-manage-ui.css">
 
 <script src="assets/js/jquery.min.js" type="text/javascript"></script> 
 
@@ -180,10 +181,7 @@ $dashboardCache = [];
 
 									<div class="page-header">
 										<h3 class="page-title">
-											<span
-												class="page-title-icon bg-gradient-primary text-white mr-2">
-												<i class="mdi mdi-home"></i>
-											</span> Validation Workflow Related Tasks 
+											Validation Workflow Related Tasks 
 										</h3>
 										
 									</div>
@@ -279,19 +277,23 @@ if (!in_array($userType, ['employee', 'vendor'])) {
 // Vendor Dashboard
 if ($userType === 'vendor') {
     try {
-        // Combined query for better performance
+        // Combined query for better performance using ETV mapping
         $vendorQuery = "
             SELECT 
-                COUNT(CASE WHEN t1.test_wf_current_stage = %s AND t1.vendor_id != 0 THEN 1 END) as new_tasks,
-                COUNT(CASE WHEN t1.test_wf_current_stage IN (%s, %s) THEN 1 END) as reassigned_tasks
+                COUNT(CASE WHEN t1.test_wf_current_stage = %s THEN 1 END) as new_tasks,
+                COUNT(CASE WHEN t1.test_wf_current_stage = '1PRV' THEN 1 END) as offline_tasks,
+                COUNT(CASE WHEN t1.test_wf_current_stage IN ('3B', '4B', '1RRV') THEN 1 END) as reassigned_tasks
             FROM tbl_test_schedules_tracking t1
-            JOIN equipments t2 ON t1.equip_id = t2.equipment_id";
+            JOIN equipments t2 ON t1.equip_id = t2.equipment_id
+            JOIN equipment_test_vendor_mapping etvm ON t1.equip_id = etvm.equipment_id AND t1.test_id = etvm.test_id
+            WHERE etvm.vendor_id = %i AND etvm.mapping_status = 'Active'";
         
-        $vendorData = DB::queryFirstRow($vendorQuery, STAGE_NEW_TASK, STAGE_REASSIGNED_B, STAGE_REASSIGNED_4B);
+        $vendorData = DB::queryFirstRow($vendorQuery, STAGE_NEW_TASK, $_SESSION['vendor_id']);
         
         if ($vendorData) {
             renderDashboardCard('danger', 'Newly Assigned Tasks', $vendorData['new_tasks'], 'New tasks', 'mdi-chart-line');
-            renderDashboardCard('info', 'Re-assigned Tasks', $vendorData['reassigned_tasks'], 'Tasks re-assigned', 'mdi-bookmark-outline');
+            renderDashboardCard('warning', 'Offline Tasks - Pending Review', $vendorData['offline_tasks'], 'Offline tasks pending review', 'mdi-file-document-outline');
+            renderDashboardCard('info', 'Re-assigned Tasks', $vendorData['reassigned_tasks'], 'Tests requiring re-work', 'mdi-refresh');
         }
     } catch (Exception $e) {
         // Log error and show fallback
@@ -307,20 +309,17 @@ elseif ($userType === 'employee' && $deptId == DEPT_ENGINEERING) {
         $engineeringQuery = "
             SELECT 
                 COUNT(CASE WHEN t1.test_wf_current_stage = %s AND t1.vendor_id = 0 AND t1.unit_id = %i THEN 1 END) as new_tasks,
-                COUNT(CASE WHEN t1.test_wf_current_stage IN (%s, %s) AND t1.unit_id = %i THEN 1 END) as reassigned_tasks,
                 COUNT(CASE WHEN t1.test_wf_current_stage = %s AND t1.unit_id = %i THEN 1 END) as approval_pending
             FROM tbl_test_schedules_tracking t1
             JOIN equipments t2 ON t1.equip_id = t2.equipment_id";
         
         $engineeringData = DB::queryFirstRow($engineeringQuery, 
             STAGE_NEW_TASK, $unitId,
-            STAGE_REASSIGNED_B, STAGE_REASSIGNED_4B, $unitId,
             STAGE_PENDING_APPROVAL, $unitId
         );
         
         if ($engineeringData) {
-            renderDashboardCard('success', 'Newly Assigned Tasks', $engineeringData['new_tasks'], 'New tasks', 'mdi-chart-line');
-            renderDashboardCard('danger', 'Re-assigned Tasks', $engineeringData['reassigned_tasks'], 'Tasks re-assigned', 'mdi-bookmark-outline');
+            renderDashboardCard('success', 'Newly Assigned Tasks', $engineeringData['new_tasks'], 'New tasks (Internal)', 'mdi-chart-line');
             renderDashboardCard('dark', 'Tasks Pending For Approval', $engineeringData['approval_pending'], 'Total tasks completed so far', 'mdi-diamond');
         }
         

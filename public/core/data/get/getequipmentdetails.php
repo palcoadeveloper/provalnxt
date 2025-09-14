@@ -112,7 +112,7 @@ echo "<table id='tbl-equip-details' class='table table-bordered'>
                       <thead>
                         <tr>
                           <th> # </th>
-                          <th> Equipment Code </th>
+                          <th> Equipment code </th>
                           <th> Category </th>
                           <th> Unit</th>
                           <th> Department</th>

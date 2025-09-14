@@ -147,11 +147,7 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 });
     </script>
     
-    
-
-    
-    
-    
+    <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
     
   </head>
   <body>
@@ -168,9 +164,7 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 	<?php include "assets/inc/_sessiontimeout.php"; ?>
 			           <div class="page-header">
 						<h3 class="page-title">
-							<span class="page-title-icon bg-gradient-primary text-white mr-2">
-								<i class="mdi mdi-home"></i>
-							</span> Vendor Details
+							 Vendor Details
 						</h3>
 						<nav aria-label="breadcrumb">
 							<ul class="breadcrumb">

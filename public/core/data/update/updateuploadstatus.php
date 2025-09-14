@@ -163,6 +163,35 @@ class UploadStatusValidator {
     
 }
 
+/**
+ * Helper function to check if approval details should be skipped
+ * for paper on glass + online mode scenarios
+ * @param string $test_wf_id Test workflow ID
+ * @return bool True if approval details should be skipped
+ */
+function shouldSkipApprovalDetails($test_wf_id) {
+    if (empty($test_wf_id)) {
+        return false;
+    }
+    
+    try {
+        $testConditions = DB::queryFirstRow("
+            SELECT t.paper_on_glass_enabled, ts.data_entry_mode
+            FROM tbl_test_schedules_tracking ts
+            LEFT JOIN tests t ON t.test_id = ts.test_id
+            WHERE ts.test_wf_id = %s
+        ", $test_wf_id);
+        
+        return ($testConditions && 
+                $testConditions['paper_on_glass_enabled'] == 'Yes' && 
+                $testConditions['data_entry_mode'] == 'online');
+                
+    } catch (Exception $e) {
+        error_log("Error checking approval details conditions: " . $e->getMessage());
+        return false;
+    }
+}
+
 try {
     // Validate input data
     $validated_data = UploadStatusValidator::validateUploadUpdateData();
@@ -218,11 +247,21 @@ try {
                             $pdf->addPage($s['orientation'], $s);
                         }
                         
-                        $pdf->SetFont('Arial','B',10);
-                        $pdf->SetXY(20, 103);
-                        $pdf->Cell(50,30,'Certificate Reviewed By:',1,0,'C');
-                        $pdf->SetFont('Arial','',10);
-                        $pdf->MultiCell(0,10,$_SESSION['user_name']."\n".' Date: '.date("d.m.Y h:i:s A")."\n"."Engg / User Department (Cipla Ltd.)",1,'C');
+                        // Check if we should skip Certificate Reviewed By section for paper on glass + online mode
+                        $test_wf_id = DB::queryFirstField(
+                            "SELECT test_wf_id FROM tbl_uploads WHERE upload_id = %i",
+                            $validated_data['up_id']
+                        );
+                        
+                        $shouldSkipReviewedBy = shouldSkipApprovalDetails($test_wf_id);
+                        
+                        if (!$shouldSkipReviewedBy) {
+                            $pdf->SetFont('Arial','B',10);
+                            $pdf->SetXY(20, 103);
+                            $pdf->Cell(50,30,'Certificate Reviewed By:',1,0,'C');
+                            $pdf->SetFont('Arial','',10);
+                            $pdf->MultiCell(0,10,$_SESSION['user_name']."\n".' Date: '.date("d.m.Y h:i:s A")."\n"."Engg / User Department (Cipla Ltd.)",1,'C');
+                        }
                         
                         // Create new file path using simple string replacement like archived version
                         $new_path_adjusted = substr($adjustedPath, 0, -4) . "R.pdf";
