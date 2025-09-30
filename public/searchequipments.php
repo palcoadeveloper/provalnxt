@@ -30,8 +30,87 @@ require_once 'core/config/db.class.php';
     <meta name="csrf-token" content="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>"> 
     <script>
     $(document).ready(function(){
-    
-    
+
+    // Function to get URL parameters
+    function getUrlParameter(name) {
+        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        var results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    }
+
+    // Function to restore search state from URL parameters
+    function restoreSearchState() {
+        const restoreFlag = getUrlParameter('restore_search');
+        if (restoreFlag === '1') {
+            console.log('Restoring search state from URL parameters');
+
+            // Restore form values
+            const unitid = getUrlParameter('unitid');
+            const deptId = getUrlParameter('dept_id');
+            const equipmentType = getUrlParameter('equipment_type');
+            const equipmentId = getUrlParameter('equipment_id');
+            const etvMappingFilter = getUrlParameter('etv_mapping_filter');
+
+            if (unitid && unitid !== '') {
+                $('#unitid').val(unitid);
+                // Trigger change to populate equipment dropdown
+                fetchEquipments(unitid);
+            }
+
+            if (deptId && deptId !== '') {
+                $('#dept_id').val(deptId);
+            }
+
+            if (equipmentType && equipmentType !== '') {
+                $('#equipment_type').val(equipmentType);
+            }
+
+            if (etvMappingFilter && etvMappingFilter !== '') {
+                $('#etv_mapping_filter').val(etvMappingFilter);
+            }
+
+            // Set equipment ID after a delay to ensure dropdown is populated
+            setTimeout(function() {
+                if (equipmentId && equipmentId !== '') {
+                    $('#equipment_id').val(equipmentId);
+                }
+
+                // Auto-submit the form to show results
+                setTimeout(function() {
+                    console.log('Auto-submitting restored search');
+
+                    // Show a brief notification that search is being restored
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            title: 'Restoring Search Results',
+                            text: 'Taking you back to your previous search...',
+                            icon: 'info',
+                            timer: 1500,
+                            timerProgressBar: true,
+                            showConfirmButton: false,
+                            toast: true,
+                            position: 'top-end'
+                        });
+                    }
+
+                    // Show loading indicator
+                    $('#pleasewaitmodal').modal('show');
+                    $('#formreport').submit();
+
+                    // Clean up URL parameters after search is restored
+                    setTimeout(function() {
+                        const cleanUrl = window.location.pathname;
+                        window.history.replaceState({}, document.title, cleanUrl);
+                    }, 2000);
+                }, 500);
+            }, 1000);
+        }
+    }
+
+    // Call restore function on page load
+    restoreSearchState();
+
 function fetchEquipments(unitid) {
   
      $('#equipment_id').empty();
@@ -119,6 +198,33 @@ e.preventDefault();
                                  "info": "Showing _START_ to _END_ of _TOTAL_ equipments"
                              }
                          });
+
+                         // Highlight previously viewed equipment if coming back from details
+                         const viewedEquipId = getUrlParameter('viewed_equip_id');
+                         if (viewedEquipId) {
+                             setTimeout(function() {
+                                 $('a[href*="equip_id=' + viewedEquipId + '"]').closest('tr').addClass('table-warning');
+                             }, 200);
+                         }
+
+                         // Smooth scroll to results section when coming back from equipment details
+                         const restoreFlag = getUrlParameter('restore_search');
+                         if (restoreFlag === '1') {
+                             setTimeout(function() {
+                                 const resultsSection = $('#displayresults');
+                                 if (resultsSection.length && resultsSection.is(':visible')) {
+                                     $('html, body').animate({
+                                         scrollTop: resultsSection.offset().top - 100
+                                     }, 800, 'swing', function() {
+                                         // Add a subtle highlight effect to the results area
+                                         resultsSection.addClass('highlight-results');
+                                         setTimeout(function() {
+                                             resultsSection.removeClass('highlight-results');
+                                         }, 2000);
+                                     });
+                                 }
+                             }, 300);
+                         }
                      }, 100); // 100ms delay
                        
                       });
@@ -196,7 +302,51 @@ e.preventDefault();
     </script>
     
     <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
-    
+
+    <style>
+    /* Enhanced search results highlight animation */
+    .highlight-results {
+        animation: gentle-glow 2s ease-in-out;
+        border-radius: 8px;
+    }
+
+    @keyframes gentle-glow {
+        0% {
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+        50% {
+            box-shadow: 0 0 20px rgba(0, 123, 255, 0.4);
+            background-color: rgba(0, 123, 255, 0.08);
+        }
+        100% {
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.1);
+            background-color: transparent;
+        }
+    }
+
+    /* Smooth scroll behavior */
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* Enhanced table row highlighting for previously viewed equipment */
+    .table-warning {
+        background-color: rgba(255, 193, 7, 0.15) !important;
+        border-left: 4px solid #ffc107;
+        animation: highlight-fade 3s ease-in-out;
+    }
+
+    @keyframes highlight-fade {
+        0% {
+            background-color: rgba(255, 193, 7, 0.3) !important;
+        }
+        100% {
+            background-color: rgba(255, 193, 7, 0.15) !important;
+        }
+    }
+    </style>
+
   </head>
   <body>
     <?php include_once "assets/inc/_pleasewaitmodal.php"; ?>

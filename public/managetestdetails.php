@@ -3,16 +3,9 @@ require_once('./core/config/config.php');
 
 // Session is already started by config.php via session_init.php
 
-// Check for proper authentication
-if (!isset($_SESSION['logged_in_user']) || !isset($_SESSION['user_name'])) {
-    session_destroy();
-    header('Location: ' . BASE_URL . 'login.php?msg=session_required');
-    exit();
-}
-
-// Validate session timeout
-require_once('core/security/session_timeout_middleware.php');
-validateActiveSession();
+// Optimized session validation
+require_once('core/security/optimized_session_validation.php');
+OptimizedSessionValidation::validateOnce();
 
 // Validate required parameters
 if (isset($_GET['m']) && $_GET['m'] != 'a' && (!isset($_GET['test_id']) || !is_numeric($_GET['test_id']))) {
@@ -116,7 +109,16 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                   title: 'Success',
                   text: "The test record is successfully " + (mode === 'add' ? "added" : "modified") + "!"
                 }).then((result) => {
-                  window.location = "searchtests.php";
+                  // Build redirect URL with search parameters if available
+                  let redirectUrl = "searchtests.php";
+                  <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+                    const urlParams = new URLSearchParams();
+                    <?php if (isset($_GET['test_performed_by'])): ?>urlParams.set('test_performed_by', '<?= htmlspecialchars($_GET['test_performed_by'], ENT_QUOTES) ?>');<?php endif; ?>
+                    <?php if (isset($_GET['test_status'])): ?>urlParams.set('test_status', '<?= htmlspecialchars($_GET['test_status'], ENT_QUOTES) ?>');<?php endif; ?>
+                    urlParams.set('restore_search', '1');
+                    redirectUrl += '?' + urlParams.toString();
+                  <?php endif; ?>
+                  window.location = redirectUrl;
                 });
               } else {
                 Swal.fire({
@@ -124,7 +126,16 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                   title: 'Oops...',
                   text: 'Something went wrong.'
                 }).then((result) => {
-                  window.location = "searchtests.php";
+                  // Build redirect URL with search parameters if available
+                  let redirectUrl = "searchtests.php";
+                  <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+                    const urlParams = new URLSearchParams();
+                    <?php if (isset($_GET['test_performed_by'])): ?>urlParams.set('test_performed_by', '<?= htmlspecialchars($_GET['test_performed_by'], ENT_QUOTES) ?>');<?php endif; ?>
+                    <?php if (isset($_GET['test_status'])): ?>urlParams.set('test_status', '<?= htmlspecialchars($_GET['test_status'], ENT_QUOTES) ?>');<?php endif; ?>
+                    urlParams.set('restore_search', '1');
+                    redirectUrl += '?' + urlParams.toString();
+                  <?php endif; ?>
+                  window.location = redirectUrl;
                 });
               }
             } catch (e) {
@@ -135,7 +146,16 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                   title: 'Success',
                   text: "The test record is successfully " + (mode === 'add' ? "added" : "modified") + "!"
                 }).then((result) => {
-                  window.location = "searchtests.php";
+                  // Build redirect URL with search parameters if available
+                  let redirectUrl = "searchtests.php";
+                  <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+                    const urlParams = new URLSearchParams();
+                    <?php if (isset($_GET['test_performed_by'])): ?>urlParams.set('test_performed_by', '<?= htmlspecialchars($_GET['test_performed_by'], ENT_QUOTES) ?>');<?php endif; ?>
+                    <?php if (isset($_GET['test_status'])): ?>urlParams.set('test_status', '<?= htmlspecialchars($_GET['test_status'], ENT_QUOTES) ?>');<?php endif; ?>
+                    urlParams.set('restore_search', '1');
+                    redirectUrl += '?' + urlParams.toString();
+                  <?php endif; ?>
+                  window.location = redirectUrl;
                 });
               } else {
                 Swal.fire({
@@ -143,7 +163,16 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                   title: 'Oops...',
                   text: 'Something went wrong.'
                 }).then((result) => {
-                  window.location = "searchtests.php";
+                  // Build redirect URL with search parameters if available
+                  let redirectUrl = "searchtests.php";
+                  <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+                    const urlParams = new URLSearchParams();
+                    <?php if (isset($_GET['test_performed_by'])): ?>urlParams.set('test_performed_by', '<?= htmlspecialchars($_GET['test_performed_by'], ENT_QUOTES) ?>');<?php endif; ?>
+                    <?php if (isset($_GET['test_status'])): ?>urlParams.set('test_status', '<?= htmlspecialchars($_GET['test_status'], ENT_QUOTES) ?>');<?php endif; ?>
+                    urlParams.set('restore_search', '1');
+                    redirectUrl += '?' + urlParams.toString();
+                  <?php endif; ?>
+                  window.location = redirectUrl;
                 });
               }
             }
@@ -787,7 +816,16 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 						<nav aria-label="breadcrumb">
 							<ul class="breadcrumb">
 								<li class="breadcrumb-item active" aria-current="page"><span><a class='btn btn-gradient-info btn-sm btn-rounded'
-										href="searchtests.php"><< Back</a> </span>
+										href="searchtests.php<?php
+                                        // Build back navigation URL with search parameters
+                                        if (isset($_GET['from_search']) && $_GET['from_search'] == '1') {
+                                            $back_params = [];
+                                            if (isset($_GET['test_performed_by'])) $back_params['test_performed_by'] = $_GET['test_performed_by'];
+                                            if (isset($_GET['test_status'])) $back_params['test_status'] = $_GET['test_status'];
+                                            $back_params['restore_search'] = '1';
+                                            echo '?' . http_build_query($back_params);
+                                        }
+                                    ?>"><< Back</a> </span>
 								</li>
 							</ul>
 						</nav>

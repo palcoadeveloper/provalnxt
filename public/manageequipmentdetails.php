@@ -125,6 +125,22 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                 }
             });
 
+            // Combined frequency selection change handler for Starting Frequency field
+            $('#combined_freq_select').on('change', function() {
+                const selectedCombination = $(this).val();
+                const validCombinations = ['6M,Y', 'Y,2Y', '6M,Y,2Y'];
+
+                if (selectedCombination && validCombinations.includes(selectedCombination)) {
+                    // Show starting frequency field and make it required
+                    toggleStartingFrequencyField(true, true);
+                    // Populate dropdown options based on selected combination
+                    populateStartingFrequencyOptions(selectedCombination);
+                } else {
+                    // Hide starting frequency field
+                    toggleStartingFrequencyField(false);
+                }
+            });
+
             // Initialize frequency sections based on current selection
             function initializeFrequencySections() {
                 const currentFrequencyType = $('#frequency_type').val();
@@ -133,14 +149,77 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                     $('#dual_freq_section').hide();
                     $('#single_freq_select').attr('required', true);
                     $('#combined_freq_select').attr('required', false);
+                    // Hide starting frequency field for single frequency type
+                    toggleStartingFrequencyField(false);
                 } else if (currentFrequencyType === 'dual') {
                     $('#single_freq_section').hide();
                     $('#dual_freq_section').show();
                     $('#single_freq_select').attr('required', false);
                     $('#combined_freq_select').attr('required', true);
+
+                    // Check if combined frequency is already selected and handle starting frequency field
+                    const selectedCombination = $('#combined_freq_select').val();
+                    const validCombinations = ['6M,Y', 'Y,2Y', '6M,Y,2Y'];
+
+                    if (selectedCombination && validCombinations.includes(selectedCombination)) {
+                        toggleStartingFrequencyField(true, true);
+                        populateStartingFrequencyOptions(selectedCombination);
+                    } else {
+                        toggleStartingFrequencyField(false);
+                    }
+                } else {
+                    // If no frequency type selected, hide starting frequency field
+                    toggleStartingFrequencyField(false);
                 }
             }
-            
+
+            // Function to populate starting frequency options based on selected combination
+            function populateStartingFrequencyOptions(selectedCombination) {
+                const startingFreqSelect = $('#starting_freq_combined_select');
+                startingFreqSelect.empty();
+                startingFreqSelect.append('<option value="">Select Starting Frequency</option>');
+
+                if (!selectedCombination) {
+                    return;
+                }
+
+                // Map frequency codes to display labels
+                const frequencyLabels = {
+                    '6M': 'Six Monthly',
+                    'Y': 'Yearly',
+                    '2Y': 'Bi-Yearly'
+                };
+
+                // Split the combination string and add options
+                const frequencies = selectedCombination.split(',');
+                frequencies.forEach(function(freq) {
+                    const trimmedFreq = freq.trim();
+                    if (frequencyLabels[trimmedFreq]) {
+                        startingFreqSelect.append('<option value="' + trimmedFreq + '">' + frequencyLabels[trimmedFreq] + '</option>');
+                    }
+                });
+
+                // Pre-select existing value for edit mode
+                <?php if ($_GET['m'] != 'a' && isset($equipment_details['starting_frequency'])): ?>
+                const existingStartingFreq = '<?php echo htmlspecialchars($equipment_details['starting_frequency'], ENT_QUOTES); ?>';
+                if (existingStartingFreq) {
+                    startingFreqSelect.val(existingStartingFreq);
+                }
+                <?php endif; ?>
+            }
+
+            // Function to control starting frequency field visibility and validation
+            function toggleStartingFrequencyField(show, required = false) {
+                if (show) {
+                    $('#starting_freq_section').show();
+                    $('#starting_freq_combined_select').attr('required', required);
+                } else {
+                    $('#starting_freq_section').hide();
+                    $('#starting_freq_combined_select').attr('required', false);
+                    $('#starting_freq_combined_select').val(''); // Clear selection when hidden
+                }
+            }
+
             // Initialize on page load
             initializeFrequencySections();
 
@@ -176,6 +255,9 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                     $('#frequency_type').attr('required', false);
                     $('#single_freq_select').attr('required', false);
                     $('#combined_freq_select').attr('required', false);
+
+                    // Hide starting frequency field for dynamic dates
+                    toggleStartingFrequencyField(false);
                 }
             }
             
@@ -225,8 +307,8 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                     validation_frequency: $("#validation_frequency").val(),
                     first_validation_date: convertDateFormat($("#first_validation_date").val()),
                     frequency_type: $("#frequency_type").val(),
-                    starting_frequency: $("#single_freq_select").val(),
-                    validation_frequencies: $("#combined_freq_select").val(),
+                    starting_frequency: $("#frequency_type").val() === 'single' ? $("#single_freq_select").val() : $("#starting_freq_combined_select").val(),
+                    validation_frequencies: $("#frequency_type").val() === 'single' ? $("#single_freq_select").val() : $("#combined_freq_select").val(),
                     equipment_status: $("#equipment_status").val(),
                     area_served: $("#area_served").val(),
                     section: $("#section").val(),
@@ -266,7 +348,19 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                             title: 'Success',
                             text: "The equipment record is successfully " + (mode === 'add' ? "added" : "modified") + "!"
                         }).then((result) => {
-                            window.location = "searchequipments.php";
+                            // Build redirect URL with search parameters if available
+                            let redirectUrl = "searchequipments.php";
+                            <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+                                const urlParams = new URLSearchParams();
+                                <?php if (isset($_GET['unitid'])): ?>urlParams.set('unitid', '<?= htmlspecialchars($_GET['unitid'], ENT_QUOTES) ?>');<?php endif; ?>
+                                <?php if (isset($_GET['dept_id'])): ?>urlParams.set('dept_id', '<?= htmlspecialchars($_GET['dept_id'], ENT_QUOTES) ?>');<?php endif; ?>
+                                <?php if (isset($_GET['equipment_type'])): ?>urlParams.set('equipment_type', '<?= htmlspecialchars($_GET['equipment_type'], ENT_QUOTES) ?>');<?php endif; ?>
+                                <?php if (isset($_GET['equipment_id'])): ?>urlParams.set('equipment_id', '<?= htmlspecialchars($_GET['equipment_id'], ENT_QUOTES) ?>');<?php endif; ?>
+                                <?php if (isset($_GET['etv_mapping_filter'])): ?>urlParams.set('etv_mapping_filter', '<?= htmlspecialchars($_GET['etv_mapping_filter'], ENT_QUOTES) ?>');<?php endif; ?>
+                                urlParams.set('restore_search', '1');
+                                redirectUrl += '?' + urlParams.toString();
+                            <?php endif; ?>
+                            window.location = redirectUrl;
                         });
                     } else {
                         // Try to parse JSON error response
@@ -456,7 +550,19 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                         <nav aria-label="breadcrumb">
                             <ul class="breadcrumb">
                                 <li class="breadcrumb-item active" aria-current="page"><span><a class='btn btn-gradient-info btn-sm btn-rounded'
-                                            href="searchequipments.php">
+                                            href="searchequipments.php<?php
+                                                // Build back navigation URL with search parameters
+                                                if (isset($_GET['from_search']) && $_GET['from_search'] == '1') {
+                                                    $back_params = [];
+                                                    if (isset($_GET['unitid'])) $back_params['unitid'] = $_GET['unitid'];
+                                                    if (isset($_GET['dept_id'])) $back_params['dept_id'] = $_GET['dept_id'];
+                                                    if (isset($_GET['equipment_type'])) $back_params['equipment_type'] = $_GET['equipment_type'];
+                                                    if (isset($_GET['equipment_id'])) $back_params['equipment_id'] = $_GET['equipment_id'];
+                                                    if (isset($_GET['etv_mapping_filter'])) $back_params['etv_mapping_filter'] = $_GET['etv_mapping_filter'];
+                                                    $back_params['restore_search'] = '1';
+                                                    echo '?' . http_build_query($back_params);
+                                                }
+                                            ?>">
                                             << Back</a> </span>
                                 </li>
                             </ul>
@@ -736,6 +842,16 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                                                     </select>
                                                     <div class="invalid-feedback">
                                                         Please select a frequency combination.
+                                                    </div>
+                                                </div>
+                                                <br/>
+                                                <div id="starting_freq_section" style="display: none;">
+                                                    <label for="starting_freq_combined_select">Starting Frequency <span class="text-danger">*</span></label>
+                                                    <select class="form-control" id="starting_freq_combined_select" name="starting_freq_combined_select">
+                                                        <option value="">Select Starting Frequency</option>
+                                                    </select>
+                                                    <div class="invalid-feedback">
+                                                        Please select a starting frequency.
                                                     </div>
                                                 </div>
                                             </div>

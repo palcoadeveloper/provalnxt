@@ -328,10 +328,20 @@ $pdf->SetFont('Arial','B',10);
 
 // now write some text above the imported page
 
-$pdf->SetXY(20, 53);
-$pdf->Cell(50,30,'Schedule Requested By:',1,0,'C');
+// Calculate equal margins for landscape A4 (297mm width)
+$page_width = 297;
+$first_cell_width = 50;
+$second_cell_width = 120; // Desired width for second cell
+$total_table_width = $first_cell_width + $second_cell_width;
+$left_margin = ($page_width - $total_table_width) / 2;
+
+$pdf->SetXY($left_margin, 53);
+$pdf->Cell($first_cell_width,30,'Schedule Requested By:',1,0,'C');
 $pdf->SetFont('Arial','',10);
-$pdf->MultiCell(0,10,htmlspecialchars($user_name, ENT_QUOTES) . "\n" . "Engineering (Cipla Ltd.)" . "\n" . 'Date: ' . date("d.m.Y H:i:s"),1,'C');
+
+// Set X position for second cell (aligned with first cell)
+$pdf->SetXY($left_margin + $first_cell_width, 53);
+$pdf->MultiCell($second_cell_width,15,"System Generated" . "\n" . 'Date: ' . date("d.m.Y H:i:s"),1,'C');
 
 //$pdf->MultiCell(0,10,$_GET['user_name']."\n"."Engineering (Cipla Ltd.)"."\n".'Date: '.date("d-M-Y H:i:s",strtotime("2021-01-16 10:43:00")),1,'C');
 

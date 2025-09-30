@@ -73,25 +73,67 @@ $pdf_path = $_GET['pdf_path'];
 // Sanitize the PDF path to prevent directory traversal
 $pdf_path = str_replace(['../', '../', '..\\', '..\\\\'], '', $pdf_path);
 
-// Handle the path correctly - convert to absolute path from document root  
-if (strpos($pdf_path, 'uploads/') === 0) {
-    // Direct uploads path
-    $full_path = __DIR__ . '/../../' . $pdf_path;
-} else if (strpos($pdf_path, 'core/uploads/') === 0) {
-    // Core uploads path
-    $full_path = __DIR__ . '/../../' . $pdf_path;
+// Handle the path correctly - use absolute path construction
+// Clean the path and ensure we're working with a proper relative path
+$clean_path = ltrim($pdf_path, '/');
+
+// Get the public directory path (2 levels up from /public/core/pdf/)
+$public_dir = dirname(dirname(__DIR__));
+
+if (strpos($clean_path, 'uploads/') === 0) {
+    // Direct uploads path - file is in public/uploads/
+    $full_path = $public_dir . '/' . $clean_path;
+} else if (strpos($clean_path, 'core/uploads/') === 0) {
+    // Core uploads path - file is in public/core/uploads/
+    $full_path = $public_dir . '/' . $clean_path;
 } else {
-    // Default to uploads directory
-    $full_path = __DIR__ . '/../../uploads/' . basename($pdf_path);
+    // Default case - assume it's just a filename and should be in uploads directory
+    $filename = basename($clean_path);
+    $full_path = $public_dir . '/uploads/' . $filename;
 }
 
 // Log the path resolution for debugging
-error_log("PDF viewer - Original path: " . $_GET['pdf_path'] . ", Resolved path: " . $full_path);
+error_log("PDF viewer - Original path: " . $_GET['pdf_path'] . ", Clean path: " . $clean_path . ", Resolved path: " . $full_path);
 
 // Check if file exists
 if (!file_exists($full_path)) {
     error_log("PDF file not found: " . $full_path);
-    die('PDF file not found: ' . basename($pdf_path) . '. Please check if the file exists and try again.');
+
+    // Provide helpful debugging information
+    $uploads_dir = $public_dir . '/uploads/';
+    $alternative_files = [];
+
+    if (is_dir($uploads_dir)) {
+        // Look for similar files
+        $pattern = basename($clean_path);
+        if (preg_match('/schedule-report-(\d+)-(\d+)\.pdf/', $pattern, $matches)) {
+            $unit_id = $matches[1];
+            // Find other schedule files for the same unit
+            $glob_pattern = $uploads_dir . "schedule-report-{$unit_id}-*.pdf";
+            $alternative_files = glob($glob_pattern);
+
+            // Sort by modification time (newest first)
+            usort($alternative_files, function($a, $b) {
+                return filemtime($b) - filemtime($a);
+            });
+
+            // Keep only the 3 most recent
+            $alternative_files = array_slice($alternative_files, 0, 3);
+        }
+    }
+
+    $error_message = 'PDF file not found: ' . basename($pdf_path);
+    if (!empty($alternative_files)) {
+        $error_message .= '<br><br>Recent schedule files for this unit:<br>';
+        foreach ($alternative_files as $file) {
+            $filename = basename($file);
+            $mod_time = date('Y-m-d H:i:s', filemtime($file));
+            $error_message .= "• {$filename} (Modified: {$mod_time})<br>";
+        }
+        $error_message .= '<br>Please check if you\'re looking for one of these files.';
+    }
+
+    die($error_message);
 }
 
 // Get user details for the footer

@@ -92,7 +92,19 @@ $vendor_details = DB::query("SELECT vendor_id, vendor_name FROM vendors WHERE ve
                         <nav aria-label="breadcrumb">
                             <ul class="breadcrumb">
                                 <li class="breadcrumb-item active" aria-current="page">
-                                    <span><a class='btn btn-gradient-info btn-sm btn-rounded' href="searchinstruments.php"><< Back</a></span>
+                                    <span><a class='btn btn-gradient-info btn-sm btn-rounded' href="searchinstruments.php<?php
+                                        // Build back navigation URL with search parameters
+                                        if (isset($_GET['from_search']) && $_GET['from_search'] == '1') {
+                                            $back_params = [];
+                                            if (isset($_GET['search_criteria'])) $back_params['search_criteria'] = $_GET['search_criteria'];
+                                            if (isset($_GET['search_input'])) $back_params['search_input'] = $_GET['search_input'];
+                                            if (isset($_GET['vendor_id'])) $back_params['vendor_id'] = $_GET['vendor_id'];
+                                            if (isset($_GET['instrument_type'])) $back_params['instrument_type'] = $_GET['instrument_type'];
+                                            if (isset($_GET['calibration_status'])) $back_params['calibration_status'] = $_GET['calibration_status'];
+                                            $back_params['restore_search'] = '1';
+                                            echo '?' . http_build_query($back_params);
+                                        }
+                                    ?>"><< Back</a></span>
                                 </li>
                             </ul>
                         </nav>
@@ -474,7 +486,19 @@ $vendor_details = DB::query("SELECT vendor_id, vendor_name FROM vendors WHERE ve
                             icon: 'success',
                             confirmButtonText: 'OK'
                         }).then((result) => {
-                            window.location.href = 'searchinstruments.php';
+                            // Build redirect URL with search parameters if available
+                            let redirectUrl = "searchinstruments.php";
+                            <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+                                const urlParams = new URLSearchParams();
+                                <?php if (isset($_GET['search_criteria'])): ?>urlParams.set('search_criteria', '<?= htmlspecialchars($_GET['search_criteria'], ENT_QUOTES) ?>');<?php endif; ?>
+                                <?php if (isset($_GET['search_input'])): ?>urlParams.set('search_input', '<?= htmlspecialchars($_GET['search_input'], ENT_QUOTES) ?>');<?php endif; ?>
+                                <?php if (isset($_GET['vendor_id'])): ?>urlParams.set('vendor_id', '<?= htmlspecialchars($_GET['vendor_id'], ENT_QUOTES) ?>');<?php endif; ?>
+                                <?php if (isset($_GET['instrument_type'])): ?>urlParams.set('instrument_type', '<?= htmlspecialchars($_GET['instrument_type'], ENT_QUOTES) ?>');<?php endif; ?>
+                                <?php if (isset($_GET['calibration_status'])): ?>urlParams.set('calibration_status', '<?= htmlspecialchars($_GET['calibration_status'], ENT_QUOTES) ?>');<?php endif; ?>
+                                urlParams.set('restore_search', '1');
+                                redirectUrl += '?' + urlParams.toString();
+                            <?php endif; ?>
+                            window.location.href = redirectUrl;
                         });
                     } else {
                         Swal.fire({

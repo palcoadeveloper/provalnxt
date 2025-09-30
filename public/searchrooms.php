@@ -29,7 +29,62 @@ require_once 'core/config/db.class.php';
     <meta name="csrf-token" content="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
     <script>
     $(document).ready(function(){
-   
+
+    // Function to get URL parameters
+    function getUrlParameter(name) {
+        name = name.replace(/[\\[]/, '\\\\[').replace(/[\\]]/, '\\\\]');
+        var regex = new RegExp('[\\\\?&]' + name + '=([^&#]*)');
+        var results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\\+/g, ' '));
+    }
+
+    // Function to restore search state from URL parameters
+    function restoreSearchState() {
+        const restoreFlag = getUrlParameter('restore_search');
+        if (restoreFlag === '1') {
+            console.log('Restoring room search state from URL parameters');
+
+            // Restore form values
+            const roomName = getUrlParameter('room_name');
+
+            if (roomName && roomName !== '') {
+                $('#room_name').val(roomName);
+
+                // Auto-submit the form to show results
+                setTimeout(function() {
+                    console.log('Auto-submitting restored room search');
+
+                    // Show a brief notification that search is being restored
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            title: 'Restoring Search Results',
+                            text: 'Taking you back to your previous room search...',
+                            icon: 'info',
+                            timer: 1500,
+                            timerProgressBar: true,
+                            showConfirmButton: false,
+                            toast: true,
+                            position: 'top-end'
+                        });
+                    }
+
+                    // Show loading indicator
+                    $('#pleasewaitmodal').modal('show');
+                    $('#formreport').submit();
+
+                    // Clean up URL parameters after search is restored
+                    setTimeout(function() {
+                        const cleanUrl = window.location.pathname;
+                        window.history.replaceState({}, document.title, cleanUrl);
+                    }, 2000);
+                }, 500);
+            }
+        }
+    }
+
+    // Call restore function on page load
+    restoreSearchState();
+
     // Room Statistics Overview functionality
     function loadRoomStatistics() {
         console.log('=== DEBUGGING ROOM STATS ===');
@@ -115,6 +170,25 @@ require_once 'core/config/db.class.php';
                                      "info": "Showing _START_ to _END_ of _TOTAL_ rooms"
                                  }
                              });
+
+                             // Smooth scroll to results section when coming back from room details
+                             const restoreFlag = getUrlParameter('restore_search');
+                             if (restoreFlag === '1') {
+                                 setTimeout(function() {
+                                     const resultsSection = $('#displayresults');
+                                     if (resultsSection.length && resultsSection.is(':visible')) {
+                                         $('html, body').animate({
+                                             scrollTop: resultsSection.offset().top - 100
+                                         }, 800, 'swing', function() {
+                                             // Add a subtle highlight effect to the results area
+                                             resultsSection.addClass('highlight-results');
+                                             setTimeout(function() {
+                                                 resultsSection.removeClass('highlight-results');
+                                             }, 2000);
+                                         });
+                                     }
+                                 }, 300);
+                             }
                          } catch (e) {
                              console.error('DataTable initialization failed:', e);
                          }
@@ -131,9 +205,37 @@ require_once 'core/config/db.class.php';
     });
     
     </script>
-    
+
+    <style>
+    /* Enhanced search results highlight animation */
+    .highlight-results {
+        animation: gentle-glow 2s ease-in-out;
+        border-radius: 8px;
+    }
+
+    @keyframes gentle-glow {
+        0% {
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+        50% {
+            box-shadow: 0 0 20px rgba(0, 123, 255, 0.4);
+            background-color: rgba(0, 123, 255, 0.08);
+        }
+        100% {
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.1);
+            background-color: transparent;
+        }
+    }
+
+    /* Smooth scroll behavior */
+    html {
+        scroll-behavior: smooth;
+    }
+    </style>
+
     <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
-    
+
   </head>
   <body>
     <?php include_once "assets/inc/_pleasewaitmodal.php"; ?>

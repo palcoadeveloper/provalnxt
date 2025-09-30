@@ -84,8 +84,14 @@ else
         
         echo "<td>".htmlspecialchars($row['two_factor_enabled'], ENT_QUOTES, 'UTF-8')."</td>";
        
-        echo "<td><a href='manageunitdetails.php?unit_id=".$row["unit_id"]."&m=r' class='btn btn-sm btn-gradient-danger btn-icon-text' role='button' aria-pressed='true'>View</a>&nbsp;&nbsp;
-<a href='manageunitdetails.php?unit_id=".$row["unit_id"]."&m=m' class='btn btn-sm btn-gradient-info btn-icon-text' role='button' aria-pressed='true'>Modify</a> </td>";
+        // Build search parameters for back navigation
+        $search_params = http_build_query([
+            'unit_status' => $_GET['unit_status'] ?? '',
+            'from_search' => '1'
+        ]);
+
+        echo "<td><a href='manageunitdetails.php?unit_id=".$row["unit_id"]."&m=r&".$search_params."' class='btn btn-sm btn-gradient-danger btn-icon-text' role='button' aria-pressed='true'>View</a>&nbsp;&nbsp;
+<a href='manageunitdetails.php?unit_id=".$row["unit_id"]."&m=m&".$search_params."' class='btn btn-sm btn-gradient-info btn-icon-text' role='button' aria-pressed='true'>Edit</a> </td>";
         echo "</tr>";
         $count++;
     }

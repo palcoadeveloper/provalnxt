@@ -1,83 +1,14 @@
 <?php
 require_once('./core/config/config.php');
 
-// Session is already started by config.php via session_init.php
-
-// Validate session timeout
-require_once('core/security/session_timeout_middleware.php');
-validateActiveSession();
-
-// Session validation - debug logging removed for security
-
-// Check for proper authentication - use logged_in_user as primary check
-if (!isset($_SESSION['logged_in_user']) || !isset($_SESSION['user_name'])) {
-    // Authentication failed - redirect to login
-    // Clear any invalid session data
-    session_destroy();
-    header('Location: login.php?msg=session_required');
-    exit();
-}
-
-// Validate essential session variables based on user type
-if (!isset($_SESSION['logged_in_user'])) {
-    session_destroy();
-    header('Location: login.php?msg=invalid_session_data');
-    exit();
-}
-
-// User ID validation is required for all user types
-if (!isset($_SESSION['user_id']) || !is_numeric($_SESSION['user_id']) || $_SESSION['user_id'] <= 0) {
-    session_destroy();
-    header('Location: login.php?msg=invalid_session_data');
-    exit();
-}
-
-// Different validation based on user type
-if ($_SESSION['logged_in_user'] === 'employee') {
-    // Strict validation for employees - they must have numeric unit_id and department_id
-    if (!isset($_SESSION['unit_id']) || !is_numeric($_SESSION['unit_id']) || $_SESSION['unit_id'] < 0) {
-        session_destroy();
-        header('Location: login.php?msg=invalid_session_data');
-        exit();
-    }
-    if (!isset($_SESSION['department_id']) || !is_numeric($_SESSION['department_id']) || $_SESSION['department_id'] < 0) {
-        session_destroy();
-        header('Location: login.php?msg=invalid_session_data');
-        exit();
-    }
-} elseif ($_SESSION['logged_in_user'] === 'vendor') {
-    // Flexible validation for vendors - they can have empty strings for unit_id and department_id
-    if (!isset($_SESSION['unit_id'])) {
-        session_destroy();
-        header('Location: login.php?msg=invalid_session_data');
-        exit();
-    }
-    // If unit_id is not empty, it should be numeric and >= 0
-    if ($_SESSION['unit_id'] !== "" && (!is_numeric($_SESSION['unit_id']) || $_SESSION['unit_id'] < 0)) {
-        session_destroy();
-        header('Location: login.php?msg=invalid_session_data');
-        exit();
-    }
-    
-    if (!isset($_SESSION['department_id'])) {
-        session_destroy();
-        header('Location: login.php?msg=invalid_session_data');
-        exit();
-    }
-    // If department_id is not empty, it should be numeric and >= 0  
-    if ($_SESSION['department_id'] !== "" && (!is_numeric($_SESSION['department_id']) || $_SESSION['department_id'] < 0)) {
-        session_destroy();
-        header('Location: login.php?msg=invalid_session_data');
-        exit();
-    }
-} else {
-    // Unknown user type
-    session_destroy();
-    header('Location: login.php?msg=invalid_session_data');
-    exit();
-}
+// Optimized session validation - single comprehensive check
+require_once('core/security/optimized_session_validation.php');
+OptimizedSessionValidation::validateOnce();
 
 require_once("core/config/db.class.php");
+
+// Load APCu caching system
+require_once('core/utils/ProValCache.php');
 
 // Dashboard Configuration Constants
 define('DEPT_ENGINEERING', 1);
@@ -261,35 +192,32 @@ function getTeamApprovalPendingCount($unitId, $userId, $deptId) {
     return $dashboardCache[$cacheKey];
 }
 
-// Main Dashboard Logic - with proper input validation
-$userType = isset($_SESSION['logged_in_user']) ? $_SESSION['logged_in_user'] : '';
-$userId = (int)$_SESSION['user_id'];
-$unitId = (int)$_SESSION['unit_id'];
-$deptId = (int)$_SESSION['department_id'];
-
-// Additional security validation
-if (!in_array($userType, ['employee', 'vendor'])) {
-    session_destroy();
-    header('Location: login.php?msg=invalid_user_type');
-    exit();
-}
+// Main Dashboard Logic - using cached user data
+$userData = OptimizedSessionValidation::getUserData();
+$userType = $userData['user_type'];
+$userId = $userData['user_id'];
+$unitId = $userData['unit_id'];
+$deptId = $userData['department_id'];
 
 // Vendor Dashboard
 if ($userType === 'vendor') {
     try {
-        // Combined query for better performance using ETV mapping
-        $vendorQuery = "
-            SELECT 
-                COUNT(CASE WHEN t1.test_wf_current_stage = %s THEN 1 END) as new_tasks,
-                COUNT(CASE WHEN t1.test_wf_current_stage = '1PRV' THEN 1 END) as offline_tasks,
-                COUNT(CASE WHEN t1.test_wf_current_stage IN ('3B', '4B', '1RRV') THEN 1 END) as reassigned_tasks
-            FROM tbl_test_schedules_tracking t1
-            JOIN equipments t2 ON t1.equip_id = t2.equipment_id
-            JOIN equipment_test_vendor_mapping etvm ON t1.equip_id = etvm.equipment_id AND t1.test_id = etvm.test_id
-            WHERE etvm.vendor_id = %i AND etvm.mapping_status = 'Active'";
-        
-        $vendorData = DB::queryFirstRow($vendorQuery, STAGE_NEW_TASK, $_SESSION['vendor_id']);
-        
+        // Use APCu caching for vendor dashboard data
+        $vendorData = ProValCache::getDashboardData('vendor', $userId, $userData['vendor_id'], function() use ($userData) {
+            // Combined query for better performance using ETV mapping
+            $vendorQuery = "
+                SELECT
+                    COUNT(CASE WHEN t1.test_wf_current_stage = %s THEN 1 END) as new_tasks,
+                    COUNT(CASE WHEN t1.test_wf_current_stage IN ('1PRV', '3BPRV', '4BPRV') THEN 1 END) as offline_tasks,
+                    COUNT(CASE WHEN t1.test_wf_current_stage IN ('3B', '4B', '1RRV') THEN 1 END) as reassigned_tasks
+                FROM tbl_test_schedules_tracking t1
+                JOIN equipments t2 ON t1.equip_id = t2.equipment_id
+                JOIN equipment_test_vendor_mapping etvm ON t1.equip_id = etvm.equipment_id AND t1.test_id = etvm.test_id
+                WHERE etvm.vendor_id = %i AND etvm.mapping_status = 'Active'";
+
+            return DB::queryFirstRow($vendorQuery, STAGE_NEW_TASK, $userData['vendor_id']);
+        });
+
         if ($vendorData) {
             renderDashboardCard('danger', 'Newly Assigned Tasks', $vendorData['new_tasks'], 'New tasks', 'mdi-chart-line');
             renderDashboardCard('warning', 'Offline Tasks - Pending Review', $vendorData['offline_tasks'], 'Offline tasks pending review', 'mdi-file-document-outline');
@@ -305,43 +233,50 @@ if ($userType === 'vendor') {
 // Employee Dashboard - Engineering Department
 elseif ($userType === 'employee' && $deptId == DEPT_ENGINEERING) {
     try {
-        // Combined query for Engineering department metrics
-        $engineeringQuery = "
-            SELECT 
-                COUNT(CASE WHEN t1.test_wf_current_stage = %s AND t1.vendor_id = 0 AND t1.unit_id = %i THEN 1 END) as new_tasks,
-                COUNT(CASE WHEN t1.test_wf_current_stage = %s AND t1.unit_id = %i THEN 1 END) as approval_pending
-            FROM tbl_test_schedules_tracking t1
-            JOIN equipments t2 ON t1.equip_id = t2.equipment_id";
-        
-        $engineeringData = DB::queryFirstRow($engineeringQuery, 
-            STAGE_NEW_TASK, $unitId,
-            STAGE_PENDING_APPROVAL, $unitId
-        );
-        
+        // Cache engineering dashboard metrics
+        $engineeringData = ProValCache::getDashboardData('engineering', $userId, $unitId, function() use ($unitId) {
+            $engineeringQuery = "
+                SELECT
+                    COUNT(CASE WHEN t1.test_wf_current_stage = %s AND t1.vendor_id = 0 AND t1.unit_id = %i THEN 1 END) as new_tasks,
+                    COUNT(CASE WHEN t1.test_wf_current_stage = %s AND t1.unit_id = %i THEN 1 END) as approval_pending
+                FROM tbl_test_schedules_tracking t1
+                JOIN equipments t2 ON t1.equip_id = t2.equipment_id";
+
+            return DB::queryFirstRow($engineeringQuery,
+                STAGE_NEW_TASK, $unitId,
+                STAGE_PENDING_APPROVAL, $unitId
+            );
+        });
+
         if ($engineeringData) {
             renderDashboardCard('success', 'Newly Assigned Tasks', $engineeringData['new_tasks'], 'New tasks (Internal)', 'mdi-chart-line');
             renderDashboardCard('dark', 'Tasks Pending For Approval', $engineeringData['approval_pending'], 'Total tasks completed so far', 'mdi-diamond');
         }
-        
-        // Pending For Team Approval Submission - optimized query
-        $pendingSubmissionQuery = "
-            SELECT COUNT(*)
-            FROM tbl_val_wf_tracking_details t
-            JOIN equipments e ON t.equipment_id = e.equipment_id
-            WHERE t.val_wf_current_stage = %s
-              AND t.unit_id = %i
-              AND t.val_wf_id IN (
-                  SELECT val_wf_id
-                  FROM tbl_test_schedules_tracking
-                  GROUP BY val_wf_id
-                  HAVING SUM(CASE WHEN test_wf_current_stage = %s THEN 1 ELSE 0 END) = COUNT(test_wf_id)
-              )";
-        
-        $pendingSubmissionCount = DB::queryFirstField($pendingSubmissionQuery, STAGE_NEW_TASK, $unitId, STAGE_COMPLETED);
+
+        // Cache pending submission count
+        $pendingSubmissionCount = ProValCache::get("eng_pending_submission_{$unitId}", function() use ($unitId) {
+            $pendingSubmissionQuery = "
+                SELECT COUNT(*)
+                FROM tbl_val_wf_tracking_details t
+                JOIN equipments e ON t.equipment_id = e.equipment_id
+                WHERE t.val_wf_current_stage = %s
+                  AND t.unit_id = %i
+                  AND t.val_wf_id IN (
+                      SELECT val_wf_id
+                      FROM tbl_test_schedules_tracking
+                      GROUP BY val_wf_id
+                      HAVING SUM(CASE WHEN test_wf_current_stage = %s THEN 1 ELSE 0 END) = COUNT(test_wf_id)
+                  )";
+
+            return DB::queryFirstField($pendingSubmissionQuery, STAGE_NEW_TASK, $unitId, STAGE_COMPLETED);
+        });
+
         renderDashboardCard('info', 'Pending For Team Approval Submission', $pendingSubmissionCount, 'Pending for Team Approval submission', 'mdi-diamond');
-        
-        // Team Approval Pending
-        $teamApprovalCount = getTeamApprovalPendingCount($unitId, $userId, $deptId);
+
+        // Cache team approval count
+        $teamApprovalCount = ProValCache::get("eng_team_approval_{$unitId}_{$userId}", function() use ($unitId, $userId, $deptId) {
+            return getTeamApprovalPendingCount($unitId, $userId, $deptId);
+        });
         renderDashboardCard('warning', 'Team Approval Pending', $teamApprovalCount, 'Pending for Team approval', 'mdi-diamond');
         
     } catch (Exception $e) {
@@ -365,7 +300,7 @@ elseif ($userType === 'employee' && $deptId == DEPT_QA) {
         renderDashboardCard('info', 'Tasks Pending For Approval', $approvalPendingCount, 'Total tasks completed so far', 'mdi-diamond');
         
         // Team Approval Pending (exclude Unit Head and QA Head users)
-        if ($_SESSION['is_unit_head'] != "Yes" && $_SESSION['is_qa_head'] != "Yes") {
+        if (!OptimizedSessionValidation::hasRole('unit_head') && !OptimizedSessionValidation::hasRole('qa_head')) {
             $teamApprovalCount = getTeamApprovalPendingCount($unitId, $userId, $deptId);
             renderDashboardCard('warning', 'Team Approval Pending', $teamApprovalCount, 'Pending for Team approval', 'mdi-diamond');
         }
@@ -380,7 +315,7 @@ elseif ($userType === 'employee' && $deptId == DEPT_QA) {
 elseif ($userType === 'employee') {
     try {
         // Single card for Team Approval Pending (exclude Unit Head and QA Head users)
-        if ($_SESSION['is_unit_head'] != "Yes" && $_SESSION['is_qa_head'] != "Yes") {
+        if (!OptimizedSessionValidation::hasRole('unit_head') && !OptimizedSessionValidation::hasRole('qa_head')) {
             $teamApprovalCount = getTeamApprovalPendingCount($unitId, $userId, $deptId);
             renderDashboardCard('warning', 'Team Approval Pending', $teamApprovalCount, 'Pending for Team approval', 'mdi-diamond');
         }
@@ -392,7 +327,7 @@ elseif ($userType === 'employee') {
 }
 
 // Role-Based Cards - QA Head (Independent of department)
-if ($_SESSION['logged_in_user'] == 'employee' && $_SESSION['is_qa_head'] == "Yes") {
+if (OptimizedSessionValidation::isEmployee() && OptimizedSessionValidation::hasRole('qa_head')) {
     try {
         // Get QA Head approval pending count
         $qaApprovalPending = DB::queryFirstField(
@@ -422,8 +357,8 @@ if ($_SESSION['logged_in_user'] == 'employee' && $_SESSION['is_qa_head'] == "Yes
     }
 }
 
-// Role-Based Cards - Unit Head (Independent of department)  
-if ($_SESSION['logged_in_user'] == 'employee' && $_SESSION['is_unit_head'] == "Yes") {
+// Role-Based Cards - Unit Head (Independent of department)
+if (OptimizedSessionValidation::isEmployee() && OptimizedSessionValidation::hasRole('unit_head')) {
     try {
         $unitHeadCount = DB::queryFirstField(
             "SELECT COUNT(*) FROM tbl_val_wf_tracking_details t WHERE t.val_wf_current_stage = %s AND t.unit_id = %i", 
@@ -438,7 +373,7 @@ if ($_SESSION['logged_in_user'] == 'employee' && $_SESSION['is_unit_head'] == "Y
 }
 
 // Role-Based Cards - Engineering Department Head
-if ($_SESSION['logged_in_user'] == 'employee' && $_SESSION['department_id'] == DEPT_ENGINEERING && $_SESSION['is_dept_head'] == "Yes") {
+if (OptimizedSessionValidation::isEmployee() && OptimizedSessionValidation::inDepartment(DEPT_ENGINEERING) && OptimizedSessionValidation::hasRole('dept_head')) {
     try {
         // Get validation schedule requests count for Engineering approval
         $validationScheduleRequests = DB::queryFirstField(

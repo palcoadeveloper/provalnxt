@@ -49,9 +49,15 @@ if (empty($room_details)) {
         echo "<td>" . htmlspecialchars($row['room_loc_name'], ENT_QUOTES, 'UTF-8') . "</td>";
         echo "<td>" . number_format($row['room_volume'], 2) . "</td>";
         echo "<td>" . date('d.m.Y H:i', strtotime($row['creation_datetime'])) . "</td>";
+        // Build search parameters for back navigation
+        $search_params = http_build_query([
+            'room_name' => $_GET['room_name'] ?? '',
+            'from_search' => '1'
+        ]);
+
         echo "<td>
-                <a href='manageroomdetails.php?room_loc_id=" . $row["room_loc_id"] . "&m=r' class='btn btn-sm btn-gradient-danger btn-icon-text' role='button' aria-pressed='true'>View</a>&nbsp;&nbsp;
-                <a href='manageroomdetails.php?room_loc_id=" . $row["room_loc_id"] . "&m=m' class='btn btn-sm btn-gradient-info btn-icon-text' role='button' aria-pressed='true'>Modify</a>
+                <a href='manageroomdetails.php?room_loc_id=" . $row["room_loc_id"] . "&m=r&" . $search_params . "' class='btn btn-sm btn-gradient-danger btn-icon-text' role='button' aria-pressed='true'>View</a>&nbsp;&nbsp;
+                <a href='manageroomdetails.php?room_loc_id=" . $row["room_loc_id"] . "&m=m&" . $search_params . "' class='btn btn-sm btn-gradient-info btn-icon-text' role='button' aria-pressed='true'>Edit</a>
               </td>";
         echo "</tr>";
         $count++;

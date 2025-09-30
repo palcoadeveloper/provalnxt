@@ -129,11 +129,23 @@ if ($mode == 'addv') {
     try {
         // Validate input data for vendor user
         $validated_data = UserDetailsValidator::validateUserData('add', 'vendor');
-        
+
+        // Determine workflow requirements for engineering users
+        $requires_approval = false;
+        $final_status = $validated_data['user_status'];
+
+        // Only non-admin engineering users require approval for vendor employees
+        if (!empty($_SESSION['user_type']) && $_SESSION['user_type'] === 'engineering' &&
+            $_SESSION['is_admin'] !== 'Yes' && $_SESSION['is_super_admin'] !== 'Yes' &&
+            $_SESSION['is_dept_head'] !== 'Yes') {
+            $requires_approval = true;
+            $final_status = 'Pending';
+        }
+
         // Execute secure transaction
-        $result = executeSecureTransaction(function() use ($validated_data) {
+        $result = executeSecureTransaction(function() use ($validated_data, $requires_approval, $final_status) {
             // Insert vendor user record
-            DB::insert('users', [
+            $insert_data = [
                 'employee_id' => $validated_data['employee_id'],
                 'user_type' => 'vendor',
                 'user_name' => $validated_data['user_name'],
@@ -142,25 +154,51 @@ if ($mode == 'addv') {
                 'user_email' => $validated_data['user_email'],
                 'user_domain_id' => $validated_data['domain_id'],
                 'is_default_password' => 'No',
-                'user_status' => $validated_data['user_status'],
-                'user_created_datetime' => date('Y-m-d H:i:s')
-            ]);
-            
+                'user_status' => $final_status,
+                'user_created_datetime' => date('Y-m-d H:i:s'),
+                'unit_id' => $_SESSION['unit_id']
+            ];
+
+            // Add workflow fields if approval required
+            if ($requires_approval) {
+                $insert_data['submitted_by'] = $_SESSION['user_id'];
+                $insert_data['original_data'] = json_encode([
+                    'intended_status' => $validated_data['user_status']
+                ]);
+            }
+
+            DB::insert('users', $insert_data);
+
             $user_id = DB::insertId();
-            
+
             if ($user_id <= 0) {
                 throw new Exception("Failed to insert vendor user record");
             }
-            
+
+            // Insert workflow log entry if approval required
+            if ($requires_approval) {
+                DB::insert('user_workflow_log', [
+                    'user_id' => $user_id,
+                    'action_type' => 'Created',
+                    'performed_by' => $_SESSION['user_id'],
+                    'action_date' => date('Y-m-d H:i:s'),
+                    'new_data' => json_encode($insert_data),
+                    'remarks' => 'Vendor employee created by non-admin engineering user - pending approval',
+                    'ip_address' => $_SERVER['REMOTE_ADDR'] ?? '',
+                    'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? ''
+                ]);
+            }
+
             // Insert log entry
             DB::insert('log', [
                 'change_type' => 'master_users_addv',
                 'table_name' => 'users',
-                'change_description' => 'Added vendor employee. User Name: '. $validated_data['user_name'],
+                'change_description' => 'Added vendor employee. User Name: '. $validated_data['user_name'] .
+                                       ($requires_approval ? ' (Pending approval)' : ''),
                 'change_by' => $_SESSION['user_id'],
                 'unit_id' => $_SESSION['unit_id']
             ]);
-            
+
             return $user_id;
         });
         
@@ -354,21 +392,44 @@ else if ($mode == 'modifyv') {
     try {
         // Validate input data for vendor user modification
         $validated_data = UserDetailsValidator::validateUserData('modify', 'vendor');
-        
+
         // Get existing data for change tracking
         $existingData = DB::queryFirstRow("SELECT * FROM users WHERE user_id = %i", $validated_data['user_id']);
-        
+
         if (!$existingData) {
             throw new Exception("User not found");
         }
-        
+
+        // Determine workflow requirements for engineering users
+        $requires_approval = false;
+        $final_status = $validated_data['user_status'];
+
+        // Only non-admin engineering users require approval for vendor employee modifications
+        if (!empty($_SESSION['user_type']) && $_SESSION['user_type'] === 'engineering' &&
+            $_SESSION['is_admin'] !== 'Yes' && $_SESSION['is_super_admin'] !== 'Yes' &&
+            $_SESSION['is_dept_head'] !== 'Yes') {
+
+            // Check if there are any substantive changes that require approval
+            $requires_approval_fields = ['user_status', 'employee_id', 'user_name', 'user_email', 'user_mobile', 'vendor_id'];
+            foreach ($requires_approval_fields as $field) {
+                $db_field = ($field === 'user_locked') ? 'is_account_locked' : $field;
+                $new_value = ($field === 'user_locked') ? $validated_data['user_locked'] : $validated_data[$field];
+
+                if (isset($existingData[$db_field]) && $existingData[$db_field] != $new_value) {
+                    $requires_approval = true;
+                    $final_status = 'Pending';
+                    break;
+                }
+            }
+        }
+
         // Track changes for logging
         $changes = [];
         $paramToColumnMapping = [
             'user_status' => 'user_status',
             'user_locked' => 'is_account_locked'
         ];
-        
+
         foreach ($paramToColumnMapping as $param => $column) {
             $new_value = safe_post($param, 'string', '');
             if (!empty($new_value) && isset($existingData[$column]) && $existingData[$column] != $new_value) {
@@ -378,40 +439,91 @@ else if ($mode == 'modifyv') {
                 ];
             }
         }
-        
+
         // Execute secure transaction
-        $result = executeSecureTransaction(function() use ($validated_data, $changes) {
+        $result = executeSecureTransaction(function() use ($validated_data, $changes, $requires_approval, $final_status, $existingData) {
+            // Store original data for audit trail
+            $original_data = json_encode($existingData);
+
+            // Build update data
+            $update_data = [
+                'employee_id' => $validated_data['employee_id'],
+                'user_name' => $validated_data['user_name'],
+                'user_mobile' => $validated_data['user_mobile'],
+                'user_email' => $validated_data['user_email'],
+                'vendor_id' => $validated_data['vendor_id'],
+                'user_status' => $final_status,
+                'user_last_modification_datetime' => date('Y-m-d H:i:s'),
+                'is_account_locked' => $validated_data['user_locked'],
+                'user_domain_id' => $validated_data['domain_id']
+            ];
+
+            // Add workflow fields if approval required
+            if ($requires_approval) {
+                $update_data['submitted_by'] = $_SESSION['user_id'];
+                $update_data['original_data'] = json_encode([
+                    'intended_status' => $validated_data['user_status'],
+                    'previous_data' => $existingData
+                ]);
+                // Clear checker fields if setting to pending
+                $update_data['checker_id'] = null;
+                $update_data['checker_date'] = null;
+            }
+
             // Update vendor user record
             DB::query(
-                "UPDATE users SET 
-                employee_id = %s, 
+                "UPDATE users SET
+                employee_id = %s,
                 user_name = %s,
-                user_mobile = %s, 
+                user_mobile = %s,
                 user_email = %s,
                 vendor_id = %i,
-                user_status = %s, 
+                user_status = %s,
                 user_last_modification_datetime = %s,
                 is_account_locked = %s,
-                user_domain_id = %s
-                WHERE user_id = %i", 
-                $validated_data['employee_id'], 
-                $validated_data['user_name'], 
-                $validated_data['user_mobile'], 
-                $validated_data['user_email'], 
-                $validated_data['vendor_id'], 
-                $validated_data['user_status'],
-                date('Y-m-d H:i:s'), 
-                $validated_data['user_locked'], 
-                $validated_data['domain_id'], 
+                user_domain_id = %s,
+                submitted_by = %s,
+                original_data = %s,
+                checker_id = %s,
+                checker_date = %s
+                WHERE user_id = %i",
+                $update_data['employee_id'],
+                $update_data['user_name'],
+                $update_data['user_mobile'],
+                $update_data['user_email'],
+                $update_data['vendor_id'],
+                $update_data['user_status'],
+                $update_data['user_last_modification_datetime'],
+                $update_data['is_account_locked'],
+                $update_data['user_domain_id'],
+                $update_data['submitted_by'] ?? null,
+                $update_data['original_data'] ?? null,
+                $update_data['checker_id'] ?? null,
+                $update_data['checker_date'] ?? null,
                 $validated_data['user_id']
             );
-            
+
             $affected_rows = DB::affectedRows();
-            
+
             if ($affected_rows === 0) {
                 throw new Exception("No user record was updated");
             }
-            
+
+            // Insert workflow log entry if approval required
+            if ($requires_approval) {
+                DB::insert('user_workflow_log', [
+                    'user_id' => $validated_data['user_id'],
+                    'action_type' => 'Modified',
+                    'performed_by' => $_SESSION['user_id'],
+                    'action_date' => date('Y-m-d H:i:s'),
+                    'old_data' => $original_data,
+                    'new_data' => json_encode($update_data),
+                    'remarks' => 'Vendor employee modified by non-admin engineering user - pending approval',
+                    'ip_address' => $_SERVER['REMOTE_ADDR'] ?? '',
+                    'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? ''
+                ]);
+            }
+
             // Determine log message based on changes
             $message = "";
             if (!empty($changes)) {
@@ -424,18 +536,19 @@ else if ($mode == 'modifyv') {
                     }
                 }
             }
-            
+
             // Insert log entry
             DB::insert('log', [
                 'change_type' => 'master_users_updatev',
                 'table_name' => 'users',
-                'change_description' => !empty($message) ? 
-                    ($message . ' User Name: ' . $validated_data['user_name']) : 
-                    ('Modified an existing vendor employee. User Name: ' . $validated_data['user_name']),
+                'change_description' => !empty($message) ?
+                    ($message . ' User Name: ' . $validated_data['user_name']) :
+                    ('Modified an existing vendor employee. User Name: ' . $validated_data['user_name']) .
+                    ($requires_approval ? ' (Pending approval)' : ''),
                 'change_by' => $_SESSION['user_id'],
                 'unit_id' => $_SESSION['unit_id']
             ]);
-            
+
             return $affected_rows;
         });
         

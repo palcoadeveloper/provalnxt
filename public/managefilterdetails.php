@@ -42,11 +42,9 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 }
 
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
+  <head>
     <?php include_once "assets/inc/_header.php"; ?>
     <script>
         $(document).ready(function() {
@@ -136,7 +134,19 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                             title: 'Success',
                             text: "The filter record is successfully " + (mode === 'add' ? "added" : "modified") + "!"
                         }).then((result) => {
-                            window.location = "searchfilters.php";
+                            // Build redirect URL with search parameters if available
+                            let redirectUrl = "searchfilters.php";
+                            <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+                              const urlParams = new URLSearchParams();
+                              <?php if (isset($_GET['unitid'])): ?>urlParams.set('unitid', '<?= htmlspecialchars($_GET['unitid'], ENT_QUOTES) ?>');<?php endif; ?>
+                              <?php if (isset($_GET['filter_type'])): ?>urlParams.set('filter_type', '<?= htmlspecialchars($_GET['filter_type'], ENT_QUOTES) ?>');<?php endif; ?>
+                              <?php if (isset($_GET['search_filter_id'])): ?>urlParams.set('filter_id', '<?= htmlspecialchars($_GET['search_filter_id'], ENT_QUOTES) ?>');<?php endif; ?>
+                              <?php if (isset($_GET['status_filter'])): ?>urlParams.set('status_filter', '<?= htmlspecialchars($_GET['status_filter'], ENT_QUOTES) ?>');<?php endif; ?>
+                              <?php if (isset($_GET['manufacturer'])): ?>urlParams.set('manufacturer', '<?= htmlspecialchars($_GET['manufacturer'], ENT_QUOTES) ?>');<?php endif; ?>
+                              urlParams.set('restore_search', '1');
+                              redirectUrl += '?' + urlParams.toString();
+                            <?php endif; ?>
+                            window.location = redirectUrl;
                         });
                     } else {
                         // Try to parse JSON error response
@@ -234,35 +244,51 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 
     <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
 
-</head>
-
-<body>
-    <?php include_once "assets/inc/_pleasewaitmodal.php"; ?>
+  </head>
+  <body>
+     	<?php include_once "assets/inc/_pleasewaitmodal.php"; ?>
     <div class="container-scroller">
-        <?php include "assets/inc/_navbar.php"; ?>
-        <!-- partial -->
-        <div class="container-fluid page-body-wrapper">
-            <!-- partial:assets/inc/_sidebar.php -->
-            <?php include "assets/inc/_sidebar.php"; ?>
-            <!-- partial -->
-            <div class="main-panel">
-                <div class="content-wrapper">
-                    <?php include "assets/inc/_sessiontimeout.php"; ?>
+	<?php include "assets/inc/_navbar.php"; ?>
+    <!-- partial -->
+	<div class="container-fluid page-body-wrapper">
+    <!-- partial:assets/inc/_sidebar.php -->
+	<?php include "assets/inc/_sidebar.php"; ?>
+    <!-- partial -->
+	<div class="main-panel">
+	<div class="content-wrapper">
+	
+                            <?php include "assets/inc/_sessiontimeout.php"; ?>
 
-                    <div class="page-header">
-                        <h3 class="page-title">
-                            Filter Details
-                        </h3>
-                        <nav aria-label="breadcrumb">
-                            <ul class="breadcrumb">
-                                <li class="breadcrumb-item active" aria-current="page"><span><a class='btn btn-gradient-info btn-sm btn-rounded'
-                                            href="searchfilters.php">
-                                            << Back</a> </span>
-                                </li>
-                            </ul>
-                        </nav>
-                    </div>
+                  
 
+ <div class="page-header">
+						<h3 class="page-title">
+							 Filter Details
+						</h3>
+						<nav aria-label="breadcrumb">
+							<ul class="breadcrumb">
+								<li class="breadcrumb-item active" aria-current="page"><span><a class='btn btn-gradient-info btn-sm btn-rounded'
+										href="searchvendors.php<?php
+                                                // Build back navigation URL with search parameters
+                                                if (isset($_GET['from_search']) && $_GET['from_search'] == '1') {
+                                                    $back_params = [];
+                                                    if (isset($_GET['unitid'])) $back_params['unitid'] = $_GET['unitid'];
+                                                    if (isset($_GET['filter_type'])) $back_params['filter_type'] = $_GET['filter_type'];
+                                                    if (isset($_GET['search_filter_id'])) $back_params['filter_id'] = $_GET['search_filter_id'];
+                                                    if (isset($_GET['status_filter'])) $back_params['status_filter'] = $_GET['status_filter'];
+                                                    if (isset($_GET['manufacturer'])) $back_params['manufacturer'] = $_GET['manufacturer'];
+                                                    $back_params['restore_search'] = '1';
+                                                    echo '?' . http_build_query($back_params);
+                                                }
+                                            ?>"><< Back</a> </span>
+								</li>
+							</ul>
+						</nav>
+					</div>
+
+
+
+                                            
                     <div class="row">
 
                         <div class="col-lg-12 grid-margin stretch-card">
@@ -422,19 +448,26 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                                             </div>
                                         </div>
 
+                                        <div class="form-row">
+
                                         <div class="d-flex justify-content-center">
 
-                                            <?php
-                                            if ($_GET['m'] == 'm') {
-                                            ?>
-                                                <button type="button" id="modify_filter" class='btn btn-gradient-primary mr-2'>Modify Filter</button>
-                                            <?php
-                                            } else if ($_GET['m'] == 'a') {
-                                            ?>
-                                                <button type="button" id="add_filter" class='btn btn-gradient-primary mr-2'>Add Filter</button>
-                                            <?php
-                                            }
-                                            ?>
+					       <?php
+
+                  if($_GET['m']=='m'){
+                      ?>
+                  <button type="button" id="modify_filter"	class='btn btn-gradient-primary mr-2'>Modify Filter</button>
+                  <?php
+                  }
+                  else if($_GET['m']=='a'){
+                      ?>
+                  <button type="button" id="add_filter"	class='btn btn-gradient-primary mr-2'>Add Filter</button>
+                  <?php
+                  }
+
+
+                  ?>
+										 </div>
 
                                         </div>
 
@@ -446,19 +479,31 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 
                     </div>
 
-                </div>
 
-                <!-- content-wrapper ends -->
-                <!-- partial:assets/inc/_footer.php -->
-                <?php include "assets/inc/_footercopyright.php"; ?>
-                <!-- partial -->
-            </div>
-            <!-- main-panel ends -->
-        </div>
-        <!-- page-body-wrapper ends -->
+
+
+
+
+
+
+
+
+
+
+
+
+          
     </div>
-    <?php include "assets/inc/_footerjs.php"; ?>
-    <?php include "assets/inc/_esignmodal.php"; ?>
+<!-- content-wrapper ends -->
+<!-- partial:assets/inc/_footer.php -->
+<?php include "assets/inc/_footercopyright.php"; ?>
+<!-- partial -->
+</div>
+<!-- main-panel ends -->
+</div>
+<!-- page-body-wrapper ends -->
+</div>
+ <?php include "assets/inc/_footerjs.php"; ?>
+ <?php include "assets/inc/_esignmodal.php"; ?>
 </body>
-
 </html>

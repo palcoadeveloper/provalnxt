@@ -209,6 +209,22 @@ if ($sch_type == 'val') {
     #prgmodaladd {
       display: none;
     }
+
+    /* Add lift effect to buttons on hover */
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    .btn {
+      transition: all 0.3s ease;
+    }
+
+    .btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
   </style>
 </head>
 
@@ -275,11 +291,16 @@ if ($sch_type == 'val') {
                         }
                         ?>
                         <tr>
-                          <td colspan='3' style='text-align: center;'>
+                          <td colspan='3' style='text-align: center; padding: 20px;'>
                             <?php echo "<input type='hidden' name='schedule_id' value='" . htmlspecialchars($row['schedule_id'], ENT_QUOTES, 'UTF-8') . "'/>"; ?>
 
-                            <button id='btnSubmit' class='btn btn-success btn-small actionButton' aria-pressed='true' data-action="approve">Approve</button>
-                            <button id='btnReject' class='btn btn-danger btn-small actionButton' aria-pressed='true' data-action="reject">Reject</button>
+                            <button id='btnSubmit' class='btn btn-primary btn-small actionButton'
+                                    type="button"
+                                    data-action="approve">Approve</button>
+                            &nbsp;&nbsp;
+                            <button id='btnReject' class='btn btn-danger btn-small actionButton'
+                                    type="button"
+                                    data-action="reject">Reject</button>
                           </td>
                         </tr>
                       </tbody>

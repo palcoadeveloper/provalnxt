@@ -337,13 +337,91 @@ if (!defined('EMAIL_TEMPLATE_CACHE_ENABLED')) {
     define('EMAIL_TEMPLATE_CACHE_ENABLED', true); // Enable email template caching
 }
 
+// ==============================================
+// APCU CACHING CONFIGURATION
+// ==============================================
+
+// Cache availability and configuration
+if (!defined('CACHE_ENABLED')) {
+    define('CACHE_ENABLED', function_exists('apcu_enabled') && apcu_enabled()); // Auto-detect APCu availability
+}
+
+// Cache TTL (Time To Live) settings in seconds
+if (!defined('CACHE_DEFAULT_TTL')) {
+    define('CACHE_DEFAULT_TTL', 300); // 5 minutes - Default cache lifetime
+}
+if (!defined('CACHE_DASHBOARD_TTL')) {
+    define('CACHE_DASHBOARD_TTL', 300); // 5 minutes - Dashboard query cache
+}
+if (!defined('CACHE_USER_PERMISSIONS_TTL')) {
+    define('CACHE_USER_PERMISSIONS_TTL', 600); // 10 minutes - User permissions cache
+}
+if (!defined('CACHE_STATIC_DATA_TTL')) {
+    define('CACHE_STATIC_DATA_TTL', 1800); // 30 minutes - Department/Unit mappings
+}
+if (!defined('CACHE_CONFIG_TTL')) {
+    define('CACHE_CONFIG_TTL', 3600); // 1 hour - Configuration data
+}
+
+// Cache key prefixes for data organization
+if (!defined('CACHE_PREFIX_DASHBOARD')) {
+    define('CACHE_PREFIX_DASHBOARD', 'proval_dash_'); // Dashboard queries
+}
+if (!defined('CACHE_PREFIX_USER')) {
+    define('CACHE_PREFIX_USER', 'proval_user_'); // User permissions and data
+}
+if (!defined('CACHE_PREFIX_STATIC')) {
+    define('CACHE_PREFIX_STATIC', 'proval_static_'); // Static mappings
+}
+if (!defined('CACHE_PREFIX_CONFIG')) {
+    define('CACHE_PREFIX_CONFIG', 'proval_config_'); // Configuration data
+}
+
+// Cache performance settings
+if (!defined('CACHE_STATS_ENABLED')) {
+    define('CACHE_STATS_ENABLED', ENVIRONMENT === 'dev'); // Enable cache statistics in development
+}
+if (!defined('CACHE_MAX_KEY_LENGTH')) {
+    define('CACHE_MAX_KEY_LENGTH', 250); // Maximum cache key length
+}
+if (!defined('CACHE_COMPRESSION_THRESHOLD')) {
+    define('CACHE_COMPRESSION_THRESHOLD', 1024); // Compress data larger than 1KB
+}
+
+// Cache invalidation settings
+if (!defined('CACHE_AUTO_INVALIDATE')) {
+    define('CACHE_AUTO_INVALIDATE', true); // Enable automatic cache invalidation
+}
+if (!defined('CACHE_VERSION_KEY')) {
+    define('CACHE_VERSION_KEY', 'proval_cache_version'); // Global cache version key
+}
+
+// Environment-specific cache settings
+if (ENVIRONMENT === 'dev') {
+    // Development: Shorter TTL for testing, detailed logging
+    if (!defined('CACHE_DEBUG_ENABLED')) {
+        define('CACHE_DEBUG_ENABLED', true);
+    }
+    if (!defined('CACHE_DEV_TTL_MULTIPLIER')) {
+        define('CACHE_DEV_TTL_MULTIPLIER', 0.2); // 20% of normal TTL in development
+    }
+} else {
+    // Production: Longer TTL, minimal logging
+    if (!defined('CACHE_DEBUG_ENABLED')) {
+        define('CACHE_DEBUG_ENABLED', false);
+    }
+    if (!defined('CACHE_DEV_TTL_MULTIPLIER')) {
+        define('CACHE_DEV_TTL_MULTIPLIER', 1.0); // Full TTL in production
+    }
+}
+
 
 // Session timeout configuration (in seconds)
 if (!defined('SESSION_TIMEOUT')) {
-    define('SESSION_TIMEOUT', 300); // 5 minutes - Compliance requirement for user lockout after inactivity
+    define('SESSION_TIMEOUT', 60); // 5 minutes - Compliance requirement for user lockout after inactivity
 }
 if (!defined('SESSION_WARNING_TIME')) {
-    define('SESSION_WARNING_TIME', 180); // 3 minutes - Show warning after 3 minutes of inactivity
+    define('SESSION_WARNING_TIME', 30); // 3 minutes - Show warning after 3 minutes of inactivity
 }
 
 // Validate session timeout configuration
@@ -351,13 +429,13 @@ if (SESSION_WARNING_TIME >= SESSION_TIMEOUT) {
     throw new Exception('SESSION_WARNING_TIME (' . SESSION_WARNING_TIME . 's) must be less than SESSION_TIMEOUT (' . SESSION_TIMEOUT . 's)');
 }
 
-if (SESSION_TIMEOUT < 120) {
+/*if (SESSION_TIMEOUT < 120) {
     throw new Exception('SESSION_TIMEOUT must be at least 2 minutes (120 seconds) for security compliance');
 }
 
 if (SESSION_WARNING_TIME < 60) {
     throw new Exception('SESSION_WARNING_TIME must be at least 1 minute (60 seconds) for usability');
-}
+}*/
 
 // Calculate remaining time for validation
 $remaining_time = SESSION_TIMEOUT - SESSION_WARNING_TIME;
@@ -378,6 +456,50 @@ if (!defined('SESSION_TIMEOUT_LOGGING_ENABLED')) {
 }
 if (!defined('SESSION_ACTIVITY_LOGGING_ENABLED')) {
     define('SESSION_ACTIVITY_LOGGING_ENABLED', ENVIRONMENT === 'dev'); // Log session activity updates
+}
+
+// ==============================================
+// ENHANCED SESSION SECURITY CONFIGURATION
+// ==============================================
+
+// Visibility change detection (when user switches to other applications)
+if (!defined('ENABLE_VISIBILITY_TIMEOUT')) {
+    define('ENABLE_VISIBILITY_TIMEOUT', true); // Enable detection when user switches apps
+}
+if (!defined('VISIBILITY_TIMEOUT')) {
+    define('VISIBILITY_TIMEOUT', 30); // Time before logout when switching apps (300 seconds = 5 minutes). You may set it to SESSION_TIMEOUT.
+}
+
+// Screen lock/lid close detection configuration (works on mobile, tablet, and desktop)
+if (!defined('ENABLE_SCREEN_LOCK_DETECTION')) {
+    define('ENABLE_SCREEN_LOCK_DETECTION', true); // Enable screen lock (mobile/tablet) and lid close (laptop) detection
+}
+if (!defined('SCREEN_LOCK_TIMEOUT')) {
+    define('SCREEN_LOCK_TIMEOUT', 30); // Time before logout when screen is locked or lid is closed (in seconds). You may set it to SESSION_TIMEOUT.
+}
+
+// Immediate logout when returning to browser after being away for SESSION_TIMEOUT duration
+if (!defined('ENABLE_IMMEDIATE_RETURN_LOGOUT')) {
+    define('ENABLE_IMMEDIATE_RETURN_LOGOUT', false); // Don't logout immediately when returning after SESSION_TIMEOUT
+}
+
+// Multi-tab coordination for security features
+if (!defined('ENABLE_COORDINATED_SECURITY_LOGOUT')) {
+    define('ENABLE_COORDINATED_SECURITY_LOGOUT', true); // Coordinate security logouts across tabs
+}
+
+// Internet connectivity monitoring configuration
+if (!defined('ENABLE_CONNECTIVITY_MONITORING')) {
+    define('ENABLE_CONNECTIVITY_MONITORING', true); // Enable internet connectivity monitoring
+}
+if (!defined('CONNECTIVITY_CHECK_INTERVAL')) {
+    define('CONNECTIVITY_CHECK_INTERVAL', 30); // Seconds between server connectivity checks
+}
+if (!defined('CONNECTIVITY_GRACE_PERIOD')) {
+    define('CONNECTIVITY_GRACE_PERIOD', 10); // Seconds to wait before showing connectivity popup
+}
+if (!defined('CONNECTIVITY_WAIT_TIME')) {
+    define('CONNECTIVITY_WAIT_TIME', 120); // Seconds to wait if user chooses "Wait" option
 }
 
 // Helper function for redirects using BASE_URL

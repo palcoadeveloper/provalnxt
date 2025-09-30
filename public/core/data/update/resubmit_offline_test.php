@@ -3,21 +3,21 @@
 // Load configuration first
 require_once(__DIR__ . '/../../config/config.php');
 // Include XSS protection middleware (auto-initializes)
-require_once('../../security/xss_integration_middleware.php');
+require_once(__DIR__ . '/../../security/xss_integration_middleware.php');
 
 // Session is already started by config.php via session_init.php
 
 // Validate session timeout
-require_once('../../security/session_timeout_middleware.php');
+require_once(__DIR__ . '/../../security/session_timeout_middleware.php');
 validateActiveSession();
 
 // Include rate limiting
-require_once('../../security/rate_limiting_utils.php');
+require_once(__DIR__ . '/../../security/rate_limiting_utils.php');
 
 // Include secure transaction wrapper
-require_once('../../security/secure_transaction_wrapper.php');
+require_once(__DIR__ . '/../../security/secure_transaction_wrapper.php');
 
-require_once '../../config/db.class.php';
+require_once(__DIR__ . '/../../config/db.class.php');
 date_default_timezone_set("Asia/Kolkata");
 
 // Apply rate limiting for form submissions
@@ -45,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Input validation helper
+
 class OfflineTestResubmitValidator {
     public static function validateResubmitData() {
         $required_fields = ['action', 'test_wf_id', 'val_wf_id', 'test_id'];
@@ -232,6 +233,43 @@ try {
     }
     
     // Execute secure transaction
+    // Check if this is an offline paper-on-glass test that requires upload validation
+    if ($test_data['data_entry_mode'] === 'offline') {
+        // Check if this test has paper-on-glass enabled
+        $paper_on_glass_check = DB::queryFirstRow(
+            "SELECT paper_on_glass_enabled FROM tests 
+            WHERE test_id = (SELECT test_id FROM tbl_test_schedules_tracking WHERE test_wf_id = %s)",
+            $validated_data['test_wf_id']
+        );
+        
+        if ($paper_on_glass_check && $paper_on_glass_check['paper_on_glass_enabled'] === 'Yes') {
+            // Validate that required uploads exist for offline mode
+            $required_uploads = DB::queryFirstRow("
+                SELECT upload_path_raw_data, upload_path_test_certificate, upload_path_master_certificate
+                FROM tbl_uploads
+                WHERE test_wf_id = %s
+                AND upload_action IS NULL
+                AND upload_status = 'Active'
+                ORDER BY uploaded_datetime DESC
+                LIMIT 1
+            ", $validated_data['test_wf_id']);
+
+            if (!$required_uploads ||
+                empty($required_uploads['upload_path_raw_data']) ||
+                empty($required_uploads['upload_path_test_certificate']) ||
+                empty($required_uploads['upload_path_master_certificate'])) {
+
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'No uploaded documents found for offline test. Please upload Raw Data, Certificate and Master Certificate files before submitting.',
+                    'csrf_token' => generateCSRFToken()
+                ]);
+                exit();
+            }
+            
+            error_log("[RESUBMIT VALIDATION] Upload validation passed for test_wf_id: " . $validated_data['test_wf_id']);
+        }
+    }
     $result = executeSecureTransaction(function() use ($validated_data, $test_data) {
         
         // Resubmit action: Update stage from '1RRV' back to '1PRV' (awaiting checker review)

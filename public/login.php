@@ -128,24 +128,312 @@ $(document).ready(function(){
       return vars;
     }
 
+    // Connectivity checking function
+    function checkConnectivity() {
+        return new Promise((resolve) => {
+            console.log('Checking connectivity...');
+            console.log('Navigator online status:', navigator.onLine);
+
+            // For localhost development, if navigator says we're online, trust it
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                console.log('Localhost detected - trusting navigator.onLine:', navigator.onLine);
+                resolve(navigator.onLine);
+                return;
+            }
+
+            // Check browser online status first
+            if (!navigator.onLine) {
+                console.log('Browser reports offline');
+                resolve(false);
+                return;
+            }
+
+            // Verify actual server connectivity
+            console.log('Checking server connectivity...');
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => {
+                console.log('Connectivity check timed out');
+                controller.abort();
+                resolve(false);
+            }, 3000);
+
+            fetch('connectivity-check.php?' + new Date().getTime(), {
+                method: 'HEAD',
+                cache: 'no-cache',
+                signal: controller.signal
+            })
+            .then(response => {
+                clearTimeout(timeoutId);
+                console.log('Server connectivity check result:', response.ok);
+                resolve(response.ok);
+            })
+            .catch(error => {
+                clearTimeout(timeoutId);
+                console.log('Server connectivity check failed:', error.message);
+                resolve(false);
+            });
+        });
+    }
+
+    // Display connectivity error
+    function showConnectivityError() {
+        console.log('Showing connectivity error modal');
+
+        // Get reason from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const reason = urlParams.get('msg') === 'session_timeout' ? 'session_timeout' : 'connection_lost';
+
+        // Create offline modal that matches ProVal design
+        var modalHtml = '<div class="modal fade" id="connectivityModal" tabindex="-1" role="dialog" style="z-index: 9999;">' +
+            '<div class="modal-dialog modal-dialog-centered" role="document">' +
+            '<div class="modal-content">' +
+            '<div class="modal-header bg-gradient-primary text-white">' +
+            '<h5 class="modal-title"><i class="mdi mdi-wifi-off mr-2"></i>Connection Lost</h5>' +
+            '</div>' +
+            '<div class="modal-body text-center p-4">' +
+            '<div class="mb-3"><i class="mdi mdi-wifi-off" style="font-size: 4rem; color: #b967db;"></i></div>' +
+            '<h4 class="mb-3">' + getConnectivityTitle(reason) + '</h4>' +
+            '<p class="text-muted mb-4">' + getConnectivityMessage(reason) + '</p>' +
+            '</div>' +
+            '<div class="modal-footer">' +
+            '<small class="text-muted">Automatically checking every 5 seconds...</small>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '</div>';
+
+        // Remove any existing connectivity modal
+        var existingModal = document.getElementById('connectivityModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Add modal to page
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        // Show modal
+        $('#connectivityModal').modal({
+            backdrop: 'static',
+            keyboard: false
+        });
+
+        // Start auto-checking connectivity
+        startLoginConnectivityCheck();
+    }
+
+    // Get appropriate title based on reason
+    function getConnectivityTitle(reason) {
+        switch(reason) {
+            case 'session_timeout':
+                return 'Session Expired';
+            case 'connection_lost':
+                return 'Connection Lost';
+            default:
+                return 'Offline';
+        }
+    }
+
+    // Get appropriate message based on reason
+    function getConnectivityMessage(reason) {
+        switch(reason) {
+            case 'session_timeout':
+                return 'Your session expired and no internet connection is available. Connection is required to log back in.';
+            case 'connection_lost':
+                return 'Your internet connection has been lost. ProVal requires an active connection for security and compliance.';
+            default:
+                return 'Please check your network connection and try again.';
+        }
+    }
+
+    // Start connectivity checking for login modal
+    function startLoginConnectivityCheck() {
+        window.loginConnectivityInterval = setInterval(function() {
+            if (navigator.onLine) {
+                // Quick server check
+                fetch('connectivity-check.php?' + new Date().getTime(), {
+                    method: 'HEAD',
+                    cache: 'no-cache'
+                })
+                .then(function(response) {
+                    if (response.ok) {
+                        clearInterval(window.loginConnectivityInterval);
+                        handleLoginReconnection();
+                    }
+                })
+                .catch(function() {
+                    // Still offline
+                });
+            }
+        }, 5000);
+    }
+
+    // Handle reconnection from login modal
+    function handleLoginReconnection() {
+        var modal = document.getElementById('connectivityModal');
+        if (modal) {
+            var modalBody = modal.querySelector('.modal-body');
+            modalBody.innerHTML = '<div class="text-center">' +
+                '<i class="mdi mdi-check-circle" style="font-size: 4rem; color: #28a745;"></i>' +
+                '<h4 class="mt-3 mb-3">Connection Restored</h4>' +
+                '<p class="text-muted">You can now proceed with login.</p>' +
+                '</div>';
+
+            setTimeout(function() {
+                $('#connectivityModal').modal('hide');
+
+                // Ensure complete cleanup of modal and backdrop after hide animation
+                setTimeout(function() {
+                    // Remove modal element
+                    var modal = document.getElementById('connectivityModal');
+                    if (modal) {
+                        modal.remove();
+                    }
+                    // Remove any lingering backdrop
+                    $('.modal-backdrop').remove();
+                    // Remove modal-open class from body
+                    $('body').removeClass('modal-open');
+                }, 500);
+
+                // Re-enable the login form
+                $('#btnNext').prop('disabled', false).text('LOGIN');
+            }, 2000);
+        }
+    }
+
+    // Manual connectivity check from login modal
+    function checkConnectivityManual() {
+        var button = document.querySelector('#connectivityModal .btn-gradient-primary');
+        if (button) {
+            button.innerHTML = '<span class="spinner-border spinner-border-sm mr-2"></span>Checking...';
+            button.disabled = true;
+
+            if (navigator.onLine) {
+                fetch('connectivity-check.php?' + new Date().getTime(), {
+                    method: 'HEAD',
+                    cache: 'no-cache'
+                })
+                .then(function(response) {
+                    if (response.ok) {
+                        clearInterval(window.loginConnectivityInterval);
+                        handleLoginReconnection();
+                    } else {
+                        throw new Error('Server not responding');
+                    }
+                })
+                .catch(function() {
+                    button.innerHTML = 'Try Again';
+                    button.disabled = false;
+                    var alert = document.querySelector('#connectivityModal .alert');
+                    alert.innerHTML = '<strong>❌ Still Offline</strong><br>Connection check failed. Please verify your network settings.';
+                    alert.className = 'alert alert-danger';
+                });
+            } else {
+                button.innerHTML = 'Try Again';
+                button.disabled = false;
+            }
+        }
+    }
+
+    // Hide connectivity error (legacy function, kept for compatibility)
+    function hideConnectivityError() {
+        // When connectivity is restored and we're on login page, just ensure form is enabled
+        if ($('#loginnotifications').hasClass('alert-warning') && $('#notify').text().includes('No internet connection')) {
+            $('#loginnotifications').hide();
+            $('#btnNext').prop('disabled', false).text('LOGIN');
+        }
+    }
+
+    // Check connectivity on page load (skip for localhost)
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        checkConnectivity().then(isOnline => {
+            if (!isOnline) {
+                showConnectivityError();
+            }
+        });
+    } else {
+        console.log('Skipping automatic connectivity check for localhost');
+    }
+
+    // Monitor connectivity changes
+    window.addEventListener('online', () => {
+        hideConnectivityError();
+    });
+
+    window.addEventListener('offline', () => {
+        showConnectivityError();
+    });
+
+    // Periodic connectivity check
+    setInterval(() => {
+        checkConnectivity().then(isOnline => {
+            if (isOnline) {
+                hideConnectivityError();
+            } else {
+                showConnectivityError();
+            }
+        });
+    }, <?php echo CONNECTIVITY_CHECK_INTERVAL * 1000; ?>);
+
     // Handle form submission
     $('#loginform').on('submit', function(e) {
+        // Check connectivity before submission
+        if (!navigator.onLine) {
+            e.preventDefault();
+            showConnectivityError();
+            return false;
+        }
+
         // Update timestamp on submit
         $('input[name="timestamp"]').val(Math.floor(Date.now() / 1000));
-        
+
         // Log CSRF token
         console.log("Submitting form with CSRF token:", $('#csrf_token').val());
-        
+
         // Verify form data exists
         if (!$('input[name="username"]').val() || !$('input[name="password"]').val()) {
             e.preventDefault();
             alert('Please fill in all required fields');
             return false;
         }
-        
-        // Allow form submission
-        return true;
+
+        // Show loading state
+        $('#btnNext').prop('disabled', true).text('Checking connection...');
+
+        // Final connectivity check before actual submission
+        checkConnectivity().then(isOnline => {
+            if (isOnline) {
+                $('#btnNext').text('Logging in...');
+                // Allow form submission
+                $('#loginform')[0].submit();
+            } else {
+                // Redirect to offline page instead of showing inline error
+                showConnectivityError();
+                return false;
+            }
+        });
+
+        // Prevent default submission until connectivity check completes
+        e.preventDefault();
+        return false;
     });
+
+    // Add hover lift effect to login button
+    $('#btnNext').hover(
+        function() {
+            // Mouse enter
+            $(this).css({
+                'transform': 'translateY(-2px)',
+                'box-shadow': '0 8px 25px rgba(185, 103, 219, 0.4)'
+            });
+        },
+        function() {
+            // Mouse leave
+            $(this).css({
+                'transform': 'translateY(0px)',
+                'box-shadow': ''
+            });
+        }
+    );
 
     var param = getUrlVars()["msg"];
 
@@ -185,15 +473,39 @@ $(document).ready(function(){
       }
       else if(param == "session_timeout") {
         $("#loginnotifications").addClass("alert-warning");
-        $("#notify").text("Your session has expired due to 5 minutes of inactivity. Please login again.");
+        var timeoutSeconds = <?php echo SESSION_TIMEOUT; ?>;
+        var timeoutText = timeoutSeconds >= 60 ? Math.round(timeoutSeconds / 60) + " minute" + (Math.round(timeoutSeconds / 60) !== 1 ? "s" : "") : timeoutSeconds + " second" + (timeoutSeconds !== 1 ? "s" : "");
+        $("#notify").text("Your session has expired due to " + timeoutText + " of inactivity. Please login again.");
       }
       else if(param == "session_timeout_compliance") {
         $("#loginnotifications").addClass("alert-warning");
-        $("#notify").text("For security compliance, you have been automatically logged out after 5 minutes of inactivity. Please login again.");
+        var timeoutSeconds = <?php echo SESSION_TIMEOUT; ?>;
+        var timeoutText = timeoutSeconds >= 60 ? Math.round(timeoutSeconds / 60) + " minute" + (Math.round(timeoutSeconds / 60) !== 1 ? "s" : "") : timeoutSeconds + " second" + (timeoutSeconds !== 1 ? "s" : "");
+        $("#notify").text("For security compliance, you have been automatically logged out after " + timeoutText + " of inactivity. Please login again.");
       }
       else if(param == "session_destroyed") {
         $("#loginnotifications").addClass("alert-warning");
         $("#notify").text("Your session has been terminated for security reasons. Please login again.");
+      }
+      else if(param == "session_screen_lock") {
+        $("#loginnotifications").addClass("alert-warning");
+        $("#notify").text("You have been logged out due to screen lock/lid closure for security. Please login again.");
+      }
+      else if(param == "connection_lost") {
+        $("#loginnotifications").addClass("alert-danger");
+        $("#notify").text("You have been logged out due to internet connection loss. Please check your network and login again.");
+      }
+      else if(param == "session_return_timeout") {
+        $("#loginnotifications").addClass("alert-warning");
+        var timeoutSeconds = <?php echo SESSION_TIMEOUT; ?>;
+        var timeoutText = timeoutSeconds >= 60 ? Math.round(timeoutSeconds / 60) + " minute" + (Math.round(timeoutSeconds / 60) !== 1 ? "s" : "") : timeoutSeconds + " second" + (timeoutSeconds !== 1 ? "s" : "");
+        $("#notify").text("You have been logged out after being away from the application for more than " + timeoutText + ". Please login again.");
+      }
+      else if(param == "session_visibility_timeout") {
+        $("#loginnotifications").addClass("alert-warning");
+        var timeoutSeconds = <?php echo VISIBILITY_TIMEOUT; ?>;
+        var timeoutText = timeoutSeconds >= 60 ? Math.round(timeoutSeconds / 60) + " minute" + (Math.round(timeoutSeconds / 60) !== 1 ? "s" : "") : timeoutSeconds + " second" + (timeoutSeconds !== 1 ? "s" : "");
+        $("#notify").text("You have been logged out after switching away from the application for more than " + timeoutText + ". Please login again.");
       }
       else if(param == "no_session") {
         $("#loginnotifications").addClass("alert-warning");
@@ -274,41 +586,6 @@ $(document).ready(function(){
         errorRef = decodeURIComponent(errorRef.replace(/\+/g, ' '));
         $("#notify").text("A system error occurred. Please contact IT support with reference: " + errorRef);
       }
-   
-       else if(param == "security_error") {
-        $("#loginnotifications").addClass("alert-danger");
-        
-        // Get IP address and security error type
-        var ipAddress = getUrlVars()["ip"] || "Unknown";
-        var securityType = getUrlVars()["type"] || "unknown";
-        
-        // Format different messages based on the security error type
-        var securityMessage = "";
-        
-        switch(securityType) {
-          case "csrf_failure":
-            securityMessage = "Security alert: Invalid form submission detected from IP: " + ipAddress + 
-                            ". This has been logged for security purposes.";
-            break;
-          case "sql_injection_attempt":
-            securityMessage = "Security alert: Potential SQL injection attempt detected from IP: " + ipAddress + 
-                            ". This activity has been logged.";
-            break;
-          case "invalid_input":
-            securityMessage = "Security alert: Invalid input detected from IP: " + ipAddress + 
-                            ". Please use only allowed characters.";
-            break;
-          default:
-            securityMessage = "Security alert: Suspicious activity detected from IP: " + ipAddress + 
-                            ". This has been logged for security purposes.";
-        }
-        
-        $("#notify").text(securityMessage);
-        
-        // Log this event client-side
-        console.warn("Security error type: " + securityType + " from IP: " + ipAddress);
-
-      }
     
 
 
@@ -383,7 +660,7 @@ $(document).ready(function(){
                        
                     </div>
                     
-                    <button id="btnNext" class="btn btn-block btn-gradient-primary btn-lg font-weight-medium auth-form-btn" type="submit">LOGIN</button>
+                    <button id="btnNext" class="btn btn-block btn-gradient-primary btn-lg font-weight-medium auth-form-btn" type="submit" style="transition: all 0.3s ease;">LOGIN</button>
                     
                 </form>
                     

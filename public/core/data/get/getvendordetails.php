@@ -56,8 +56,14 @@ else
         echo "<td>".$row['vendor_spoc_name']."</td>";
         echo "<td>".$row['vendor_spoc_mobile']."</td>";
         echo "<td>".$row['vendor_spoc_email']."</td>";
-        echo "<td><a href='managevendordetails.php?vendor_id=".$row["vendor_id"]."&m=r' class='btn btn-sm btn-gradient-info btn-icon-text' role='button' aria-pressed='true'>View</a>
-&nbsp;&nbsp;<a href='managevendordetails.php?vendor_id=".$row["vendor_id"]."&m=m' class='btn btn-sm btn-gradient-info btn-icon-text' role='button' aria-pressed='true'>Modify</a> </td>";
+        // Build search parameters for back navigation
+        $search_params = http_build_query([
+            'searchinput' => $_GET['searchinput'],
+            'from_search' => '1'
+        ]);
+
+        echo "<td><a href='managevendordetails.php?vendor_id=".$row["vendor_id"]."&m=r&".$search_params."' class='btn btn-sm btn-gradient-info btn-icon-text' role='button' aria-pressed='true'>View</a>
+&nbsp;&nbsp;<a href='managevendordetails.php?vendor_id=".$row["vendor_id"]."&m=m&".$search_params."' class='btn btn-sm btn-gradient-info btn-icon-text' role='button' aria-pressed='true'>Edit</a> </td>";
         echo "</tr>";
         $count++;
     }

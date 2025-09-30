@@ -152,7 +152,7 @@ FROM tbl_test_schedules_tracking t1, equipments t2, equipment_test_vendor_mappin
 WHERE t1.equip_id=t2.equipment_id 
 AND t1.equip_id=etvm.equipment_id 
 AND t1.test_id=etvm.test_id 
-AND t1.test_wf_current_stage in ('1PRV','3BPRV') 
+AND t1.test_wf_current_stage in ('1PRV','3BPRV','4BPRV') 
 AND etvm.vendor_id=%i 
 AND etvm.mapping_status='Active'";
 

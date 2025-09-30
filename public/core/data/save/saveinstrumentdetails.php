@@ -284,7 +284,9 @@ try {
     
     try {
         // Determine if approval workflow is needed
-        $needs_approval = $is_vendor_user && !$is_admin_user;
+        // Admin and Super Admin users do not require approval, regardless of user type
+        $is_session_admin = ($_SESSION['is_admin'] === 'Yes' || $_SESSION['is_super_admin'] === 'Yes');
+        $needs_approval = $is_vendor_user && !$is_admin_user && !$is_session_admin;
         
         if ($action == 'a') {
             // Check for uniqueness: Instrument ID + Calibrated On + Status
@@ -300,9 +302,39 @@ try {
             }
             
             if ($needs_approval) {
-                // Create approval request for vendor users (future implementation)
-                echo json_encode(['success' => false, 'message' => 'Approval workflow not yet implemented']);
-                exit();
+                // Insert with Pending status for vendor users
+                DB::insert('instruments', [
+                    'instrument_id' => $instrument_id,
+                    'instrument_type' => $instrument_type,
+                    'vendor_id' => $vendor_id,
+                    'serial_number' => $serial_number,
+                    'calibrated_on' => $calibrated_on,
+                    'calibration_due_on' => $calibration_due_on,
+                    'master_certificate_path' => $master_certificate_path,
+                    'instrument_status' => 'Pending',
+                    'submitted_by' => $logged_in_user_id,
+                    'created_by' => $logged_in_user_id,
+                    'created_date' => date('Y-m-d H:i:s')
+                ]);
+
+                // Log the workflow action
+                DB::insert('instrument_workflow_log', [
+                    'instrument_id' => $instrument_id,
+                    'action_type' => 'Created',
+                    'performed_by' => $logged_in_user_id,
+                    'action_date' => date('Y-m-d H:i:s'),
+                    'new_data' => json_encode($instrument_data),
+                    'remarks' => 'Instrument created by vendor - pending checker approval',
+                    'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
+                    'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null
+                ]);
+
+                ob_end_clean();
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Instrument submitted successfully. It will be visible after checker approval.',
+                    'status' => 'pending'
+                ]);
             } else {
                 // Direct insert for admin users
                 DB::insert('instruments', [
@@ -314,6 +346,7 @@ try {
                     'calibration_due_on' => $calibration_due_on,
                     'master_certificate_path' => $master_certificate_path,
                     'instrument_status' => $instrument_status,
+                    'submitted_by' => $logged_in_user_id,
                     'created_by' => $logged_in_user_id,
                     'created_date' => date('Y-m-d H:i:s'),
                     'approval_status' => 'APPROVED'
@@ -323,7 +356,7 @@ try {
                 DB::insert('log', [
                     'change_type' => 'INSERT',
                     'table_name' => 'instruments',
-                    'change_description' => 'Added new instrument: ' . $instrument_id . ' (Admin)',
+                    'change_description' => 'Added new instrument: ' . $instrument_id . ' (Admin - No approval required)',
                     'change_by' => $logged_in_user_id
                 ]);
                 
@@ -333,9 +366,54 @@ try {
 
         } else if ($action == 'e') {
             if ($needs_approval) {
-                // Create approval request for modifications (future implementation)
-                echo json_encode(['success' => false, 'message' => 'Approval workflow not yet implemented']);
-                exit();
+                // Get original data for audit trail
+                $original_instrument = DB::queryFirstRow(
+                    "SELECT * FROM instruments WHERE instrument_id = %s",
+                    $instrument_id
+                );
+
+                // Update with Pending status for vendor users
+                $update_data = [
+                    'instrument_type' => $instrument_type,
+                    'vendor_id' => $vendor_id,
+                    'serial_number' => $serial_number,
+                    'calibrated_on' => $calibrated_on,
+                    'calibration_due_on' => $calibration_due_on,
+                    'instrument_status' => 'Pending',
+                    'submitted_by' => $logged_in_user_id,
+                    'checker_id' => null,
+                    'checker_action' => null,
+                    'checker_date' => null,
+                    'checker_remarks' => null,
+                    'original_data' => json_encode($original_instrument)
+                ];
+
+                // Update certificate path if new file uploaded
+                if ($master_certificate_path) {
+                    $update_data['master_certificate_path'] = $master_certificate_path;
+                }
+
+                DB::update('instruments', $update_data, "instrument_id = %s", $instrument_id);
+
+                // Log the workflow action
+                DB::insert('instrument_workflow_log', [
+                    'instrument_id' => $instrument_id,
+                    'action_type' => 'Modified',
+                    'performed_by' => $logged_in_user_id,
+                    'action_date' => date('Y-m-d H:i:s'),
+                    'old_data' => json_encode($original_instrument),
+                    'new_data' => json_encode($instrument_data),
+                    'remarks' => 'Instrument modified by vendor - pending checker approval',
+                    'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
+                    'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null
+                ]);
+
+                ob_end_clean();
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Instrument updated successfully. Changes will be visible after checker approval.',
+                    'status' => 'pending'
+                ]);
             } else {
                 // Direct update for admin users
                 $update_data = [
@@ -362,7 +440,7 @@ try {
                 DB::insert('log', [
                     'change_type' => 'UPDATE',
                     'table_name' => 'instruments',
-                    'change_description' => 'Updated instrument: ' . $instrument_id . ' (Admin)',
+                    'change_description' => 'Updated instrument: ' . $instrument_id . ' (Admin - No approval required)',
                     'change_by' => $logged_in_user_id
                 ]);
                 

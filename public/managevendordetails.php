@@ -85,9 +85,17 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
             Swal.fire({
               icon: 'success',
               title: 'Success',
-              text: "The vendor record is successfully " + (mode === 'add' ? "added" : "modified") + "!"                
+              text: "The vendor record is successfully " + (mode === 'add' ? "added" : "modified") + "!"
             }).then((result) => {
-              window.location = "searchvendors.php";
+              // Build redirect URL with search parameters if available
+              let redirectUrl = "searchvendors.php";
+              <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+                const urlParams = new URLSearchParams();
+                <?php if (isset($_GET['searchinput'])): ?>urlParams.set('searchinput', '<?= htmlspecialchars($_GET['searchinput'], ENT_QUOTES) ?>');<?php endif; ?>
+                urlParams.set('restore_search', '1');
+                redirectUrl += '?' + urlParams.toString();
+              <?php endif; ?>
+              window.location = redirectUrl;
             });
           } else {
             Swal.fire({
@@ -169,7 +177,15 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 						<nav aria-label="breadcrumb">
 							<ul class="breadcrumb">
 								<li class="breadcrumb-item active" aria-current="page"><span><a class='btn btn-gradient-info btn-sm btn-rounded'
-										href="searchvendors.php"><< Back</a> </span>
+										href="searchvendors.php<?php
+                                                // Build back navigation URL with search parameters
+                                                if (isset($_GET['from_search']) && $_GET['from_search'] == '1') {
+                                                    $back_params = [];
+                                                    if (isset($_GET['searchinput'])) $back_params['searchinput'] = $_GET['searchinput'];
+                                                    $back_params['restore_search'] = '1';
+                                                    echo '?' . http_build_query($back_params);
+                                                }
+                                            ?>"><< Back</a> </span>
 								</li>
 							</ul>
 						</nav>

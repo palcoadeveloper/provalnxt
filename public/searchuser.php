@@ -30,7 +30,76 @@ require_once 'core/config/db.class.php';
    <meta name="csrf-token" content="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
     <script>
     $(document).ready(function(){
-    
+
+    // Function to get URL parameters
+    function getUrlParameter(name) {
+        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        var results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    }
+
+    // Function to restore search state from URL parameters
+    function restoreSearchState() {
+        const restoreFlag = getUrlParameter('restore_search');
+        if (restoreFlag === '1') {
+            console.log('Restoring user search state from URL parameters');
+
+            // Restore form values
+            const usertype = getUrlParameter('usertype');
+            const unitid = getUrlParameter('unitid');
+            const searchcriteria = getUrlParameter('searchcriteria');
+            const searchinput = getUrlParameter('searchinput');
+            const vendorid = getUrlParameter('vendorid');
+            const employeestatus = getUrlParameter('employee_status');
+
+            if (usertype && usertype !== '') {
+                $('#user_type').val(usertype);
+                // Trigger the change event to show/hide relevant divs
+                $('#user_type').trigger('change');
+            }
+            if (unitid && unitid !== '') $('#unitid').val(unitid);
+            if (searchcriteria && searchcriteria !== '') $('#search_criteria').val(searchcriteria);
+            if (searchinput && searchinput !== '') $('#search_input').val(searchinput);
+            if (vendorid && vendorid !== '') $('#vendor_id').val(vendorid);
+            if (employeestatus && employeestatus !== '') $('#employee_status').val(employeestatus);
+
+            // Auto-submit the form to show results if we have meaningful search parameters
+            if (usertype && usertype !== '') {
+                setTimeout(function() {
+                    console.log('Auto-submitting restored user search');
+
+                    // Show a brief notification that search is being restored
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            title: 'Restoring Search Results',
+                            text: 'Taking you back to your previous user search...',
+                            icon: 'info',
+                            timer: 1500,
+                            timerProgressBar: true,
+                            showConfirmButton: false,
+                            toast: true,
+                            position: 'top-end'
+                        });
+                    }
+
+                    // Show loading indicator
+                    $('#pleasewaitmodal').modal('show');
+                    $('#formreport').submit();
+
+                    // Clean up URL parameters after search is restored
+                    setTimeout(function() {
+                        const cleanUrl = window.location.pathname;
+                        window.history.replaceState({}, document.title, cleanUrl);
+                    }, 2000);
+                }, 500);
+            }
+        }
+    }
+
+    // Call restore function on page load
+    restoreSearchState();
+
       $('#user_type').on('change', function(){
     	var demovalue = $(this).val(); 
         $("div.myDiv").hide();
@@ -55,6 +124,7 @@ require_once 'core/config/db.class.php';
             $('#inactive_employees_count').text(stats.inactive_employees || 0);
             $('#active_vendor_employees_count').text(stats.active_vendor_employees || 0);
             $('#inactive_vendor_employees_count').text(stats.inactive_vendor_employees || 0);
+            $('#pending_vendor_employees_count').text(stats.pending_vendor_employees || 0);
           } catch(e) {
             console.log('Error parsing statistics response:', e);
             console.log('Raw response:', response);
@@ -96,8 +166,9 @@ require_once 'core/config/db.class.php';
                         unitid: $("#unitid").val(),
                         searchcriteria: $("#search_criteria").val(),
                         searchinput: $("#search_input").val(),
-                        vendorid: $("#vendor_id").val()
-                        
+                        vendorid: $("#vendor_id").val(),
+                        employee_status: $("#employee_status").val()
+
                       },
                       function(data, status){
                       $('#pleasewaitmodal').modal('hide');
@@ -131,6 +202,25 @@ require_once 'core/config/db.class.php';
                                  "info": "Showing _START_ to _END_ of _TOTAL_ users"
                              }
                          });
+
+                         // Smooth scroll to results section when coming back from user details
+                         const restoreFlag = getUrlParameter('restore_search');
+                         if (restoreFlag === '1') {
+                             setTimeout(function() {
+                                 const resultsSection = $('#displayresults');
+                                 if (resultsSection.length && resultsSection.is(':visible')) {
+                                     $('html, body').animate({
+                                         scrollTop: resultsSection.offset().top - 100
+                                     }, 800, 'swing', function() {
+                                         // Add a subtle highlight effect to the results area
+                                         resultsSection.addClass('highlight-results');
+                                         setTimeout(function() {
+                                             resultsSection.removeClass('highlight-results');
+                                         }, 2000);
+                                     });
+                                 }
+                             }, 300);
+                         }
                      }, 100); // 100ms delay
                        
                       });
@@ -170,6 +260,34 @@ require_once 'core/config/db.class.php';
     
     </script>
 
+    <style>
+    /* Enhanced search results highlight animation */
+    .highlight-results {
+        animation: gentle-glow 2s ease-in-out;
+        border-radius: 8px;
+    }
+
+    @keyframes gentle-glow {
+        0% {
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+        50% {
+            box-shadow: 0 0 20px rgba(0, 123, 255, 0.4);
+            background-color: rgba(0, 123, 255, 0.08);
+        }
+        100% {
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.1);
+            background-color: transparent;
+        }
+    }
+
+    /* Smooth scroll behavior */
+    html {
+        scroll-behavior: smooth;
+    }
+    </style>
+
     <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
     
   </head>
@@ -189,7 +307,7 @@ require_once 'core/config/db.class.php';
               <h3 class="page-title"> Search Users</h3>
               <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                  <li class="breadcrumb-item"><a class='btn btn-gradient-success btn-sm btn-rounded' href="manageuserdetails.php?m=a&u=c">+ Add Employee</a></li>
+                  <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="manageuserdetails.php?m=a&u=c">+ Add Employee</a></li>
                    <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="manageuserdetails.php?m=a&u=v">+ Add Vendor Employee</a></li>
                 </ol>
               </nav>
@@ -286,6 +404,20 @@ require_once 'core/config/db.class.php';
                                     </h4>
                                     <h2 class="mb-5 display-1" id="inactive_vendor_employees_count">0</h2>
                                     <h6 class="card-text">Not active</h6>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-3 stretch-card grid-margin">
+                            <div class="card bg-gradient-secondary card-img-holder text-white user-stats-tile">
+                                <div class="card-body">
+                                    <img src="assets/images/dashboard/circle.svg" class="card-img-absolute" alt="circle-image" />
+                                    <h4 class="font-weight-normal mb-3">
+                                        Pending Approval
+                                        <i class="mdi mdi-clock-outline mdi-24px float-right"></i>
+                                    </h4>
+                                    <h2 class="mb-5 display-1" id="pending_vendor_employees_count">0</h2>
+                                    <h6 class="card-text">Awaiting checker</h6>
                                 </div>
                             </div>
                         </div>
@@ -408,16 +540,19 @@ require_once 'core/config/db.class.php';
                         <input type="Text" class="form-control" id="search_input" name="search_input"/>
                       </div>
                       </div>
-                      
-                     
-        
-     
-  
-            
-        
-               
-                      
-                      
+
+                      <div class="form-row">
+                      <div class="form-group col-md-6">
+                        <label for="employee_status">Employee Status</label>
+                        <select class="form-control" id="employee_status" name="employee_status">
+                          <option value="">All Status</option>
+                          <option value="Active">Active</option>
+                          <option value="Inactive">Inactive</option>
+                          <option value="Pending">Pending</option>
+                        </select>
+                      </div>
+                      </div>
+
                       <input type="submit" id="searchusers" class="btn btn-gradient-original-success mr-2"/>
                       
                     </form>

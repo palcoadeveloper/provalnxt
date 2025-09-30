@@ -25,7 +25,8 @@ try {
         'active_employees' => 0,
         'inactive_employees' => 0,
         'active_vendor_employees' => 0,
-        'inactive_vendor_employees' => 0
+        'inactive_vendor_employees' => 0,
+        'pending_vendor_employees' => 0
     ];
     
     // Build query conditions based on unit selection and user permissions
@@ -68,12 +69,17 @@ try {
     // Query for inactive vendor employees
     $inactive_vendor_employees_query = "SELECT COUNT(*) FROM users WHERE user_status = 'Inactive' AND user_type = 'vendor'" . $unit_condition;
     $stats['inactive_vendor_employees'] = executeCountQuery($inactive_vendor_employees_query, $unit_params);
-    
+
+    // Query for pending vendor employees (waiting for checker approval)
+    $pending_vendor_employees_query = "SELECT COUNT(*) FROM users WHERE user_status = 'Pending' AND user_type = 'vendor'" . $unit_condition;
+    $stats['pending_vendor_employees'] = executeCountQuery($pending_vendor_employees_query, $unit_params);
+
     // Ensure all values are integers
     $stats['active_employees'] = intval($stats['active_employees']);
     $stats['inactive_employees'] = intval($stats['inactive_employees']);
     $stats['active_vendor_employees'] = intval($stats['active_vendor_employees']);
     $stats['inactive_vendor_employees'] = intval($stats['inactive_vendor_employees']);
+    $stats['pending_vendor_employees'] = intval($stats['pending_vendor_employees']);
     
     // Return JSON response
     echo json_encode($stats);

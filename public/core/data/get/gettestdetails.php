@@ -70,8 +70,15 @@ else
         echo "<td>".$row['test_performed_by']."</td>";
         echo "<td>".$row['test_status']."</td>";
        
-        echo "<td><a href='managetestdetails.php?test_id=".$row["test_id"]."&m=r' class='btn btn-sm btn-gradient-danger btn-icon-text' role='button' aria-pressed='true'>View</a>&nbsp;&nbsp;
-<a href='managetestdetails.php?test_id=".$row["test_id"]."&m=m' class='btn btn-sm btn-gradient-info btn-icon-text' role='button' aria-pressed='true'>Modify</a> </td>";
+        // Build search parameters for back navigation
+        $search_params = http_build_query([
+            'test_performed_by' => $_GET['test_performed_by'] ?? '',
+            'test_status' => $_GET['test_status'] ?? '',
+            'from_search' => '1'
+        ]);
+
+        echo "<td><a href='managetestdetails.php?test_id=".$row["test_id"]."&m=r&" . $search_params . "' class='btn btn-sm btn-gradient-danger btn-icon-text' role='button' aria-pressed='true'>View</a>&nbsp;&nbsp;
+<a href='managetestdetails.php?test_id=".$row["test_id"]."&m=m&" . $search_params . "' class='btn btn-sm btn-gradient-info btn-icon-text' role='button' aria-pressed='true'>Modify</a> </td>";
         echo "</tr>";
         $count++;
     }

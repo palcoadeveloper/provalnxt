@@ -435,6 +435,12 @@ function handleSuccessfulLogin($user, $userType)
         $_SESSION['unit_name'] = htmlspecialchars($user['unit_name']);
         $_SESSION['unit_site'] = htmlspecialchars($user['unit_site']);
         $_SESSION['department_id'] = (int)$user['department_id'];
+
+        // Set department_type for engineering department users (department_id = 1)
+        if ((int)$user['department_id'] === 1) {
+            $_SESSION['department_type'] = 'engineering';
+        }
+
         $_SESSION['is_qa_head'] = $user['is_qa_head'];
         $_SESSION['is_unit_head'] = $user['is_unit_head'];
         $_SESSION['is_admin'] = $user['is_admin'];
@@ -458,6 +464,7 @@ function handleSuccessfulLogin($user, $userType)
         }
     } elseif ($userType === "V") { // Vendor
         $_SESSION['logged_in_user'] = "vendor";
+        $_SESSION['user_type'] = "vendor"; // Added for sidebar visibility and vendor filtering
         $_SESSION['account_name'] = htmlspecialchars($user['user_domain_id']);
         $_SESSION['user_id'] = (int)$user['user_id'];
         $_SESSION['user_name'] = htmlspecialchars($user['user_name']);

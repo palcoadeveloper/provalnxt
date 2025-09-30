@@ -30,9 +30,86 @@ require_once 'core/config/db.class.php';
   <meta name="csrf-token" content="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
     <script>
     $(document).ready(function(){
-    
-    
-    		
+
+    // Function to get URL parameters
+    function getUrlParameter(name) {
+        name = name.replace(/[\\[]/, '\\\\[').replace(/[\\]]/, '\\\\]');
+        var regex = new RegExp('[\\\\?&]' + name + '=([^&#]*)');
+        var results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\\+/g, ' '));
+    }
+
+    // Function to restore search state from URL parameters
+    function restoreSearchState() {
+        const restoreFlag = getUrlParameter('restore_search');
+        if (restoreFlag === '1') {
+            console.log('Restoring mapping search state from URL parameters');
+
+            // Restore form values
+            const unitid = getUrlParameter('unitid');
+            const deptId = getUrlParameter('dept_id');
+            const equipmentType = getUrlParameter('equipment_type');
+            const equipmentId = getUrlParameter('equipment_id');
+            const etvMappingFilter = getUrlParameter('etv_mapping_filter');
+
+            if (unitid && unitid !== '') {
+                $('#unitid').val(unitid);
+                // Trigger change to load equipments for this unit
+                $('#unitid').trigger('change');
+            }
+
+            if (deptId && deptId !== '') {
+                $('#dept_id').val(deptId);
+            }
+
+            if (equipmentType && equipmentType !== '') {
+                $('#equipment_type').val(equipmentType);
+            }
+
+            if (etvMappingFilter && etvMappingFilter !== '') {
+                $('#etv_mapping_filter').val(etvMappingFilter);
+            }
+
+            // Set equipment_id after equipments are loaded
+            if (equipmentId && equipmentId !== '') {
+                setTimeout(function() {
+                    $('#equipment_id').val(equipmentId);
+                }, 1000); // Wait for equipments to load
+            }
+
+            // Auto-submit the form to show results
+            setTimeout(function() {
+                console.log('Auto-submitting restored mapping search');
+
+                // Show a brief notification that search is being restored
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Restoring Search Results',
+                        text: 'Taking you back to your previous mapping search...',
+                        icon: 'info',
+                        timer: 1500,
+                        timerProgressBar: true,
+                        showConfirmButton: false,
+                        toast: true,
+                        position: 'top-end'
+                    });
+                }
+
+                // Show loading indicator
+                $('#pleasewaitmodal').modal('show');
+                $('#formreport').submit();
+
+                // Clean up URL parameters after search is restored
+                setTimeout(function() {
+                    const cleanUrl = window.location.pathname;
+                    window.history.replaceState({}, document.title, cleanUrl);
+                }, 2000);
+            }, 1500); // Longer delay to allow equipment dropdown to load
+        }
+    }
+
+    // Call restore function on page load
+    restoreSearchState();
 
 
 function fetchEquipments(unitid) {
@@ -114,6 +191,25 @@ e.preventDefault();
                                         "info": "Showing _START_ to _END_ of _TOTAL_ mappings"
                                     }
                                 });
+
+                                // Smooth scroll to results section when coming back from mapping details
+                                const restoreFlag = getUrlParameter('restore_search');
+                                if (restoreFlag === '1') {
+                                    setTimeout(function() {
+                                        const resultsSection = $('#displayresults');
+                                        if (resultsSection.length && resultsSection.is(':visible')) {
+                                            $('html, body').animate({
+                                                scrollTop: resultsSection.offset().top - 100
+                                            }, 800, 'swing', function() {
+                                                // Add a subtle highlight effect to the results area
+                                                resultsSection.addClass('highlight-results');
+                                                setTimeout(function() {
+                                                    resultsSection.removeClass('highlight-results');
+                                                }, 2000);
+                                            });
+                                        }
+                                    }, 300);
+                                }
                             }, 100); // 100ms delay
                     		
                        
@@ -212,8 +308,36 @@ e.preventDefault();
     
     </script>
 
+    <style>
+    /* Enhanced search results highlight animation */
+    .highlight-results {
+        animation: gentle-glow 2s ease-in-out;
+        border-radius: 8px;
+    }
+
+    @keyframes gentle-glow {
+        0% {
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+        50% {
+            box-shadow: 0 0 20px rgba(0, 123, 255, 0.4);
+            background-color: rgba(0, 123, 255, 0.08);
+        }
+        100% {
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.1);
+            background-color: transparent;
+        }
+    }
+
+    /* Smooth scroll behavior */
+    html {
+        scroll-behavior: smooth;
+    }
+    </style>
+
     <link rel="stylesheet" href="assets/css/modern-manage-ui.css">
-    
+
   </head>
   <body>
    <?php include_once "assets/inc/_pleasewaitmodal.php"; ?>

@@ -47,23 +47,29 @@ try {
     if ($action === 'heartbeat') {
         // Update session activity timestamp
         updateSessionActivity();
-        
+
         // Get session information for response
         $userType = isset($_SESSION['employee_id']) && !empty($_SESSION['employee_id']) ? 'employee' : 'vendor';
         $userId = $_SESSION['employee_id'] ?? $_SESSION['vendor_id'] ?? 'unknown';
         $remainingTime = getRemainingSessionTime();
-        
+
+        // Check for multi-tab coordination info
+        $tabId = $_POST['tab_id'] ?? null;
+        $isMaster = $_POST['is_master'] ?? false;
+
         // Log heartbeat in development mode
         if (defined('ENVIRONMENT') && ENVIRONMENT === 'dev') {
-            error_log("Session heartbeat received for {$userType}: {$userId}, remaining time: {$remainingTime}s");
+            $tabInfo = $tabId ? " (Tab: {$tabId}, Master: " . ($isMaster ? 'yes' : 'no') . ")" : '';
+            error_log("Session heartbeat received for {$userType}: {$userId}, remaining time: {$remainingTime}s{$tabInfo}");
         }
-        
+
         echo json_encode([
             'status' => 'success',
             'message' => 'Session extended',
             'remaining_time' => $remainingTime,
             'user_type' => $userType,
-            'warning_threshold' => getSessionWarningTime()
+            'warning_threshold' => getSessionWarningTime(),
+            'multi_tab_enabled' => true
         ]);
         
     } elseif ($action === 'status') {

@@ -98,18 +98,55 @@ else //if($results=="success")
 where unit_id=%d and schedule_year=%d", $unit_id, $schedule_year);
     // create a new cURL resource
     $ch = curl_init();
-    
-    // set URL and other appropriate options
 
-    curl_setopt($ch, CURLOPT_URL,BASE_URL."generateschedulereport.php?unit_id=".$unit_id."&sch_id=".$scheduleid."&sch_year=".$schedule_year."&user_name=".urlencode($_SESSION['user_name']));
-    curl_setopt($ch, CURLOPT_HEADER, 0);
-    
+    // set URL and other appropriate options - try minimal version first
+    $pdf_url = BASE_URL."generateschedulereport_minimal.php?unit_id=".$unit_id."&sch_id=".$scheduleid."&sch_year=".$schedule_year."&user_name=".urlencode($_SESSION['user_name']);
+
+    // Configure cURL similar to level3 approval approach
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $pdf_url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 30, // Reduced timeout like protocol generation
+        CURLOPT_CONNECTTIMEOUT => 5, // Quick connection timeout
+        CURLOPT_FOLLOWLOCATION => false,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => 0,
+        CURLOPT_USERAGENT => 'ProVal-Internal/1.0'
+    ]);
+
     // grab URL and pass it to the browser
-    $output=curl_exec($ch);
-//    echo $output;
+    $output = curl_exec($ch);
+    $curl_error = curl_error($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
     // close cURL resource, and free up system resources
     curl_close($ch);
-    echo "The schedule is successfully generated.";
+
+    // Check for cURL errors
+    if ($curl_error) {
+        error_log("PDF Generation cURL Error: " . $curl_error . " URL: " . $pdf_url);
+        echo "The schedule is successfully generated, but PDF generation failed. Error: " . $curl_error;
+    } elseif ($http_code !== 200) {
+        error_log("PDF Generation HTTP Error: HTTP " . $http_code . " URL: " . $pdf_url . " Response: " . substr($output, 0, 500));
+        echo "The schedule is successfully generated, but PDF generation failed. HTTP Error: " . $http_code;
+    } elseif (empty($output)) {
+        error_log("PDF Generation Empty Response: URL: " . $pdf_url);
+        echo "The schedule is successfully generated, but PDF generation returned empty response.";
+    } else {
+        // Success detection logic - check for success message or PDF binary
+        if (strpos($output, 'PDF generated successfully') !== false ||
+            strpos($output, '%PDF') !== false) {
+            echo "The schedule is successfully generated and PDF has been created.";
+        } else if (strpos($output, 'Fatal error') === false &&
+                   strpos($output, 'Warning') === false &&
+                   strpos($output, 'Error') === false &&
+                   !empty(trim($output))) {
+            echo "The schedule is successfully generated and PDF has been created.";
+        } else {
+            error_log("PDF Generation Output Error: " . substr($output, 0, 1000) . " URL: " . $pdf_url);
+            echo "The schedule is successfully generated, but PDF generation encountered errors. Check error logs for details.";
+        }
+    }
     
     DB::insert('log', [
         

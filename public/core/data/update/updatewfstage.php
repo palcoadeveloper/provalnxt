@@ -170,6 +170,38 @@ function shouldSkipApprovalDetails($test_wf_id) {
 }
 
 /**
+ * Helper function to validate required uploads for offline paper-on-glass tests
+ * @param string $test_wf_id Test workflow ID
+ * @param string $stage_description Description of current stage for error message
+ * @return bool True if validation passes
+ * @throws InvalidArgumentException If required uploads are missing
+ */
+function validateOfflineTestUploads($test_wf_id, $stage_description) {
+    $required_uploads = DB::queryFirstRow("
+        SELECT upload_path_raw_data, upload_path_test_certificate, upload_path_master_certificate
+        FROM tbl_uploads
+        WHERE test_wf_id = %s
+        AND upload_action IS NULL
+        AND upload_status = 'Active'
+        ORDER BY uploaded_datetime DESC
+        LIMIT 1
+    ", $test_wf_id);
+
+    if (!$required_uploads ||
+        empty($required_uploads['upload_path_raw_data']) ||
+        empty($required_uploads['upload_path_test_certificate']) ||
+        empty($required_uploads['upload_path_master_certificate'])) {
+
+        throw new InvalidArgumentException(
+            "For offline mode tests {$stage_description}, Raw Data, Certificate and Master Certificate files must be uploaded before submission."
+        );
+    }
+
+    error_log("Upload validation passed for {$stage_description}: test_wf_id {$test_wf_id}");
+    return true;
+}
+
+/**
  * Function to reject all uploaded files for a given workflow ID
  * Similar to individual file rejection but applied to all files
  * @param string $test_wf_id The workflow ID
@@ -279,36 +311,22 @@ try {
                     INNER JOIN tests t ON t.test_id = ts.test_id
                     WHERE ts.test_wf_id = %s
                 ", $validated_data['test_val_wf_id']);
-                
-                if ($test_mode_data && 
-                    $test_mode_data['data_entry_mode'] === 'offline' && 
+
+                if ($test_mode_data &&
+                    $test_mode_data['data_entry_mode'] === 'offline' &&
                     $test_mode_data['paper_on_glass_enabled'] === 'Yes') {
-                    
+
                     $is_offline_mode = true;
-                    
-                    // For offline mode, check required documents before allowing submission
-                    $required_uploads = DB::queryFirstRow("
-                        SELECT upload_path_raw_data, upload_path_test_certificate, upload_path_master_certificate
-                        FROM tbl_uploads 
-                        WHERE test_wf_id = %s 
-                        AND upload_action IS NULL
-                        AND upload_status = 'Active'
-                        ORDER BY uploaded_datetime DESC
-                        LIMIT 1
-                    ", $validated_data['test_val_wf_id']);
-                    
-                    if (!$required_uploads || 
-                        empty($required_uploads['upload_path_raw_data']) ||
-                        empty($required_uploads['upload_path_test_certificate']) ||
-                        empty($required_uploads['upload_path_master_certificate'])) {
-                        
-                        throw new InvalidArgumentException(
-                            "For offline mode tests, Raw Data, Certificate and Master Certificate files must be uploaded before submission."
-                        );
+
+                    // Validate uploads based on current stage
+                    if ($test_mode_data['test_wf_current_stage'] === '1RRV') {
+                        // Validation for tests transitioning FROM 1RRV stage
+                        validateOfflineTestUploads($validated_data['test_val_wf_id'], 'at 1RRV stage');
+                    } else {
+                        // Validation for tests transitioning TO 1PRV stage (existing logic)
+                        validateOfflineTestUploads($validated_data['test_val_wf_id'], 'during initial submission');
                     }
-                    
-                    error_log("Offline mode validation passed for test_wf_id: {$validated_data['test_val_wf_id']}");
-                    
+
                     // For offline mode, manually set the state to 1PRV instead of using state machine
                     DB::query("UPDATE tbl_test_schedules_tracking 
                               SET test_wf_current_stage = '1PRV',
@@ -337,16 +355,31 @@ try {
                 }
             }
             
-            // Insert audit trail with correct workflow stage
-            $audit_stage = $is_offline_mode ? '1PRV' : $document->getFiniteState();
-            DB::insert('audit_trail', [
-                'val_wf_id' => $validated_data['val_wf_id'],
-                'test_wf_id' => $validated_data['test_val_wf_id'],
-                'user_id' => $_SESSION['user_id'],
-                'user_type' => $_SESSION['logged_in_user'],
-                'time_stamp' => DB::sqleval("NOW()"),
-                'wf_stage' => $audit_stage
-            ]);
+            // Skip generic audit trail for offline paper-on-glass reject actions that have specialized audit trail
+            $skip_generic_audit_trail = false;
+            if (($action === 'qa_reject' || $action === 'engg_reject') && isset($test_conditions)) {
+                // Check if this is an offline paper-on-glass test that will have specialized audit trail
+                $is_offline_paper_on_glass = (
+                    $test_conditions['paper_on_glass_enabled'] === 'Yes' &&
+                    $test_conditions['data_entry_mode'] === 'offline'
+                );
+                if ($is_offline_paper_on_glass) {
+                    $skip_generic_audit_trail = true;
+                }
+            }
+
+            // Insert audit trail with correct workflow stage (skip for specialized offline paper-on-glass reject actions)
+            if (!$skip_generic_audit_trail) {
+                $audit_stage = $is_offline_mode ? '1PRV' : $document->getFiniteState();
+                DB::insert('audit_trail', [
+                    'val_wf_id' => $validated_data['val_wf_id'],
+                    'test_wf_id' => $validated_data['test_val_wf_id'],
+                    'user_id' => $_SESSION['user_id'],
+                    'user_type' => $_SESSION['logged_in_user'],
+                    'time_stamp' => DB::sqleval("NOW()"),
+                    'wf_stage' => $audit_stage
+                ]);
+            }
             
             $unit_id = (isset($_SESSION['unit_id']) && $_SESSION['unit_id'] === "") ? 0 : $_SESSION['unit_id'];
             
@@ -362,13 +395,28 @@ try {
                                     '. Test WfID:' . $validated_data['test_val_wf_id'] . $mode_suffix;
             }
             
-            DB::insert('log', [
-                'change_type' => 'tran_ereview_approve',
-                'table_name' => 'tbl_test_schedules_tracking',
-                'change_description' => $change_description,
-                'change_by' => $_SESSION['user_id'],
-                'unit_id' => $unit_id
-            ]);
+            // Skip generic logging for offline paper-on-glass reject actions that have specialized logging
+            $skip_generic_logging = false;
+            if (($action === 'qa_reject' || $action === 'engg_reject') && isset($test_conditions)) {
+                // Check if this is an offline paper-on-glass test that will have specialized logging
+                $is_offline_paper_on_glass = (
+                    $test_conditions['paper_on_glass_enabled'] === 'Yes' &&
+                    $test_conditions['data_entry_mode'] === 'offline'
+                );
+                if ($is_offline_paper_on_glass) {
+                    $skip_generic_logging = true;
+                }
+            }
+
+            if (!$skip_generic_logging) {
+                DB::insert('log', [
+                    'change_type' => 'tran_ereview_approve',
+                    'table_name' => 'tbl_test_schedules_tracking',
+                    'change_description' => $change_description,
+                    'change_by' => $_SESSION['user_id'],
+                    'unit_id' => $unit_id
+                ]);
+            }
             
             // Handle specific actions
             if ($action === "qa_approve") {
@@ -497,7 +545,58 @@ try {
             } elseif ($action === "qa_reject") {
                 // When QA rejects the task, automatically reject all uploaded files
                 rejectAllFilesForWorkflow($validated_data['test_val_wf_id']);
-                
+
+                // Get test conditions for QA rejection special handling
+                $test_wf_id = $validated_data['test_val_wf_id'];
+                $test_conditions = DB::queryFirstRow("
+                    SELECT tst.data_entry_mode, tst.test_wf_current_stage, t.paper_on_glass_enabled
+                    FROM tbl_test_schedules_tracking tst
+                    LEFT JOIN tests t ON t.test_id = tst.test_id
+                    WHERE tst.test_wf_id = %s
+                ", $test_wf_id);
+
+                // Special handling for offline paper-on-glass tests
+                if ($test_conditions) {
+                    $is_offline_paper_on_glass_qa_rejection = (
+                        $test_conditions['paper_on_glass_enabled'] === 'Yes' &&
+                        $test_conditions['data_entry_mode'] === 'offline' &&
+                        $test_conditions['test_wf_current_stage'] == '3A'
+                    );
+
+                    if ($is_offline_paper_on_glass_qa_rejection) {
+                        // Special handling for offline paper-on-glass QA rejection: change stage to 4BPRV
+                        DB::query("UPDATE tbl_test_schedules_tracking
+                                  SET test_wf_current_stage = '4BPRV'
+                                  WHERE test_wf_id = %s", $test_wf_id);
+
+                        $unit_id = (!empty($_SESSION['unit_id']) && is_numeric($_SESSION['unit_id'])) ? (int)$_SESSION['unit_id'] : null;
+
+                        // Insert audit trail with wf_stage = '4BPRV'
+                        DB::insert('audit_trail', [
+                            'val_wf_id' => $validated_data['val_wf_id'],
+                            'test_wf_id' => $validated_data['test_val_wf_id'],
+                            'user_id' => $_SESSION['user_id'],
+                            'user_type' => $_SESSION['logged_in_user'],
+                            'time_stamp' => DB::sqleval("NOW()"),
+                            'wf_stage' => '4BPRV'
+                        ]);
+
+                        // Insert specialized log entry for offline paper-on-glass QA rejection
+                        DB::insert('log', [
+                            'change_type' => 'tran_off_qa_reject_4bprv',
+                            'table_name' => 'tbl_test_schedules_tracking',
+                            'change_description' => 'Task rejected by QA and assigned back to the vendor checker. Test WF:' . $validated_data['test_val_wf_id'] . ', Val WF:' . $validated_data['val_wf_id'],
+                            'change_by' => $_SESSION['user_id'],
+                            'unit_id' => $unit_id
+                        ]);
+
+                        error_log("QA reject - offline paper-on-glass test moved to 4BPRV. test_wf_id: {$test_wf_id} by user: {$_SESSION['user_id']}");
+
+                        // Skip the normal state machine processing since we handled the stage manually
+                        $skip_stage_update = true;
+                    }
+                }
+
             } elseif ($action === "engg_approve") {
                 // Handle Engineering approval with witness functionality
                 $test_wf_id = $validated_data['test_val_wf_id'];
@@ -600,9 +699,7 @@ try {
                             DB::insert('log', [
                                 'change_type' => 'tran_off_engg_reject_3bprv',
                                 'table_name' => 'tbl_test_schedules_tracking',
-                                'change_description' => 'Offline paper-on-glass test rejected by Engineering, moved to 3BPRV. User:' . $_SESSION['user_id'] . 
-                                                      ', Test WF:' . $validated_data['test_val_wf_id'] . 
-                                                      ', Val WF:' . $validated_data['val_wf_id'],
+                                'change_description' => 'Task rejected by engineering and assigned back to the vendor checker. Test WF:' . $validated_data['test_val_wf_id'] . ', Val WF:' . $validated_data['val_wf_id'],
                                 'change_by' => $_SESSION['user_id'],
                                 'unit_id' => $unit_id
                             ]);
@@ -643,9 +740,9 @@ try {
                 }
             }
             
-            // Update test workflow stage (skip if already set to 3BPRV for offline paper-on-glass rejection)
+            // Update test workflow stage (skip if already set to 3BPRV or 4BPRV for offline paper-on-glass rejections)
             $current_stage_check = DB::queryFirstRow("SELECT test_wf_current_stage FROM tbl_test_schedules_tracking WHERE test_wf_id = %s", $validated_data['test_val_wf_id']);
-            $skip_stage_update = ($current_stage_check && $current_stage_check['test_wf_current_stage'] === '3BPRV');
+            $skip_stage_update = ($current_stage_check && ($current_stage_check['test_wf_current_stage'] === '3BPRV' || $current_stage_check['test_wf_current_stage'] === '4BPRV'));
             
             if (!$skip_stage_update) {
                 $test_conducted_date = isset($validated_data['test_conducted_date']) ? $validated_data['test_conducted_date'] : date('Y-m-d');
@@ -659,18 +756,19 @@ try {
                           $document->getFiniteState(), $test_conducted_date, DB::sqleval("NOW()"), 
                           $_SESSION['user_id'], $validated_data['test_val_wf_id']);
             } else {
-                // For 3BPRV cases, only update other fields without changing the stage
+                // For 3BPRV and 4BPRV cases, only update other fields without changing the stage
                 $test_conducted_date = isset($validated_data['test_conducted_date']) ? $validated_data['test_conducted_date'] : date('Y-m-d');
-                
-                DB::query("UPDATE tbl_test_schedules_tracking SET 
-                          test_conducted_date = %s, 
+
+                DB::query("UPDATE tbl_test_schedules_tracking SET
+                          test_conducted_date = %s,
                           certi_submission_date = %?,
-                          test_performed_by = %i 
-                          WHERE test_wf_id = %s", 
-                          $test_conducted_date, DB::sqleval("NOW()"), 
+                          test_performed_by = %i
+                          WHERE test_wf_id = %s",
+                          $test_conducted_date, DB::sqleval("NOW()"),
                           $_SESSION['user_id'], $validated_data['test_val_wf_id']);
-                          
-                error_log("Preserved 3BPRV stage for test_wf_id: {$validated_data['test_val_wf_id']}");
+
+                $preserved_stage = $current_stage_check['test_wf_current_stage'];
+                error_log("Preserved {$preserved_stage} stage for test_wf_id: {$validated_data['test_val_wf_id']}");
             }
             
             return 'external_test_processed';

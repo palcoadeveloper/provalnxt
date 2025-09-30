@@ -22,8 +22,19 @@
           
           <div class="nav-profile-text">
             <p class="mb-1 text-black">
-              <span class="font-weight-bold mb-2"><?php echo $_SESSION['user_name'].(($_SESSION['logged_in_user']=='vendor')?" (".$_SESSION['vendor_name'].")":"") ; ?></span>
-              <span class="text-secondary text-small d-none d-md-inline">&nbsp;&nbsp;&nbsp;<?php echo ($_SESSION['logged_in_user']=="vendor") ? "" : $_SESSION['unit_name'].", ".$_SESSION['unit_site']; ?></span>
+              <?php
+              // Use optimized session validation if available, fallback to direct session access
+              if (class_exists('OptimizedSessionValidation') && OptimizedSessionValidation::isValidated()) {
+                  $userData = OptimizedSessionValidation::getUserData();
+                  $displayName = $userData['user_name'] . (($userData['user_type'] == 'vendor') ? " (" . $userData['vendor_name'] . ")" : "");
+                  $locationText = ($userData['user_type'] == "vendor") ? "" : $userData['unit_name'] . ", " . $userData['unit_site'];
+              } else {
+                  $displayName = $_SESSION['user_name'] . (($_SESSION['logged_in_user'] == 'vendor') ? " (" . $_SESSION['vendor_name'] . ")" : "");
+                  $locationText = ($_SESSION['logged_in_user'] == "vendor") ? "" : $_SESSION['unit_name'] . ", " . $_SESSION['unit_site'];
+              }
+              ?>
+              <span class="font-weight-bold mb-2"><?php echo htmlspecialchars($displayName); ?></span>
+              <span class="text-secondary text-small d-none d-md-inline">&nbsp;&nbsp;&nbsp;<?php echo htmlspecialchars($locationText); ?></span>
             </p>
             <?php if (defined('SHOW_SESSION_DEBUG_TIMERS') && SHOW_SESSION_DEBUG_TIMERS): ?>
             <!-- Debug: Session Inactivity Timer -->
@@ -37,8 +48,8 @@
         </a>
         <div class="dropdown-menu navbar-dropdown" aria-labelledby="profileDropdown">
 
-          <a class="dropdown-item" href="logout.php">
-            <i class="mdi mdi-logout mr-2 text-primary"></i> Signout </a>
+          <button type="button" class="dropdown-item" onclick="event.stopPropagation(); event.preventDefault(); handleLogoutSimple();" style="border: none; background: transparent !important; width: 100%; text-align: left; padding: 0.25rem 1.5rem; color: #b66dff !important; font-size: inherit; cursor: pointer;">
+            <i class="mdi mdi-logout mr-2 text-primary"></i> Signout </button>
         </div>
       </li>
     </ul>

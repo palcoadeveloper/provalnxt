@@ -1,0 +1,22 @@
+[2025-09-30 12:20:12] [INFO] Bulk Schedule Generator Started - Operation ID: bulk_gen_68db7da47b3c1
+[2025-09-30 12:20:12] [INFO] Target Year: 2026
+[2025-09-30 12:20:12] [INFO] Test Mode: NO
+[2025-09-30 12:20:12] [INFO] Found 1 active units with fixed scheduling logic
+[2025-09-30 12:20:12] [INFO] Processing Unit: Unit VII (ID: 7) | {"unit_id":"7","unit_name":"Unit VII"}
+[2025-09-30 12:20:12] [INFO] Equipment data validation passed for Unit 7 (fixed scheduling) | {"unit_id":"7","unit_name":"Unit VII"}
+[2025-09-30 12:20:12] [INFO] Calling USP_FIXED_CREATESCHEDULES(7, 2026) | {"unit_id":"7","unit_name":"Unit VII"}
+[2025-09-30 12:20:12] [INFO] Stored procedure result: success | {"unit_id":"7","unit_name":"Unit VII"}
+[2025-09-30 12:20:12] [SUCCESS] Schedule generated successfully for Unit 7, Schedule ID: 130 | {"unit_id":"7","unit_name":"Unit VII"}
+[2025-09-30 12:20:12] [INFO] Generating PDF for Unit 7, Schedule ID: 130 | {"unit_id":"7","unit_name":"Unit VII"}
+[2025-09-30 12:20:12] [SUCCESS] PDF generated successfully for Unit 7 | {"unit_id":"7","unit_name":"Unit VII"}
+[2025-09-30 12:20:12] [SUCCESS] Unit 7 processed successfully (Schedule ID: 130) | {"unit_id":"7","unit_name":"Unit VII"}
+[2025-09-30 12:20:12] [INFO] === BULK GENERATION SUMMARY ===
+[2025-09-30 12:20:12] [INFO] Operation ID: bulk_gen_68db7da47b3c1
+[2025-09-30 12:20:12] [INFO] Target Year: 2026
+[2025-09-30 12:20:12] [INFO] Total Units Processed: 1
+[2025-09-30 12:20:12] [INFO] Successful: 1
+[2025-09-30 12:20:12] [INFO] Warnings: 0
+[2025-09-30 12:20:12] [INFO] Errors: 0
+[2025-09-30 12:20:12] [INFO] Skipped: 0
+[2025-09-30 12:20:12] [INFO] Success Rate: 100%
+[2025-09-30 12:20:12] [INFO] Processing completed at: 2025-09-30 12:20:12

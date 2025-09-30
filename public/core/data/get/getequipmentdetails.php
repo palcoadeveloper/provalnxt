@@ -138,7 +138,17 @@ else
         echo "<td>".$row['unit_id']."</td>";
         echo "<td>".$row['department_name']."</td>";
 
-        echo "<td><a href='manageequipmentdetails.php?equip_id=".$row["equipment_id"]."&m=r' class='btn btn-sm btn-gradient-danger btn-icon-text' role='button' aria-pressed='true'>View</a>&nbsp;&nbsp;<a href='manageequipmentdetails.php?equip_id=".$row["equipment_id"]."&m=m' class='btn btn-sm btn-gradient-info btn-icon-text' role='button' aria-pressed='true'>Modify</a> </td>";
+        // Build search parameters for back navigation
+        $search_params = http_build_query([
+            'unitid' => $_GET['unitid'],
+            'dept_id' => $_GET['dept_id'],
+            'equipment_type' => $_GET['equipment_type'],
+            'equipment_id' => $_GET['equipment_id'],
+            'etv_mapping_filter' => $_GET['etv_mapping_filter'],
+            'from_search' => '1'
+        ]);
+
+        echo "<td><a href='manageequipmentdetails.php?equip_id=".$row["equipment_id"]."&m=r&".$search_params."' class='btn btn-sm btn-gradient-danger btn-icon-text' role='button' aria-pressed='true'>View</a>&nbsp;&nbsp;<a href='manageequipmentdetails.php?equip_id=".$row["equipment_id"]."&m=m&".$search_params."' class='btn btn-sm btn-gradient-info btn-icon-text' role='button' aria-pressed='true'>Edit</a> </td>";
         echo "</tr>";
         $count++;
     }

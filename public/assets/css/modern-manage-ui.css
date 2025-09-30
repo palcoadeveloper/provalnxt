@@ -988,6 +988,10 @@ table.dataTable td:last-child a.btn:nth-of-type(3):hover {
 }
 
 /* Modern Gradient Styling for Standard Bootstrap Button Classes - High Specificity */
+.swal2-popup .swal2-actions .btn.btn-primary,
+.swal2-actions .btn.btn-primary,
+.modal .modal-footer .btn.btn-primary,
+.modal-footer .btn.btn-primary,
 body .btn.btn-primary,
 form .btn.btn-primary,
 .btn-primary {
@@ -997,8 +1001,28 @@ form .btn.btn-primary,
     color: white !important;
     box-shadow: 0 4px 12px rgba(185, 103, 219, 0.3) !important;
     transition: all 0.3s ease !important;
+    padding: 0.5rem 1rem !important;
+    font-size: 0.875rem !important;
+    line-height: 1.5 !important;
+    border-radius: 0.25rem !important;
+    min-height: 38px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
+.swal2-popup .swal2-actions .btn.btn-primary:hover,
+.swal2-popup .swal2-actions .btn.btn-primary:focus,
+.swal2-popup .swal2-actions .btn.btn-primary:active,
+.swal2-actions .btn.btn-primary:hover,
+.swal2-actions .btn.btn-primary:focus,
+.swal2-actions .btn.btn-primary:active,
+.modal .modal-footer .btn.btn-primary:hover,
+.modal .modal-footer .btn.btn-primary:focus,
+.modal .modal-footer .btn.btn-primary:active,
+.modal-footer .btn.btn-primary:hover,
+.modal-footer .btn.btn-primary:focus,
+.modal-footer .btn.btn-primary:active,
 body .btn.btn-primary:hover,
 body .btn.btn-primary:focus,
 body .btn.btn-primary:active,
@@ -1013,6 +1037,169 @@ form .btn.btn-primary:active,
     box-shadow: 0 6px 20px rgba(185, 103, 219, 0.4) !important;
     transform: translateY(-1px) !important;
     color: white !important;
+}
+
+/* Modern Gradient Styling for Secondary Buttons - Maximum Specificity Override */
+.swal2-popup .swal2-actions .btn.btn-secondary,
+.swal2-actions .btn.btn-secondary,
+.modal .modal-footer .btn.btn-secondary,
+.modal-footer .btn.btn-secondary,
+body .btn.btn-secondary,
+form .btn.btn-secondary,
+.btn-secondary {
+    background: linear-gradient(135deg, #868e96 0%, #6c757d 100%) !important;
+    background-color: #868e96 !important;
+    border: none !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(134, 142, 150, 0.3) !important;
+    transition: all 0.3s ease !important;
+    padding: 0.5rem 1rem !important;
+    font-size: 0.875rem !important;
+    line-height: 1.5 !important;
+    border-radius: 0.25rem !important;
+    min-height: 38px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.swal2-popup .swal2-actions .btn.btn-secondary:hover,
+.swal2-popup .swal2-actions .btn.btn-secondary:focus,
+.swal2-popup .swal2-actions .btn.btn-secondary:active,
+.swal2-actions .btn.btn-secondary:hover,
+.swal2-actions .btn.btn-secondary:focus,
+.swal2-actions .btn.btn-secondary:active,
+.modal .modal-footer .btn.btn-secondary:hover,
+.modal .modal-footer .btn.btn-secondary:focus,
+.modal .modal-footer .btn.btn-secondary:active,
+.modal-footer .btn.btn-secondary:hover,
+.modal-footer .btn.btn-secondary:focus,
+.modal-footer .btn.btn-secondary:active,
+body .btn.btn-secondary:hover,
+body .btn.btn-secondary:focus,
+body .btn.btn-secondary:active,
+form .btn.btn-secondary:hover,
+form .btn.btn-secondary:focus,
+form .btn.btn-secondary:active,
+.btn-secondary:hover,
+.btn-secondary:focus,
+.btn-secondary:active {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%) !important;
+    background-color: #6c757d !important;
+    box-shadow: 0 6px 20px rgba(134, 142, 150, 0.4) !important;
+    transform: translateY(-1px) !important;
+    color: white !important;
+}
+
+/* SweetAlert Button Spacing and Enhanced Hover Effects */
+.swal2-actions .btn + .btn {
+    margin-left: 15px !important;
+}
+
+/* Additional SweetAlert spacing selectors for better specificity */
+.swal2-actions > .btn:not(:first-child) {
+    margin-left: 15px !important;
+}
+
+.swal2-popup .swal2-actions {
+    gap: 15px !important;
+    display: flex !important;
+    justify-content: center !important;
+}
+
+.swal2-popup .swal2-actions .btn {
+    margin: 0 !important;
+}
+
+/* Enhanced hover effect specifically for SweetAlert primary buttons */
+.swal2-popup .swal2-actions .btn.btn-primary {
+    transition: all 0.3s ease !important;
+}
+
+.swal2-popup .swal2-actions .btn.btn-primary:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(185, 103, 219, 0.5) !important;
+}
+
+/* Enhanced hover effect specifically for SweetAlert secondary buttons */
+.swal2-popup .swal2-actions .btn.btn-secondary {
+    transition: all 0.3s ease !important;
+}
+
+.swal2-popup .swal2-actions .btn.btn-secondary:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(134, 142, 150, 0.5) !important;
+}
+
+/* Hover Lift Effect for SweetAlert OK/Confirm Buttons - Maximum Specificity */
+html body .swal2-container .swal2-popup .swal2-actions .swal2-confirm,
+html body .swal2-popup .swal2-actions .swal2-confirm,
+html body .swal2-actions .swal2-confirm,
+html body .swal2-confirm,
+.swal2-confirm,
+button.swal2-confirm {
+    transition: all 0.3s ease !important;
+}
+
+html body .swal2-container .swal2-popup .swal2-actions .swal2-confirm:hover,
+html body .swal2-popup .swal2-actions .swal2-confirm:hover,
+html body .swal2-actions .swal2-confirm:hover,
+html body .swal2-confirm:hover,
+.swal2-confirm:hover,
+button.swal2-confirm:hover,
+button[data-hover-added="true"]:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(52, 144, 220, 0.4) !important;
+}
+
+/* Hover Lift Effect for Custom Gradient Buttons */
+.btn.btn-gradient-original-success,
+.btn.btn-gradient-original-danger {
+    transition: all 0.3s ease !important;
+}
+
+.btn.btn-gradient-original-success:hover,
+.btn.btn-gradient-original-success:focus {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4) !important;
+}
+
+.btn.btn-gradient-original-danger:hover,
+.btn.btn-gradient-original-danger:focus {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4) !important;
+}
+
+/* Hover Lift Effect for Login Button - Maximum Specificity */
+#btnNext.btn.btn-gradient-primary.btn-block.btn-lg.auth-form-btn,
+#btnNext.btn.btn-gradient-primary.btn-block.btn-lg,
+#btnNext.btn.btn-gradient-primary.btn-block,
+#btnNext.btn.btn-gradient-primary,
+.btn.btn-gradient-primary.btn-block,
+.btn.btn-gradient-primary.btn-lg,
+.btn.btn-gradient-primary.auth-form-btn,
+.btn.btn-gradient-primary {
+    transition: all 0.3s ease !important;
+}
+
+#btnNext.btn.btn-gradient-primary.btn-block.btn-lg.auth-form-btn:hover,
+#btnNext.btn.btn-gradient-primary.btn-block.btn-lg.auth-form-btn:focus,
+#btnNext.btn.btn-gradient-primary.btn-block.btn-lg:hover,
+#btnNext.btn.btn-gradient-primary.btn-block.btn-lg:focus,
+#btnNext.btn.btn-gradient-primary.btn-block:hover,
+#btnNext.btn.btn-gradient-primary.btn-block:focus,
+#btnNext.btn.btn-gradient-primary:hover,
+#btnNext.btn.btn-gradient-primary:focus,
+.btn.btn-gradient-primary.btn-block:hover,
+.btn.btn-gradient-primary.btn-block:focus,
+.btn.btn-gradient-primary.btn-lg:hover,
+.btn.btn-gradient-primary.btn-lg:focus,
+.btn.btn-gradient-primary.auth-form-btn:hover,
+.btn.btn-gradient-primary.auth-form-btn:focus,
+.btn.btn-gradient-primary:hover,
+.btn.btn-gradient-primary:focus {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(185, 103, 219, 0.4) !important;
 }
 
 body .btn.btn-info,

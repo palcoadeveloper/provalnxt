@@ -100,7 +100,15 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                   title: 'Success',
                   text: "The room/location record is successfully " + (mode === 'add' ? "added" : "modified") + "!"
                 }).then((result) => {
-                  window.location = "searchrooms.php";
+                  // Build redirect URL with search parameters if available
+                  let redirectUrl = "searchrooms.php";
+                  <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+                    const urlParams = new URLSearchParams();
+                    <?php if (isset($_GET['room_name'])): ?>urlParams.set('room_name', '<?= htmlspecialchars($_GET['room_name'], ENT_QUOTES) ?>');<?php endif; ?>
+                    urlParams.set('restore_search', '1');
+                    redirectUrl += '?' + urlParams.toString();
+                  <?php endif; ?>
+                  window.location = redirectUrl;
                 });
               } else {
                 Swal.fire({
@@ -117,7 +125,15 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                   title: 'Success',
                   text: "The room/location record is successfully " + (mode === 'add' ? "added" : "modified") + "!"
                 }).then((result) => {
-                  window.location = "searchrooms.php";
+                  // Build redirect URL with search parameters if available
+                  let redirectUrl = "searchrooms.php";
+                  <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+                    const urlParams = new URLSearchParams();
+                    <?php if (isset($_GET['room_name'])): ?>urlParams.set('room_name', '<?= htmlspecialchars($_GET['room_name'], ENT_QUOTES) ?>');<?php endif; ?>
+                    urlParams.set('restore_search', '1');
+                    redirectUrl += '?' + urlParams.toString();
+                  <?php endif; ?>
+                  window.location = redirectUrl;
                 });
               } else {
                 Swal.fire({
@@ -234,7 +250,15 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 				<nav aria-label="breadcrumb">
 					<ul class="breadcrumb">
 						<li class="breadcrumb-item active" aria-current="page"><span><a class='btn btn-gradient-info btn-sm btn-rounded'
-								href="searchrooms.php"><< Back</a> </span>
+								href="searchrooms.php<?php
+                                // Build back navigation URL with search parameters
+                                if (isset($_GET['from_search']) && $_GET['from_search'] == '1') {
+                                    $back_params = [];
+                                    if (isset($_GET['room_name'])) $back_params['room_name'] = $_GET['room_name'];
+                                    $back_params['restore_search'] = '1';
+                                    echo '?' . http_build_query($back_params);
+                                }
+                            ?>"><< Back</a> </span>
 						</li>
 					</ul>
 				</nav>

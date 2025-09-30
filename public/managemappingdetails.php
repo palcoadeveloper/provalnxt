@@ -184,7 +184,19 @@ function submitMappingData(mode) {
         title: 'Success',
         text: "The mapping record is successfully modified. Vendor changed successfully for all external tests of this equipment."
       }).then((result) => {
-        window.location = "searchmapping.php";
+        // Build redirect URL with search parameters if available
+        let redirectUrl = "searchmapping.php";
+        <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+          const urlParams = new URLSearchParams();
+          <?php if (isset($_GET['unitid'])): ?>urlParams.set('unitid', '<?= htmlspecialchars($_GET['unitid'], ENT_QUOTES) ?>');<?php endif; ?>
+          <?php if (isset($_GET['dept_id'])): ?>urlParams.set('dept_id', '<?= htmlspecialchars($_GET['dept_id'], ENT_QUOTES) ?>');<?php endif; ?>
+          <?php if (isset($_GET['equipment_type'])): ?>urlParams.set('equipment_type', '<?= htmlspecialchars($_GET['equipment_type'], ENT_QUOTES) ?>');<?php endif; ?>
+          <?php if (isset($_GET['equipment_id'])): ?>urlParams.set('equipment_id', '<?= htmlspecialchars($_GET['equipment_id'], ENT_QUOTES) ?>');<?php endif; ?>
+          <?php if (isset($_GET['etv_mapping_filter'])): ?>urlParams.set('etv_mapping_filter', '<?= htmlspecialchars($_GET['etv_mapping_filter'], ENT_QUOTES) ?>');<?php endif; ?>
+          urlParams.set('restore_search', '1');
+          redirectUrl += '?' + urlParams.toString();
+        <?php endif; ?>
+        window.location = redirectUrl;
       });
     } else if (response === "success") {
       Swal.fire({
@@ -192,7 +204,19 @@ function submitMappingData(mode) {
         title: 'Success',
         text: "The mapping record is successfully " + (mode === 'add' ? "added" : "modified") + "!"
       }).then((result) => {
-        window.location = "searchmapping.php";
+        // Build redirect URL with search parameters if available
+        let redirectUrl = "searchmapping.php";
+        <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+          const urlParams = new URLSearchParams();
+          <?php if (isset($_GET['unitid'])): ?>urlParams.set('unitid', '<?= htmlspecialchars($_GET['unitid'], ENT_QUOTES) ?>');<?php endif; ?>
+          <?php if (isset($_GET['dept_id'])): ?>urlParams.set('dept_id', '<?= htmlspecialchars($_GET['dept_id'], ENT_QUOTES) ?>');<?php endif; ?>
+          <?php if (isset($_GET['equipment_type'])): ?>urlParams.set('equipment_type', '<?= htmlspecialchars($_GET['equipment_type'], ENT_QUOTES) ?>');<?php endif; ?>
+          <?php if (isset($_GET['equipment_id'])): ?>urlParams.set('equipment_id', '<?= htmlspecialchars($_GET['equipment_id'], ENT_QUOTES) ?>');<?php endif; ?>
+          <?php if (isset($_GET['etv_mapping_filter'])): ?>urlParams.set('etv_mapping_filter', '<?= htmlspecialchars($_GET['etv_mapping_filter'], ENT_QUOTES) ?>');<?php endif; ?>
+          urlParams.set('restore_search', '1');
+          redirectUrl += '?' + urlParams.toString();
+        <?php endif; ?>
+        window.location = redirectUrl;
       });
     } else {
       // Handle error responses with specific messages
@@ -220,7 +244,19 @@ function submitMappingData(mode) {
         title: errorTitle,
         text: errorMessage
       }).then((result) => {
-        window.location = "searchmapping.php";
+        // Build redirect URL with search parameters if available
+        let redirectUrl = "searchmapping.php";
+        <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+          const urlParams = new URLSearchParams();
+          <?php if (isset($_GET['unitid'])): ?>urlParams.set('unitid', '<?= htmlspecialchars($_GET['unitid'], ENT_QUOTES) ?>');<?php endif; ?>
+          <?php if (isset($_GET['dept_id'])): ?>urlParams.set('dept_id', '<?= htmlspecialchars($_GET['dept_id'], ENT_QUOTES) ?>');<?php endif; ?>
+          <?php if (isset($_GET['equipment_type'])): ?>urlParams.set('equipment_type', '<?= htmlspecialchars($_GET['equipment_type'], ENT_QUOTES) ?>');<?php endif; ?>
+          <?php if (isset($_GET['equipment_id'])): ?>urlParams.set('equipment_id', '<?= htmlspecialchars($_GET['equipment_id'], ENT_QUOTES) ?>');<?php endif; ?>
+          <?php if (isset($_GET['etv_mapping_filter'])): ?>urlParams.set('etv_mapping_filter', '<?= htmlspecialchars($_GET['etv_mapping_filter'], ENT_QUOTES) ?>');<?php endif; ?>
+          urlParams.set('restore_search', '1');
+          redirectUrl += '?' + urlParams.toString();
+        <?php endif; ?>
+        window.location = redirectUrl;
       });
     }
   }).fail(function(xhr, status, error) {
@@ -420,7 +456,19 @@ $("#modify_mapping").click(async function(e) {
 						<nav aria-label="breadcrumb">
 							<ul class="breadcrumb">
 								<li class="breadcrumb-item active" aria-current="page"><span><a class='btn btn-gradient-info btn-sm btn-rounded'
-										href="searchmapping.php"><< Back</a> </span>
+										href="searchmapping.php<?php
+                                        // Build back navigation URL with search parameters
+                                        if (isset($_GET['from_search']) && $_GET['from_search'] == '1') {
+                                            $back_params = [];
+                                            if (isset($_GET['unitid'])) $back_params['unitid'] = $_GET['unitid'];
+                                            if (isset($_GET['dept_id'])) $back_params['dept_id'] = $_GET['dept_id'];
+                                            if (isset($_GET['equipment_type'])) $back_params['equipment_type'] = $_GET['equipment_type'];
+                                            if (isset($_GET['equipment_id'])) $back_params['equipment_id'] = $_GET['equipment_id'];
+                                            if (isset($_GET['etv_mapping_filter'])) $back_params['etv_mapping_filter'] = $_GET['etv_mapping_filter'];
+                                            $back_params['restore_search'] = '1';
+                                            echo '?' . http_build_query($back_params);
+                                        }
+                                    ?>"><< Back</a> </span>
 								</li>
 							</ul>
 						</nav>

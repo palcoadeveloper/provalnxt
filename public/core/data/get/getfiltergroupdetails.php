@@ -58,9 +58,15 @@ if (empty($filtergroup_details)) {
             echo "<span class='badge badge-danger'>" . htmlspecialchars($row['status'], ENT_QUOTES, 'UTF-8') . "</span>";
         }
         echo "</td>";
+        // Build search parameters for back navigation
+        $search_params = http_build_query([
+            'status' => $_GET['status'] ?? '',
+            'from_search' => '1'
+        ]);
+
         echo "<td>
-                <a href='managefiltergroups.php?filter_group_id=" . $row["filter_group_id"] . "&m=r' class='btn btn-sm btn-gradient-danger btn-icon-text' role='button' aria-pressed='true'>View</a>&nbsp;&nbsp;
-                <a href='managefiltergroups.php?filter_group_id=" . $row["filter_group_id"] . "&m=m' class='btn btn-sm btn-gradient-info btn-icon-text' role='button' aria-pressed='true'>Modify</a>
+                <a href='managefiltergroups.php?filter_group_id=" . $row["filter_group_id"] . "&m=r&" . $search_params . "' class='btn btn-sm btn-gradient-danger btn-icon-text' role='button' aria-pressed='true'>View</a>&nbsp;&nbsp;
+                <a href='managefiltergroups.php?filter_group_id=" . $row["filter_group_id"] . "&m=m&" . $search_params . "' class='btn btn-sm btn-gradient-info btn-icon-text' role='button' aria-pressed='true'>Edit</a>
               </td>";
         echo "</tr>";
         $count++;

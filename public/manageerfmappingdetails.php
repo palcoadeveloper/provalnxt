@@ -286,7 +286,18 @@ try {
                             showConfirmButton: true
                         }).then((result) => {
                             if (result.isConfirmed) {
-                                window.location.href = 'searcherfmapping.php';
+                                // Build redirect URL with search parameters if available
+                                let redirectUrl = "searcherfmapping.php";
+                                <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+                                  const urlParams = new URLSearchParams();
+                                  <?php if (isset($_GET['unitid'])): ?>urlParams.set('unitid', '<?= htmlspecialchars($_GET['unitid'], ENT_QUOTES) ?>');<?php endif; ?>
+                                  <?php if (isset($_GET['equipment_id'])): ?>urlParams.set('equipment_id', '<?= htmlspecialchars($_GET['equipment_id'], ENT_QUOTES) ?>');<?php endif; ?>
+                                  <?php if (isset($_GET['room_loc_id'])): ?>urlParams.set('room_loc_id', '<?= htmlspecialchars($_GET['room_loc_id'], ENT_QUOTES) ?>');<?php endif; ?>
+                                  <?php if (isset($_GET['mapping_status'])): ?>urlParams.set('mapping_status', '<?= htmlspecialchars($_GET['mapping_status'], ENT_QUOTES) ?>');<?php endif; ?>
+                                  urlParams.set('restore_search', '1');
+                                  redirectUrl += '?' + urlParams.toString();
+                                <?php endif; ?>
+                                window.location.href = redirectUrl;
                             }
                         });
                     } else {
@@ -357,7 +368,18 @@ try {
               <nav aria-label="breadcrumb">
                 <ul class="breadcrumb">
                   <li class="breadcrumb-item active" aria-current="page"><span><a class='btn btn-gradient-info btn-sm btn-rounded'
-                      href="searcherfmapping.php"><< Back</a> </span>
+                      href="searcherfmapping.php<?php
+                          // Build back navigation URL with search parameters
+                          if (isset($_GET['from_search']) && $_GET['from_search'] == '1') {
+                              $back_params = [];
+                              if (isset($_GET['unitid'])) $back_params['unitid'] = $_GET['unitid'];
+                              if (isset($_GET['equipment_id'])) $back_params['equipment_id'] = $_GET['equipment_id'];
+                              if (isset($_GET['room_loc_id'])) $back_params['room_loc_id'] = $_GET['room_loc_id'];
+                              if (isset($_GET['mapping_status'])) $back_params['mapping_status'] = $_GET['mapping_status'];
+                              $back_params['restore_search'] = '1';
+                              echo '?' . http_build_query($back_params);
+                          }
+                      ?>"><< Back</a> </span>
                   </li>
                 </ul>
               </nav>
@@ -477,14 +499,36 @@ try {
                       <div class="form-row">
                         <div class="form-group col-md-12">
                           <input type="submit" class="btn btn-gradient-primary mr-2" value="<?php echo (isset($_GET['m']) && $_GET['m'] == 'm') ? 'Update ERF Mapping' : 'Save ERF Mapping'; ?>"/>
-                          <a href="searcherfmapping.php" class="btn btn-light">Cancel</a>
+                          <a href="searcherfmapping.php<?php
+    // Build back navigation URL with search parameters
+    if (isset($_GET['from_search']) && $_GET['from_search'] == '1') {
+        $back_params = [];
+        if (isset($_GET['unitid'])) $back_params['unitid'] = $_GET['unitid'];
+        if (isset($_GET['equipment_id'])) $back_params['equipment_id'] = $_GET['equipment_id'];
+        if (isset($_GET['room_loc_id'])) $back_params['room_loc_id'] = $_GET['room_loc_id'];
+        if (isset($_GET['mapping_status'])) $back_params['mapping_status'] = $_GET['mapping_status'];
+        $back_params['restore_search'] = '1';
+        echo '?' . http_build_query($back_params);
+    }
+?>" class="btn btn-light">Cancel</a>
                         </div>
                       </div>
                       <?php else: ?>
                       <div class="form-row">
                         <div class="form-group col-md-12">
                           <a href="manageerfmappingdetails.php?erf_mapping_id=<?php echo $_GET['erf_mapping_id']; ?>&m=m" class="btn btn-gradient-info mr-2">Edit</a>
-                          <a href="searcherfmapping.php" class="btn btn-light">Back to Search</a>
+                          <a href="searcherfmapping.php<?php
+    // Build back navigation URL with search parameters
+    if (isset($_GET['from_search']) && $_GET['from_search'] == '1') {
+        $back_params = [];
+        if (isset($_GET['unitid'])) $back_params['unitid'] = $_GET['unitid'];
+        if (isset($_GET['equipment_id'])) $back_params['equipment_id'] = $_GET['equipment_id'];
+        if (isset($_GET['room_loc_id'])) $back_params['room_loc_id'] = $_GET['room_loc_id'];
+        if (isset($_GET['mapping_status'])) $back_params['mapping_status'] = $_GET['mapping_status'];
+        $back_params['restore_search'] = '1';
+        echo '?' . http_build_query($back_params);
+    }
+?>" class="btn btn-light">Back to Search</a>
                         </div>
                       </div>
                       <?php endif; ?>

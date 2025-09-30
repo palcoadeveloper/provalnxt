@@ -1,24 +1,32 @@
-<!-- Required meta tags -->
+<?php
+/**
+ * ProVal HVAC - Optimized Header Assets
+ * Reduces HTTP requests from 20+ to 2 (1 CSS + 1 JS)
+ */
+?>
 <meta charset="utf-8">
-<meta name="viewport"
-	content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Palcoa ProVal - HVAC Validation System</title>
-<!-- plugins:css -->
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>ProVal HVAC</title>
+
+<?php if (defined('ENVIRONMENT') && ENVIRONMENT === 'prod'): ?>
+<!-- Production: Minified and concatenated assets (1 CSS HTTP request) -->
+<link rel="stylesheet" href="assets/dist/css/proval-styles.min.css">
+<?php else: ?>
+<!-- Development: Individual assets for debugging (7 CSS HTTP requests) -->
 <link rel="stylesheet" href="assets/vendors/mdi/css/materialdesignicons.min.css">
 <link rel="stylesheet" href="assets/vendors/css/vendor.bundle.base.css">
 <link rel="stylesheet" href="assets/vendors/css/dataTables.bootstrap4.css">
 <link rel="stylesheet" href="assets/css/jquery-ui.min.css">
-<!-- endinject -->
-<!-- Plugin css for this page -->
-<!-- End plugin css for this page -->
-<!-- inject:css -->
-<!-- endinject -->
-<!-- Layout styles -->
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/css/responsive.css">
-<!-- End layout styles -->
+<link rel="stylesheet" href="assets/css/modern-manage-ui.css">
+<?php endif; ?>
+
 <link rel="shortcut icon" href="assets/images/favicon.ico" />
-  <script src="assets/js/jquery.min.js" type="text/javascript"></script> 
 
-
-<script src="assets/js/custom.js" type="text/javascript"></script>
+<?php if (defined('ENVIRONMENT') && ENVIRONMENT === 'prod'): ?>
+<!-- Production: All JS handled in footer for optimal 2-request loading -->
+<?php else: ?>
+<!-- Development: Individual vendor scripts for debugging -->
+<script src="assets/js/jquery.min.js" type="text/javascript"></script>
+<?php endif; ?>

@@ -8,8 +8,9 @@
       </a>
     </li>
     
-    <li class="nav-item" <?php if((isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === 'Yes') || 
-    (isset($_SESSION['is_super_admin']) && $_SESSION['is_super_admin'] === 'Yes')){echo 'style="display: block;"';}else{echo 'style="display: none;"';} ?> >
+    <li class="nav-item" <?php if((isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === 'Yes') ||
+    (isset($_SESSION['is_super_admin']) && $_SESSION['is_super_admin'] === 'Yes') ||
+    (isset($_SESSION['department_type']) && $_SESSION['department_type'] === 'engineering')){echo 'style="display: block;"';}else{echo 'style="display: none;"';} ?> >
       <a class="nav-link" data-toggle="collapse" href="#user-management" aria-expanded="false" aria-controls="user-management">
         <span class="menu-title">User Management</span>
         <i class="menu-arrow"></i>
@@ -22,8 +23,9 @@
       </div>
     </li>
     
-    <li class="nav-item" <?php if ((isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === 'Yes') || 
-    (isset($_SESSION['is_super_admin']) && $_SESSION['is_super_admin'] === 'Yes')) {echo 'style="display: block;"';}else{echo 'style="display: none;"';} ?>  >
+    <li class="nav-item" <?php if ((isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === 'Yes') ||
+    (isset($_SESSION['is_super_admin']) && $_SESSION['is_super_admin'] === 'Yes') ||
+    (isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'vendor')) {echo 'style="display: block;"';}else{echo 'style="display: none;"';} ?>  >
       <a class="nav-link" data-toggle="collapse" href="#master-management" aria-expanded="false" aria-controls="master-management">
         <span class="menu-title">Master Management</span>
         <i class="menu-arrow"></i>
@@ -31,16 +33,16 @@
       </a>
       <div class="collapse" id="master-management">
         <ul class="nav flex-column sub-menu">
-          <li class="nav-item"> <a class="nav-link" href="searchdepartments.php"> Departments </a></li>
-          <li class="nav-item"> <a class="nav-link" href="searchvendors.php"> Vendors </a></li>
-          <li class="nav-item"> <a class="nav-link" href="searchequipments.php"> Equipments </a></li>
+          <li class="nav-item" <?php if ((isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === 'Yes') || (isset($_SESSION['is_super_admin']) && $_SESSION['is_super_admin'] === 'Yes')) {echo 'style="display: block;"';}else{echo 'style="display: none;"';} ?>> <a class="nav-link" href="searchdepartments.php"> Departments </a></li>
+          <li class="nav-item" <?php if ((isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === 'Yes') || (isset($_SESSION['is_super_admin']) && $_SESSION['is_super_admin'] === 'Yes')) {echo 'style="display: block;"';}else{echo 'style="display: none;"';} ?>> <a class="nav-link" href="searchvendors.php"> Vendors </a></li>
+          <li class="nav-item" <?php if ((isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === 'Yes') || (isset($_SESSION['is_super_admin']) && $_SESSION['is_super_admin'] === 'Yes')) {echo 'style="display: block;"';}else{echo 'style="display: none;"';} ?>> <a class="nav-link" href="searchequipments.php"> Equipments </a></li>
           <li class="nav-item"> <a class="nav-link" href="searchinstruments.php"> Instruments Calibration </a></li>
-          <li class="nav-item"> <a class="nav-link" href="searchrooms.php"> Room/Location </a></li>
-          <li class="nav-item"> <a class="nav-link" href="searchtests.php"> Tests </a></li>
-          <li class="nav-item"> <a class="nav-link" href="searchmapping.php"> ETV Mapping </a></li>
-          <li class="nav-item"> <a class="nav-link" href="searcherfmapping.php"> ERF Mapping </a></li>
-          <li class="nav-item"> <a class="nav-link" href="searchfiltergroups.php"> Filter Groups </a></li>
-          <li class="nav-item"> <a class="nav-link" href="searchfilters.php"> Filters </a></li>
+          <li class="nav-item" <?php if ((isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === 'Yes') || (isset($_SESSION['is_super_admin']) && $_SESSION['is_super_admin'] === 'Yes')) {echo 'style="display: block;"';}else{echo 'style="display: none;"';} ?>> <a class="nav-link" href="searchrooms.php"> Room/Location </a></li>
+          <li class="nav-item" <?php if ((isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === 'Yes') || (isset($_SESSION['is_super_admin']) && $_SESSION['is_super_admin'] === 'Yes')) {echo 'style="display: block;"';}else{echo 'style="display: none;"';} ?>> <a class="nav-link" href="searchtests.php"> Tests </a></li>
+          <li class="nav-item" <?php if ((isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === 'Yes') || (isset($_SESSION['is_super_admin']) && $_SESSION['is_super_admin'] === 'Yes')) {echo 'style="display: block;"';}else{echo 'style="display: none;"';} ?>> <a class="nav-link" href="searchmapping.php"> ETV Mapping </a></li>
+          <li class="nav-item" <?php if ((isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === 'Yes') || (isset($_SESSION['is_super_admin']) && $_SESSION['is_super_admin'] === 'Yes')) {echo 'style="display: block;"';}else{echo 'style="display: none;"';} ?>> <a class="nav-link" href="searcherfmapping.php"> ERF Mapping </a></li>
+          <li class="nav-item" <?php if ((isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === 'Yes') || (isset($_SESSION['is_super_admin']) && $_SESSION['is_super_admin'] === 'Yes')) {echo 'style="display: block;"';}else{echo 'style="display: none;"';} ?>> <a class="nav-link" href="searchfiltergroups.php"> Filter Groups </a></li>
+          <li class="nav-item" <?php if ((isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === 'Yes') || (isset($_SESSION['is_super_admin']) && $_SESSION['is_super_admin'] === 'Yes')) {echo 'style="display: block;"';}else{echo 'style="display: none;"';} ?>> <a class="nav-link" href="searchfilters.php"> Filters </a></li>
           <li class="nav-item" <?php if (isset($_SESSION['is_super_admin']) && $_SESSION['is_super_admin'] === 'Yes') {echo 'style="display: block;"';}else{echo 'style="display: none;"';} ?>> <a class="nav-link" href="searchunits.php"> Units </a></li>
         </ul>
       </div>

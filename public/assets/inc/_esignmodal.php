@@ -62,6 +62,68 @@ if (session_status() === PHP_SESSION_NONE) {
     data: {},
     successCallback: null
   };
+
+  // Initialize SweetAlert button watcher when page loads
+  document.addEventListener('DOMContentLoaded', function() {
+    // MutationObserver to watch for SweetAlert buttons
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        mutation.addedNodes.forEach(function(node) {
+          if (node.nodeType === 1) { // Element node
+            // Check if this is a swal2 container or contains swal2 elements
+            const sweetAlertButtons = node.classList && node.classList.contains('swal2-container')
+              ? node.querySelectorAll('.swal2-confirm')
+              : node.querySelectorAll ? node.querySelectorAll('.swal2-confirm') : [];
+
+            sweetAlertButtons.forEach(function(button) {
+              if (!button.hasAttribute('data-hover-added')) {
+                applySweetAlertHover(button);
+              }
+            });
+          }
+        });
+      });
+    });
+
+    // Start observing
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  });
+
+  // Helper function to add hover lift effect to SweetAlert buttons
+  function applySweetAlertHover(button) {
+    if (!button || button.hasAttribute('data-hover-added')) return;
+
+    // Mark button as processed
+    button.setAttribute('data-hover-added', 'true');
+
+    // Force styles with maximum priority
+    button.style.setProperty('transition', 'all 0.3s ease', 'important');
+
+    button.addEventListener('mouseenter', function() {
+      this.style.setProperty('transform', 'translateY(-2px)', 'important');
+      this.style.setProperty('box-shadow', '0 8px 25px rgba(52, 144, 220, 0.4)', 'important');
+    });
+
+    button.addEventListener('mouseleave', function() {
+      this.style.setProperty('transform', 'translateY(0px)', 'important');
+      this.style.setProperty('box-shadow', 'none', 'important');
+    });
+
+    console.log('SweetAlert hover effect applied to button:', button);
+  }
+
+  // Fallback helper function for didOpen callback
+  function addSweetAlertHoverEffect() {
+    setTimeout(() => {
+      const confirmButton = document.querySelector('.swal2-confirm');
+      if (confirmButton) {
+        applySweetAlertHover(confirmButton);
+      }
+    }, 50);
+  }
   
   /**
    * Configure the modal for a specific action
@@ -97,7 +159,8 @@ if (session_status() === PHP_SESSION_NONE) {
         icon: 'error',
         title: 'Account Locked',
         text: "Your account has been locked. Please contact admin.",
-        showConfirmButton: true
+        showConfirmButton: true,
+        didOpen: addSweetAlertHoverEffect
       }).then(() => window.location.href = response.redirect);
       return;
     }
@@ -109,7 +172,8 @@ if (session_status() === PHP_SESSION_NONE) {
         icon: 'info',
         title: 'Redirecting',
         text: "Click OK to continue.",
-        showConfirmButton: true
+        showConfirmButton: true,
+        didOpen: addSweetAlertHoverEffect
       }).then(() => window.location.href = response.redirect);
       return;
     }
@@ -131,7 +195,8 @@ if (session_status() === PHP_SESSION_NONE) {
         Swal.fire({
           icon: 'success',
           title: 'Success',
-          text: response.message || "Operation completed successfully."
+          text: response.message || "Operation completed successfully.",
+          didOpen: addSweetAlertHoverEffect
         }).then(() => {
           window.location.reload();
         });
@@ -161,7 +226,12 @@ if (session_status() === PHP_SESSION_NONE) {
         $('#enterPasswordRemark').modal('hide');
       }
       
-      Swal.fire({ icon: 'error', title: 'Error', text: msg });
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: msg,
+        didOpen: addSweetAlertHoverEffect
+      });
       
       // Reset UI appropriately
       resetModalUI(shouldCloseModal);
@@ -213,7 +283,8 @@ if (session_status() === PHP_SESSION_NONE) {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'Modal not properly configured. Please try again.'
+        text: 'Modal not properly configured. Please try again.',
+        didOpen: addSweetAlertHoverEffect
       });
       return;
     }
@@ -306,7 +377,8 @@ if (session_status() === PHP_SESSION_NONE) {
           Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: errorMsg + ' Please check the console for details.'
+            text: errorMsg + ' Please check the console for details.',
+            didOpen: addSweetAlertHoverEffect
           });
         }
       }
@@ -357,7 +429,8 @@ if (session_status() === PHP_SESSION_NONE) {
             Swal.fire({
               icon: 'success',
               title: 'Success',
-              text: response.message || 'Test approved successfully'
+              text: response.message || 'Test approved successfully',
+              didOpen: addSweetAlertHoverEffect
             }).then(() => {
               // Redirect to assigned cases after approval
               window.location.href = 'assignedcases.php';
@@ -370,7 +443,8 @@ if (session_status() === PHP_SESSION_NONE) {
           Swal.fire({
             icon: 'error',
             title: 'Oops...',
-            text: 'You have one or more files to be approved.'
+            text: 'You have one or more files to be approved.',
+            didOpen: addSweetAlertHoverEffect
           });
         } else {
           $('#enterPasswordRemark').modal('show');
@@ -394,7 +468,8 @@ if (session_status() === PHP_SESSION_NONE) {
             Swal.fire({
               icon: 'success',
               title: 'Success',
-              text: response.message || 'Test rejected successfully'
+              text: response.message || 'Test rejected successfully',
+              didOpen: addSweetAlertHoverEffect
             }).then(() => {
               // Redirect to assigned cases after rejection
               window.location.href = 'assignedcases.php';
@@ -407,7 +482,8 @@ if (session_status() === PHP_SESSION_NONE) {
           Swal.fire({
             icon: 'error',
             title: 'Oops...',
-            text: 'You have one or more files to be approved.'
+            text: 'You have one or more files to be approved.',
+            didOpen: addSweetAlertHoverEffect
           });
         } else {
           $('#enterPasswordRemark').modal('show');

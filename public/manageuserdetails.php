@@ -3,16 +3,9 @@ require_once('./core/config/config.php');
 
 // Session is already started by config.php via session_init.php
 
-// Check for proper authentication
-if (!isset($_SESSION['logged_in_user']) || !isset($_SESSION['user_name'])) {
-    session_destroy();
-    header('Location: ' . BASE_URL . 'login.php?msg=session_required');
-    exit();
-}
-
-// Validate session timeout
-require_once('core/security/session_timeout_middleware.php');
-validateActiveSession();
+// Optimized session validation
+require_once('core/security/optimized_session_validation.php');
+OptimizedSessionValidation::validateOnce();
 
 // Generate CSRF token if not present
 if (!isset($_SESSION['csrf_token'])) {
@@ -116,7 +109,19 @@ try {
                         title: 'Success',
                         text: "The employee record is successfully added!"
                     }).then((result) => {
-                        window.location = "searchuser.php";
+                        // Build redirect URL with search parameters if available
+                        let redirectUrl = "searchuser.php";
+                        <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+                          const urlParams = new URLSearchParams();
+                          <?php if (isset($_GET['usertype'])): ?>urlParams.set('usertype', '<?= htmlspecialchars($_GET['usertype'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['unitid'])): ?>urlParams.set('unitid', '<?= htmlspecialchars($_GET['unitid'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['searchcriteria'])): ?>urlParams.set('searchcriteria', '<?= htmlspecialchars($_GET['searchcriteria'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['searchinput'])): ?>urlParams.set('searchinput', '<?= htmlspecialchars($_GET['searchinput'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['vendorid'])): ?>urlParams.set('vendorid', '<?= htmlspecialchars($_GET['vendorid'], ENT_QUOTES) ?>');<?php endif; ?>
+                          urlParams.set('restore_search', '1');
+                          redirectUrl += '?' + urlParams.toString();
+                        <?php endif; ?>
+                        window.location = redirectUrl;
                     });
                 } else {
                     // Show error message
@@ -125,7 +130,19 @@ try {
                         title: 'Oops...',
                         text: 'Something went wrong.'
                     }).then((result) => {
-                        window.location = "searchuser.php";
+                        // Build redirect URL with search parameters if available
+                        let redirectUrl = "searchuser.php";
+                        <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+                          const urlParams = new URLSearchParams();
+                          <?php if (isset($_GET['usertype'])): ?>urlParams.set('usertype', '<?= htmlspecialchars($_GET['usertype'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['unitid'])): ?>urlParams.set('unitid', '<?= htmlspecialchars($_GET['unitid'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['searchcriteria'])): ?>urlParams.set('searchcriteria', '<?= htmlspecialchars($_GET['searchcriteria'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['searchinput'])): ?>urlParams.set('searchinput', '<?= htmlspecialchars($_GET['searchinput'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['vendorid'])): ?>urlParams.set('vendorid', '<?= htmlspecialchars($_GET['vendorid'], ENT_QUOTES) ?>');<?php endif; ?>
+                          urlParams.set('restore_search', '1');
+                          redirectUrl += '?' + urlParams.toString();
+                        <?php endif; ?>
+                        window.location = redirectUrl;
                     });
                 }
             });
@@ -158,7 +175,19 @@ try {
                         title: 'Success',
                         text: "The vendor record is successfully added!"
                     }).then((result) => {
-                        window.location = "searchuser.php";
+                        // Build redirect URL with search parameters if available
+                        let redirectUrl = "searchuser.php";
+                        <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+                          const urlParams = new URLSearchParams();
+                          <?php if (isset($_GET['usertype'])): ?>urlParams.set('usertype', '<?= htmlspecialchars($_GET['usertype'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['unitid'])): ?>urlParams.set('unitid', '<?= htmlspecialchars($_GET['unitid'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['searchcriteria'])): ?>urlParams.set('searchcriteria', '<?= htmlspecialchars($_GET['searchcriteria'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['searchinput'])): ?>urlParams.set('searchinput', '<?= htmlspecialchars($_GET['searchinput'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['vendorid'])): ?>urlParams.set('vendorid', '<?= htmlspecialchars($_GET['vendorid'], ENT_QUOTES) ?>');<?php endif; ?>
+                          urlParams.set('restore_search', '1');
+                          redirectUrl += '?' + urlParams.toString();
+                        <?php endif; ?>
+                        window.location = redirectUrl;
                     });
                 } else {
                     // Show error message
@@ -167,7 +196,19 @@ try {
                         title: 'Oops...',
                         text: 'Something went wrong.'
                     }).then((result) => {
-                        window.location = "searchuser.php";
+                        // Build redirect URL with search parameters if available
+                        let redirectUrl = "searchuser.php";
+                        <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+                          const urlParams = new URLSearchParams();
+                          <?php if (isset($_GET['usertype'])): ?>urlParams.set('usertype', '<?= htmlspecialchars($_GET['usertype'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['unitid'])): ?>urlParams.set('unitid', '<?= htmlspecialchars($_GET['unitid'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['searchcriteria'])): ?>urlParams.set('searchcriteria', '<?= htmlspecialchars($_GET['searchcriteria'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['searchinput'])): ?>urlParams.set('searchinput', '<?= htmlspecialchars($_GET['searchinput'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['vendorid'])): ?>urlParams.set('vendorid', '<?= htmlspecialchars($_GET['vendorid'], ENT_QUOTES) ?>');<?php endif; ?>
+                          urlParams.set('restore_search', '1');
+                          redirectUrl += '?' + urlParams.toString();
+                        <?php endif; ?>
+                        window.location = redirectUrl;
                     });
                 }
             });
@@ -221,7 +262,19 @@ try {
                             title: 'Success',
                             text: "The employee record is successfully modified!"
                         }).then((result) => {
-                            window.location = "searchuser.php";
+                            // Build redirect URL with search parameters if available
+                        let redirectUrl = "searchuser.php";
+                        <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+                          const urlParams = new URLSearchParams();
+                          <?php if (isset($_GET['usertype'])): ?>urlParams.set('usertype', '<?= htmlspecialchars($_GET['usertype'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['unitid'])): ?>urlParams.set('unitid', '<?= htmlspecialchars($_GET['unitid'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['searchcriteria'])): ?>urlParams.set('searchcriteria', '<?= htmlspecialchars($_GET['searchcriteria'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['searchinput'])): ?>urlParams.set('searchinput', '<?= htmlspecialchars($_GET['searchinput'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['vendorid'])): ?>urlParams.set('vendorid', '<?= htmlspecialchars($_GET['vendorid'], ENT_QUOTES) ?>');<?php endif; ?>
+                          urlParams.set('restore_search', '1');
+                          redirectUrl += '?' + urlParams.toString();
+                        <?php endif; ?>
+                        window.location = redirectUrl;
                         });
                     } else {
                         // Show error message with actual response
@@ -230,7 +283,19 @@ try {
                             title: 'Oops...',
                             text: 'Something went wrong. Response: ' + JSON.stringify(data)
                         }).then((result) => {
-                            window.location = "searchuser.php";
+                            // Build redirect URL with search parameters if available
+                        let redirectUrl = "searchuser.php";
+                        <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+                          const urlParams = new URLSearchParams();
+                          <?php if (isset($_GET['usertype'])): ?>urlParams.set('usertype', '<?= htmlspecialchars($_GET['usertype'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['unitid'])): ?>urlParams.set('unitid', '<?= htmlspecialchars($_GET['unitid'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['searchcriteria'])): ?>urlParams.set('searchcriteria', '<?= htmlspecialchars($_GET['searchcriteria'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['searchinput'])): ?>urlParams.set('searchinput', '<?= htmlspecialchars($_GET['searchinput'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['vendorid'])): ?>urlParams.set('vendorid', '<?= htmlspecialchars($_GET['vendorid'], ENT_QUOTES) ?>');<?php endif; ?>
+                          urlParams.set('restore_search', '1');
+                          redirectUrl += '?' + urlParams.toString();
+                        <?php endif; ?>
+                        window.location = redirectUrl;
                         });
                     }
                 });
@@ -272,7 +337,19 @@ try {
                             title: 'Success',
                             text: "The vendor record is successfully modified!"
                         }).then((result) => {
-                            window.location = "searchuser.php";
+                            // Build redirect URL with search parameters if available
+                        let redirectUrl = "searchuser.php";
+                        <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+                          const urlParams = new URLSearchParams();
+                          <?php if (isset($_GET['usertype'])): ?>urlParams.set('usertype', '<?= htmlspecialchars($_GET['usertype'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['unitid'])): ?>urlParams.set('unitid', '<?= htmlspecialchars($_GET['unitid'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['searchcriteria'])): ?>urlParams.set('searchcriteria', '<?= htmlspecialchars($_GET['searchcriteria'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['searchinput'])): ?>urlParams.set('searchinput', '<?= htmlspecialchars($_GET['searchinput'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['vendorid'])): ?>urlParams.set('vendorid', '<?= htmlspecialchars($_GET['vendorid'], ENT_QUOTES) ?>');<?php endif; ?>
+                          urlParams.set('restore_search', '1');
+                          redirectUrl += '?' + urlParams.toString();
+                        <?php endif; ?>
+                        window.location = redirectUrl;
                         });
                     } else {
                         // Show error message
@@ -281,7 +358,19 @@ try {
                             title: 'Oops...',
                             text: 'Something went wrong.'
                         }).then((result) => {
-                            window.location = "searchuser.php";
+                            // Build redirect URL with search parameters if available
+                        let redirectUrl = "searchuser.php";
+                        <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+                          const urlParams = new URLSearchParams();
+                          <?php if (isset($_GET['usertype'])): ?>urlParams.set('usertype', '<?= htmlspecialchars($_GET['usertype'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['unitid'])): ?>urlParams.set('unitid', '<?= htmlspecialchars($_GET['unitid'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['searchcriteria'])): ?>urlParams.set('searchcriteria', '<?= htmlspecialchars($_GET['searchcriteria'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['searchinput'])): ?>urlParams.set('searchinput', '<?= htmlspecialchars($_GET['searchinput'], ENT_QUOTES) ?>');<?php endif; ?>
+                          <?php if (isset($_GET['vendorid'])): ?>urlParams.set('vendorid', '<?= htmlspecialchars($_GET['vendorid'], ENT_QUOTES) ?>');<?php endif; ?>
+                          urlParams.set('restore_search', '1');
+                          redirectUrl += '?' + urlParams.toString();
+                        <?php endif; ?>
+                        window.location = redirectUrl;
                         });
                     }
                 });
@@ -475,7 +564,19 @@ try {
 						<nav aria-label="breadcrumb">
 							<ul class="breadcrumb">
 								<li class="breadcrumb-item active" aria-current="page"><span><a class='btn btn-gradient-info btn-sm btn-rounded'
-										href="searchuser.php"><< Back</a> </span>
+										href="searchuser.php<?php
+                    // Build back navigation URL with search parameters
+                    if (isset($_GET['from_search']) && $_GET['from_search'] == '1') {
+                        $back_params = [];
+                        if (isset($_GET['usertype'])) $back_params['usertype'] = $_GET['usertype'];
+                        if (isset($_GET['unitid'])) $back_params['unitid'] = $_GET['unitid'];
+                        if (isset($_GET['searchcriteria'])) $back_params['searchcriteria'] = $_GET['searchcriteria'];
+                        if (isset($_GET['searchinput'])) $back_params['searchinput'] = $_GET['searchinput'];
+                        if (isset($_GET['vendorid'])) $back_params['vendorid'] = $_GET['vendorid'];
+                        $back_params['restore_search'] = '1';
+                        echo '?' . http_build_query($back_params);
+                    }
+                ?>"><< Back</a> </span>
 								</li>
 							</ul>
 						</nav>
@@ -784,14 +885,15 @@ try {
                     	  <select class="form-control" id="user_status" name="user_status">
 									
 										
-                       	<?php 
+                       	<?php
                        	echo "<option value='Active'".(($user_details['user_status']=='Active')? "selected" : "") .">Active</option>";
                        	echo "<option value='Inactive'".(($user_details['user_status']=='Inactive')? "selected" : "") .">Inactive</option>";
-                 
-                       	
-                       	    
-                       	    
-                       
+                       	echo "<option value='Pending'".(($user_details['user_status']=='Pending')? "selected" : "") .">Pending</option>";
+
+
+
+
+
                        	?>	
                         </select>
                      

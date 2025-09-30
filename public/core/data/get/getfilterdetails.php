@@ -179,9 +179,21 @@ try {
                     <span class="' . $due_status_class . '">' . $due_date . $due_status_text . '</span>
                 </td>
                 <td>' . $status_badge . '</td>
-                <td>
-                    <a href="managefilterdetails.php?m=m&filter_id=' . intval($row['filter_id']) . '" 
-                       class="btn btn-gradient-primary btn-sm" 
+                <td>';
+
+        // Build search parameters for back navigation
+        $search_params = http_build_query([
+            'unitid' => $_GET['unitid'] ?? '',
+            'filter_type' => $_GET['filter_type'] ?? '',
+            'search_filter_id' => $_GET['filter_id'] ?? '',
+            'status_filter' => $_GET['status_filter'] ?? '',
+            'manufacturer' => $_GET['manufacturer'] ?? '',
+            'from_search' => '1'
+        ]);
+
+        $html .= '
+                    <a href="managefilterdetails.php?m=m&filter_id=' . intval($row['filter_id']) . '&' . $search_params . '"
+                       class="btn btn-gradient-primary btn-sm"
                        title="Edit Filter">
                          Edit
                     </a>

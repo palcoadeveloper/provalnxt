@@ -3,13 +3,9 @@ require_once('./core/config/config.php');
 
 // Session is already started by config.php via session_init.php
 
-// Validate session timeout
-require_once('core/security/session_timeout_middleware.php');
-validateActiveSession();
-
-// Use centralized session validation
-require_once('core/security/session_validation.php');
-validateUserSession();
+// Optimized session validation
+require_once('core/security/optimized_session_validation.php');
+OptimizedSessionValidation::validateOnce();
 
 date_default_timezone_set("Asia/Kolkata");
 
@@ -32,6 +28,7 @@ define('STAGE_REASSIGNED_4A', '4A');
 define('STAGE_OFFLINE_PROVISIONAL', '1PRV');
 define('STAGE_OFFLINE_REJECTED', '1RRV');
 define('STAGE_OFFLINE_REJECTED_ENGG', '3BPRV');
+define('STAGE_REASSIGNED_4BPRV', '4BPRV');
 require_once("core/config/db.class.php");
 require_once 'core/security/secure_query_wrapper.php';
 
@@ -83,7 +80,8 @@ $validStages = [
     STAGE_REASSIGNED_4B,
     STAGE_OFFLINE_PROVISIONAL,
     STAGE_OFFLINE_REJECTED,
-    STAGE_OFFLINE_REJECTED_ENGG
+    STAGE_OFFLINE_REJECTED_ENGG,
+    STAGE_REASSIGNED_4BPRV
 ];
 
 if (!in_array($current_wf_stage, $validStages)) {
@@ -2615,31 +2613,82 @@ function adduserremark(ur, up) {
               <button id="resubmit_to_checker" class='btn btn-primary btn-small'>Submit to Checker</button>
             `);
             
-            // Re-bind the click event for the new button to use the modal
+            // Re-bind the click event for the new button with upload validation
             $("#resubmit_to_checker").off('click').on('click', function() {
-              // Configure the remarks modal for resubmission
-              configureRemarksModal(
-                'resubmit', // action
-                'core/data/update/resubmit_offline_test.php', // endpoint
-                {
-                  test_wf_id: urlParams.get('test_val_wf_id') || '',
-                  val_wf_id: urlParams.get('val_wf_id') || '',
-                  test_id: urlParams.get('test_id') || ''
+              const testWfId = urlParams.get('test_val_wf_id') || '';
+
+              if (!testWfId) {
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Error',
+                  text: 'Missing test workflow ID'
+                });
+                return;
+              }
+
+              // Show loading state
+              const $button = $(this);
+              const originalText = $button.text();
+              $button.prop('disabled', true).text('Validating...');
+
+              // First, validate uploads before opening modal
+              $.ajax({
+                url: 'core/data/get/validate_uploads.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                  test_wf_id: testWfId,
+                  csrf_token: $("input[name='csrf_token']").val()
                 },
-                function(response) {
-                  // Custom success callback for resubmission
+                success: function(response) {
+                  // Restore button state
+                  $button.prop('disabled', false).text(originalText);
+
+                  if (response.status === 'success') {
+                    // Upload validation passed - proceed with modal
+                    configureRemarksModal(
+                      'resubmit', // action
+                      'core/data/update/resubmit_offline_test.php', // endpoint
+                      {
+                        test_wf_id: testWfId,
+                        val_wf_id: urlParams.get('val_wf_id') || '',
+                        test_id: urlParams.get('test_id') || ''
+                      },
+                      function(response) {
+                        // Custom success callback for resubmission
+                        Swal.fire({
+                          icon: 'success',
+                          title: 'Success',
+                          text: response.message || 'Test resubmitted successfully'
+                        }).then(() => {
+                          window.location.reload();
+                        });
+                      }
+                    );
+
+                    // Show the Add Remarks modal
+                    $('#enterPasswordRemark').modal('show');
+                  } else {
+                    // Upload validation failed - show error
+                    Swal.fire({
+                      icon: 'error',
+                      title: 'Upload Required',
+                      text: response.message || 'Upload validation failed'
+                    });
+                  }
+                },
+                error: function(xhr, status, error) {
+                  // Restore button state
+                  $button.prop('disabled', false).text(originalText);
+
+                  console.error('Upload validation error:', error);
                   Swal.fire({
-                    icon: 'success',
-                    title: 'Success',
-                    text: response.message || 'Test resubmitted successfully'
-                  }).then(() => {
-                    window.location.reload();
+                    icon: 'error',
+                    title: 'Validation Error',
+                    text: 'Failed to validate uploads. Please try again.'
                   });
                 }
-              );
-              
-              // Show the Add Remarks modal
-              $('#enterPasswordRemark').modal('show');
+              });
             });
             
             console.log('Submit to Checker button shown after finalization for 1RRV stage');
@@ -2719,31 +2768,82 @@ function adduserremark(ur, up) {
       });
       
       $("#resubmit_to_checker").click(function() {
-        // Configure the remarks modal for resubmission
+        // Configure the remarks modal for resubmission with upload validation
         const urlParams = new URLSearchParams(window.location.search);
-        
-        configureRemarksModal(
-          'resubmit', // action
-          'core/data/update/resubmit_offline_test.php', // endpoint
-          {
-            test_wf_id: urlParams.get('test_val_wf_id') || '',
-            val_wf_id: urlParams.get('val_wf_id') || '',
-            test_id: urlParams.get('test_id') || ''
+        const testWfId = urlParams.get('test_val_wf_id') || '';
+
+        if (!testWfId) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Missing test workflow ID'
+          });
+          return;
+        }
+
+        // Show loading state
+        const $button = $(this);
+        const originalText = $button.text();
+        $button.prop('disabled', true).text('Validating...');
+
+        // First, validate uploads before opening modal
+        $.ajax({
+          url: 'core/data/get/validate_uploads.php',
+          type: 'POST',
+          dataType: 'json',
+          data: {
+            test_wf_id: testWfId,
+            csrf_token: $("input[name='csrf_token']").val()
           },
-          function(response) {
-            // Custom success callback for resubmission
+          success: function(response) {
+            // Restore button state
+            $button.prop('disabled', false).text(originalText);
+
+            if (response.status === 'success') {
+              // Upload validation passed - proceed with modal
+              configureRemarksModal(
+                'resubmit', // action
+                'core/data/update/resubmit_offline_test.php', // endpoint
+                {
+                  test_wf_id: testWfId,
+                  val_wf_id: urlParams.get('val_wf_id') || '',
+                  test_id: urlParams.get('test_id') || ''
+                },
+                function(response) {
+                  // Custom success callback for resubmission
+                  Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: response.message || 'Test resubmitted successfully'
+                  }).then(() => {
+                    window.location.reload();
+                  });
+                }
+              );
+
+              // Show the Add Remarks modal
+              $('#enterPasswordRemark').modal('show');
+            } else {
+              // Upload validation failed - show error
+              Swal.fire({
+                icon: 'error',
+                title: 'Upload Required',
+                text: response.message || 'Upload validation failed'
+              });
+            }
+          },
+          error: function(xhr, status, error) {
+            // Restore button state
+            $button.prop('disabled', false).text(originalText);
+
+            console.error('Upload validation error:', error);
             Swal.fire({
-              icon: 'success',
-              title: 'Success',
-              text: response.message || 'Test resubmitted successfully'
-            }).then(() => {
-              window.location.reload();
+              icon: 'error',
+              title: 'Validation Error',
+              text: 'Failed to validate uploads. Please try again.'
             });
           }
-        );
-        
-        // Show the Add Remarks modal
-        $('#enterPasswordRemark').modal('show');
+        });
       });
       
     });
@@ -3339,7 +3439,7 @@ function adduserremark(ur, up) {
 
 
                               <?php
-                                                                        } else if (($current_wf_stage == STAGE_OFFLINE_PROVISIONAL || $current_wf_stage == STAGE_OFFLINE_REJECTED_ENGG) && !$show_same_user_error) // Offline test awaiting checker review
+                                                                        } else if (($current_wf_stage == STAGE_OFFLINE_PROVISIONAL || $current_wf_stage == STAGE_OFFLINE_REJECTED_ENGG || $current_wf_stage == STAGE_REASSIGNED_4BPRV) && !$show_same_user_error) // Offline test awaiting checker review
                                                                         {
                               ?>
                                 <!-- Approve/Reject buttons for offline test review -->

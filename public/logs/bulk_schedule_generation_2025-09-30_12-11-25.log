@@ -1,0 +1,17 @@
+[2025-09-30 12:11:25] [INFO] Bulk Schedule Generator Started - Operation ID: bulk_gen_68db7b95c787f
+[2025-09-30 12:11:25] [INFO] Target Year: 2027
+[2025-09-30 12:11:25] [INFO] Test Mode: NO
+[2025-09-30 12:11:25] [INFO] Single Unit Mode: 7
+[2025-09-30 12:11:25] [INFO] Found 1 active units with fixed scheduling logic
+[2025-09-30 12:11:25] [INFO] Processing Unit: Unit VII (ID: 7) | {"unit_id":"7","unit_name":"Unit VII"}
+[2025-09-30 12:11:25] [WARNING] Schedule already exists for Unit 7, Year 2027 (Schedule ID: 129) | {"unit_id":"7","unit_name":"Unit VII"}
+[2025-09-30 12:11:25] [INFO] === BULK GENERATION SUMMARY ===
+[2025-09-30 12:11:25] [INFO] Operation ID: bulk_gen_68db7b95c787f
+[2025-09-30 12:11:25] [INFO] Target Year: 2027
+[2025-09-30 12:11:25] [INFO] Total Units Processed: 1
+[2025-09-30 12:11:25] [INFO] Successful: 0
+[2025-09-30 12:11:25] [INFO] Warnings: 0
+[2025-09-30 12:11:25] [INFO] Errors: 0
+[2025-09-30 12:11:25] [INFO] Skipped: 1
+[2025-09-30 12:11:25] [INFO] Success Rate: 0%
+[2025-09-30 12:11:25] [INFO] Processing completed at: 2025-09-30 12:11:25

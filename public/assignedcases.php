@@ -3,13 +3,9 @@ require_once('./core/config/config.php');
 
 // Session is already started by config.php via session_init.php
 
-// Validate session timeout
-require_once('core/security/session_timeout_middleware.php');
-validateActiveSession();
-
-// Use centralized session validation
-require_once('core/security/session_validation.php');
-validateUserSession();
+// Optimized session validation
+require_once('core/security/optimized_session_validation.php');
+OptimizedSessionValidation::validateOnce();
 
 // Define workflow stage constants for better code readability
 define('DEPT_ENGINEERING', 1);

@@ -374,8 +374,15 @@ function generateScheduleAfterAuth() {
           // All validations passed, proceed with schedule generation
           proceedWithScheduleGeneration();
         } else {
-          // Equipment data missing, show confirmation dialog
-          showEquipmentDataWarning(equipmentValidationResult);
+          // Equipment data missing, show blocking error message
+          $('#pleasewaitmodal').modal('hide');
+          Swal.fire({
+            icon: 'error',
+            title: 'Missing Equipment Data',
+            html: equipmentValidationResult,
+            showConfirmButton: true,
+            confirmButtonText: 'OK'
+          });
         }
       })
       .fail(function() {
@@ -439,28 +446,22 @@ function proceedWithScheduleGeneration() {
   });
 }
 
-// Helper function to show equipment data warning with confirmation
-function showEquipmentDataWarning(warningMessage) {
+// Helper function to show equipment data error (blocking)
+function showEquipmentDataError(errorMessage) {
   $('#pleasewaitmodal').modal('hide');
-  
+
   Swal.fire({
-    icon: 'warning',
-    title: 'Missing Equipment Validation Data',
-    html: warningMessage,
-    showCancelButton: true,
-    confirmButtonText: 'Proceed Anyway',
-    cancelButtonText: 'Cancel',
-    confirmButtonColor: '#d33',
-    cancelButtonColor: '#3085d6',
-    reverseButtons: true
-  }).then((result) => {
-    if (result.isConfirmed) {
-      // User confirmed to proceed despite missing data
-      $('#pleasewaitmodal').modal('show');
-      proceedWithScheduleGeneration();
-    }
-    // If cancelled, do nothing - user stays on the form
+    icon: 'error',
+    title: 'Missing Equipment Data',
+    html: errorMessage,
+    showConfirmButton: true,
+    confirmButtonText: 'OK',
+    customClass: {
+      confirmButton: 'btn btn-primary'
+    },
+    buttonsStyling: false
   });
+  // No proceed option - validation is blocking
 }
 
 // Function to change adhoc validation status after successful authentication

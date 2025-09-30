@@ -88,9 +88,18 @@ if (empty($mapping_details)) {
         echo "<td>" . htmlspecialchars($row['filter_group_name'] ?? 'No Group', ENT_QUOTES, 'UTF-8') . "</td>";
         echo "<td>" . htmlspecialchars($row['area_classification'], ENT_QUOTES, 'UTF-8') . "</td>";
         echo "<td>" . htmlspecialchars($row['erf_mapping_status'], ENT_QUOTES, 'UTF-8') . "</td>";
+        // Build search parameters for back navigation
+        $search_params = http_build_query([
+            'unitid' => $_GET['unitid'] ?? '',
+            'equipment_id' => $_GET['equipment_id'] ?? '',
+            'room_loc_id' => $_GET['room_loc_id'] ?? '',
+            'mapping_status' => $_GET['mapping_status'] ?? '',
+            'from_search' => '1'
+        ]);
+
         echo "<td>
-                <a href='manageerfmappingdetails.php?erf_mapping_id=" . $row["erf_mapping_id"] . "&m=r' class='btn btn-xs btn-gradient-danger' role='button' aria-pressed='true'>View</a>&nbsp;
-                <a href='manageerfmappingdetails.php?erf_mapping_id=" . $row["erf_mapping_id"] . "&m=m' class='btn btn-xs btn-gradient-info' role='button' aria-pressed='true'>Modify</a>
+                <a href='manageerfmappingdetails.php?erf_mapping_id=" . $row["erf_mapping_id"] . "&m=r&" . $search_params . "' class='btn btn-xs btn-gradient-danger' role='button' aria-pressed='true'>View</a>&nbsp;
+                <a href='manageerfmappingdetails.php?erf_mapping_id=" . $row["erf_mapping_id"] . "&m=m&" . $search_params . "' class='btn btn-xs btn-gradient-info' role='button' aria-pressed='true'>Edit</a>
               </td>";
         echo "</tr>";
         $count++;

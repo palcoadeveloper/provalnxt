@@ -1,16 +1,9 @@
 <?php
 require_once('./core/config/config.php');
 
-// Check for proper authentication
-if (!isset($_SESSION['logged_in_user']) || !isset($_SESSION['user_name'])) {
-    session_destroy();
-    header('Location: ' . BASE_URL . 'login.php?msg=session_required');
-    exit();
-}
-
-// Validate session timeout
-require_once('core/security/session_timeout_middleware.php');
-validateActiveSession();
+// Optimized session validation
+require_once('core/security/optimized_session_validation.php');
+OptimizedSessionValidation::validateOnce();
 
 // Generate CSRF token if not present
 if (!isset($_SESSION['csrf_token'])) {
@@ -109,7 +102,15 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                             showConfirmButton: true
                         }).then((result) => {
                             if (result.isConfirmed) {
-                                window.location.href = 'searchfiltergroups.php';
+                                // Build redirect URL with search parameters if available
+                                let redirectUrl = "searchfiltergroups.php";
+                                <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+                                  const urlParams = new URLSearchParams();
+                                  <?php if (isset($_GET['status'])): ?>urlParams.set('status', '<?= htmlspecialchars($_GET['status'], ENT_QUOTES) ?>');<?php endif; ?>
+                                  urlParams.set('restore_search', '1');
+                                  redirectUrl += '?' + urlParams.toString();
+                                <?php endif; ?>
+                                window.location.href = redirectUrl;
                             }
                         });
                     } else {
@@ -168,7 +169,15 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
               <nav aria-label="breadcrumb">
                 <ul class="breadcrumb">
                   <li class="breadcrumb-item active" aria-current="page"><span><a class='btn btn-gradient-info btn-sm btn-rounded'
-                      href="searchfiltergroups.php"><< Back</a> </span>
+                      href="searchfiltergroups.php<?php
+                          // Build back navigation URL with search parameters
+                          if (isset($_GET['from_search']) && $_GET['from_search'] == '1') {
+                              $back_params = [];
+                              if (isset($_GET['status'])) $back_params['status'] = $_GET['status'];
+                              $back_params['restore_search'] = '1';
+                              echo '?' . http_build_query($back_params);
+                          }
+                      ?>"><< Back</a> </span>
                   </li>
                 </ul>
               </nav>
@@ -227,14 +236,21 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                       <div class="form-row">
                         <div class="form-group col-md-12">
                           <input type="submit" class="btn btn-gradient-primary mr-2" value="<?php echo (isset($_GET['m']) && $_GET['m'] == 'm') ? 'Update Filter Group' : 'Save Filter Group'; ?>"/>
-                          <a href="searchfiltergroups.php" class="btn btn-light">Cancel</a>
                         </div>
                       </div>
                       <?php else: ?>
                       <div class="form-row">
                         <div class="form-group col-md-12">
                           <a href="managefiltergroups.php?filter_group_id=<?php echo $_GET['filter_group_id']; ?>&m=m" class="btn btn-gradient-info mr-2">Edit</a>
-                          <a href="searchfiltergroups.php" class="btn btn-light">Back to Search</a>
+                          <a href="searchfiltergroups.php<?php
+    // Build back navigation URL with search parameters
+    if (isset($_GET['from_search']) && $_GET['from_search'] == '1') {
+        $back_params = [];
+        if (isset($_GET['status'])) $back_params['status'] = $_GET['status'];
+        $back_params['restore_search'] = '1';
+        echo '?' . http_build_query($back_params);
+    }
+?>" class="btn btn-light">Back to Search</a>
                         </div>
                       </div>
                       <?php endif; ?>

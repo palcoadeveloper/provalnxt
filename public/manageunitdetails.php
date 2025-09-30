@@ -127,7 +127,15 @@ try {
                   title: 'Success',
                   text: "The unit record is successfully " + (mode === 'add' ? "added" : "modified") + "!"
                 }).then((result) => {
-                  window.location = "searchunits.php";
+                  // Build redirect URL with search parameters if available
+                  let redirectUrl = "searchunits.php";
+                  <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+                    const urlParams = new URLSearchParams();
+                    <?php if (isset($_GET['unit_status'])): ?>urlParams.set('unit_status', '<?= htmlspecialchars($_GET['unit_status'], ENT_QUOTES) ?>');<?php endif; ?>
+                    urlParams.set('restore_search', '1');
+                    redirectUrl += '?' + urlParams.toString();
+                  <?php endif; ?>
+                  window.location = redirectUrl;
                 });
               } else {
                 Swal.fire({
@@ -168,7 +176,15 @@ try {
                   title: 'Success',
                   text: "The unit record is successfully " + (mode === 'add' ? "added" : "modified") + "!"
                 }).then((result) => {
-                  window.location = "searchunits.php";
+                  // Build redirect URL with search parameters if available
+                  let redirectUrl = "searchunits.php";
+                  <?php if (isset($_GET['from_search']) && $_GET['from_search'] == '1'): ?>
+                    const urlParams = new URLSearchParams();
+                    <?php if (isset($_GET['unit_status'])): ?>urlParams.set('unit_status', '<?= htmlspecialchars($_GET['unit_status'], ENT_QUOTES) ?>');<?php endif; ?>
+                    urlParams.set('restore_search', '1');
+                    redirectUrl += '?' + urlParams.toString();
+                  <?php endif; ?>
+                  window.location = redirectUrl;
                 });
                 return;
               }
@@ -322,7 +338,15 @@ try {
 						<nav aria-label="breadcrumb">
 							<ul class="breadcrumb">
 								<li class="breadcrumb-item active" aria-current="page"><span><a class='btn btn-gradient-info btn-sm btn-rounded'
-									href="searchunits.php"><< Back</a> </span>
+									href="searchunits.php<?php
+                    // Build back navigation URL with search parameters
+                    if (isset($_GET['from_search']) && $_GET['from_search'] == '1') {
+                        $back_params = [];
+                        if (isset($_GET['unit_status'])) $back_params['unit_status'] = $_GET['unit_status'];
+                        $back_params['restore_search'] = '1';
+                        echo '?' . http_build_query($back_params);
+                    }
+                ?>"><< Back</a> </span>
 								</li>
 							</ul>
 						</nav>

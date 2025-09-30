@@ -28,29 +28,43 @@ try {
     $stats = [
         'active_instruments' => 0,
         'expired_instruments' => 0,
-        'due_soon_instruments' => 0
+        'due_soon_instruments' => 0,
+        'pending_instruments' => 0
     ];
-    
+
     // Debug logging
     error_log("DEBUG: Starting instrument statistics query");
-    
+
+    // Determine vendor filtering for vendor users
+    $vendorCondition = '';
+    if (isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'vendor' &&
+        isset($_SESSION['vendor_id']) && $_SESSION['vendor_id'] > 0) {
+        $vendorCondition = ' AND vendor_id = ' . intval($_SESSION['vendor_id']);
+        error_log("DEBUG: Applying vendor filter for vendor_id: " . $_SESSION['vendor_id']);
+    }
+
     // Query for active instruments
     $stats['active_instruments'] = intval(DB::queryFirstField(
-        "SELECT COUNT(*) FROM instruments WHERE instrument_status = 'Active'"
+        "SELECT COUNT(*) FROM instruments WHERE instrument_status = 'Active'" . $vendorCondition
     ));
-    
+
     // Query for expired instruments (calibration due date passed) - all instruments regardless of status
     $stats['expired_instruments'] = intval(DB::queryFirstField(
-        "SELECT COUNT(*) FROM instruments WHERE calibration_due_on < CURDATE()"
+        "SELECT COUNT(*) FROM instruments WHERE calibration_due_on < CURDATE()" . $vendorCondition
     ));
-    
+
     // Query for instruments due for calibration soon (within 30 days)
     $stats['due_soon_instruments'] = intval(DB::queryFirstField(
-        "SELECT COUNT(*) FROM instruments 
-         WHERE calibration_due_on BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY) 
-         AND instrument_status = 'Active'"
+        "SELECT COUNT(*) FROM instruments
+         WHERE calibration_due_on BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+         AND instrument_status = 'Active'" . $vendorCondition
     ));
-    
+
+    // Query for pending instruments (waiting for checker approval)
+    $stats['pending_instruments'] = intval(DB::queryFirstField(
+        "SELECT COUNT(*) FROM instruments WHERE instrument_status = 'Pending'" . $vendorCondition
+    ));
+
     error_log("DEBUG: Instrument stats = " . json_encode($stats));
     
     // Return JSON response

@@ -60,8 +60,18 @@ else
         echo "<td>".$row['test_performed_by']."</td>";
         echo "<td>".$row['test_type']."</td>";
 
-        echo "<td><a href='managemappingdetails.php?mapping_id=".$row["mapping_id"]."&unit_id=".$_GET['unitid']."&equip_id=".$row["equipment_id"]."&test_id=".$row['test_id']."&m=r' class='btn btn-sm btn-gradient-danger btn-icon-text' role='button' aria-pressed='true'>View</a>&nbsp;&nbsp;
-<a href='managemappingdetails.php?mapping_id=".$row["mapping_id"]."&unit_id=".$_GET['unitid']."&equip_id=".$row["equipment_id"]."&test_id=".$row['test_id']."&m=m' class='btn btn-sm btn-gradient-info btn-icon-text' role='button' aria-pressed='true'>Modify</a> </td>";
+        // Build search parameters for back navigation
+        $search_params = http_build_query([
+            'unitid' => $_GET['unitid'] ?? '',
+            'dept_id' => $_GET['dept_id'] ?? '',
+            'equipment_type' => $_GET['equipment_type'] ?? '',
+            'equipment_id' => $_GET['equipment_id'] ?? '',
+            'etv_mapping_filter' => $_GET['etv_mapping_filter'] ?? '',
+            'from_search' => '1'
+        ]);
+
+        echo "<td><a href='managemappingdetails.php?mapping_id=".$row["mapping_id"]."&unit_id=".$_GET['unitid']."&equip_id=".$row["equipment_id"]."&test_id=".$row['test_id']."&m=r&" . $search_params . "' class='btn btn-sm btn-gradient-danger btn-icon-text' role='button' aria-pressed='true'>View</a>&nbsp;&nbsp;
+<a href='managemappingdetails.php?mapping_id=".$row["mapping_id"]."&unit_id=".$_GET['unitid']."&equip_id=".$row["equipment_id"]."&test_id=".$row['test_id']."&m=m&" . $search_params . "' class='btn btn-sm btn-gradient-info btn-icon-text' role='button' aria-pressed='true'>Edit</a> </td>";
         echo "</tr>";
         $count++;
     }
