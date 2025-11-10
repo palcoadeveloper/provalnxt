@@ -279,7 +279,7 @@ e.preventDefault();
               <h3 class="page-title"> Search Tests</h3>
               <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                  <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="managetestdetails.php?m=a">+ Add Test</a></li>
+                  <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="managetestdetails.php?m=a"><i class="mdi mdi-plus-circle"></i> Add Test</a></li>
                   
                 </ol>
               </nav>
@@ -367,7 +367,9 @@ e.preventDefault();
                
                       
                       
-                      <input type="submit" id="searchusers" class="btn btn-gradient-original-success mr-2"/>
+                      <button type="submit" id="searchusers" class="btn btn-gradient-primary btn-icon-text">
+                        <i class="mdi mdi-magnify"></i> Search Tests
+                      </button>
                       
                     </form>
                   </div>
@@ -381,7 +383,11 @@ e.preventDefault();
                 <h4 class="card-title">Result</h4>
                     <div class="table-responsive-xl">
 	<div id="displayresults">
-	<p class="card-description">Select the criteria and hit the Submit button.</p>
+        <div class="text-center text-muted py-4">
+                        <i class="mdi mdi-filter-variant icon-lg mb-2"></i>
+                        <p> Use the search filters above to find tests</p>
+                      </div>
+   
 	</div>
 	</div>
                 </div>

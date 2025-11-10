@@ -1017,7 +1017,7 @@ $(document).ready(function(){
                         <nav aria-label="breadcrumb">
                             <ul class="breadcrumb">
                                 <li class="breadcrumb-item active" aria-current="page"><span><a class='btn btn-gradient-info btn-sm btn-rounded'
-                                        href="manageprotocols.php"><< Back</a> </span>
+                                        href="manageprotocols.php"><i class="mdi mdi-arrow-left"></i> Back</a> </span>
                                 </li>
                             </ul>
                         </nav>
@@ -1061,7 +1061,9 @@ $(document).ready(function(){
                                     <td><input name="upload_file_other" id="upload_file_other" type="file" class="form-control-file" /></td>
                                   </tr>
                                   <tr>
-                                    <td colspan="2"><input id="btnUploadDocs" class="btn btn-success" type="submit" value="Upload Document" /></td>
+                                    <td colspan="2"><button id="btnUploadDocs" class="btn btn-gradient-success btn-icon-text" type="submit">
+                                      <i class="mdi mdi-cloud-upload"></i> Upload Document
+                                    </button></td>
                                   </tr>
                                 </table>
                                 <br />
@@ -1178,10 +1180,13 @@ $(document).ready(function(){
 
                                             <tr>
                                                 <td colspan="4">
-                                                    <div class="d-flex justify-content-center"> 
-                                                        <input id="btnSubmit" type="submit" class='btn btn-success btn-small' value='Approve' />
-                                                        &nbsp;&nbsp;
-                                                        <input id="btnSendBack" type="button" class='btn btn-danger btn-small' value='Send Back' />
+                                                    <div class="d-flex justify-content-center">
+                                                        <button id="btnSubmit" type="submit" class='btn btn-gradient-success btn-icon-text mr-2'>
+                                                            <i class="mdi mdi-check-circle"></i> Approve
+                                                        </button>
+                                                        <button id="btnSendBack" type="button" class='btn btn-gradient-danger btn-icon-text'>
+                                                            <i class="mdi mdi-arrow-left-circle"></i> Send Back
+                                                        </button>
                                                     </div>
                                                 </td>
                                             </tr>

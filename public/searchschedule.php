@@ -88,7 +88,7 @@ require_once('core/config/db.class.php');
          
          
 			          <div class="page-header">
-              <h3 class="page-title">Search Schedule - Validation Protocols </h3>
+              <h3 class="page-title">Search Schedules </h3>
              
             </div>
             
@@ -160,7 +160,9 @@ require_once('core/config/db.class.php');
   </div>
   
  
-  <button class="btn btn-gradient-original-success" type="submit">Search Schedule</button>
+  <button class="btn btn-gradient-primary btn-icon-text" type="submit">
+    <i class="mdi mdi-magnify"></i> Search Schedule
+  </button>
 </form>
       
           
@@ -286,7 +288,10 @@ require_once('core/config/db.class.php');
                     
                     <div class="table-responsive-xl">
                 <div id="displayresults">
-                <p class="card-description"> Select the criteria and hit the Submit button. </p>
+                <div class="text-center text-muted py-4">
+                        <i class="mdi mdi-filter-variant icon-lg mb-2"></i>
+                        <p> Use the search filters above to find schedules</p>
+                      </div>
                 
                 </div>
                 </div>

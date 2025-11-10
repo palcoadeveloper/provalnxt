@@ -318,27 +318,27 @@ function cleanFilePath($filePath) {
 
 if ($_SESSION['logged_in_user'] == "employee" and $_SESSION['department_id'] == 8)
 {
-    
-    $output= "<table class='table table-bordered'><tr><th>Raw Data File</th><th>Master Certificate File</th><th>Certificate File</th><th>Other Document File</th><th>Uploaded By</th></tr>";
+
+    $output= "<table class='table table-hover table-sm'><thead><tr><th>Raw Data File</th><th>Master Certificate File</th><th>Certificate File</th><th>Other Document File</th><th>Uploaded By</th></tr></thead><tbody>";
 }
 else
 {
-    $output= "<table class='table table-bordered'><tr><th>Raw Data File</th><th>Master Certificate File</th><th>Certificate File</th><th>Other Document File</th><th>Uploaded By</th><th>Action</th></tr>";
-    
+    $output= "<table class='table table-hover table-sm'><thead><tr><th>Raw Data File</th><th>Master Certificate File</th><th>Certificate File</th><th>Other Document File</th><th>Uploaded By</th><th>Action</th></tr></thead><tbody>";
+
 }
 
 if(empty($results))
 {
     if ($_SESSION['logged_in_user'] == "employee" and $_SESSION['department_id'] == 8)
     {
-        $output=$output. "<tr><td colspan='5'>Nothing to display.</td></tr>";
+        $output=$output. "<tr><td colspan='5' style='text-align: center; color: #6c757d;'>No files uploaded yet.</td></tr>";
     }
     else
     {
-        $output=$output. "<tr><td colspan='6'>Nothing to display.</td></tr>";
+        $output=$output. "<tr><td colspan='6' style='text-align: center; color: #6c757d;'>No files uploaded yet.</td></tr>";
     }
-    
-   
+
+
 }
 else {
     
@@ -395,10 +395,10 @@ else {
     }
     
     
-    
-    
+
+
 }
-$output=$output."</table>";
+$output=$output."</tbody></table>";
 
 // Output template section first (for vendors), then uploaded files table
 echo $template_output . $output;

@@ -44,7 +44,7 @@ $filesToUpdate = [
     'manageunitdetails.php',
     'manageuserdetails.php',
     'updatetaskdetails.php',
-    'showaudittrail.php',
+    'searchaudittrail.php',
     'manageroutinetests.php',
     'searchvendors.php',
     'manageerfmappingdetails.php',

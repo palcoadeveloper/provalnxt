@@ -32,7 +32,7 @@
                                 <td colspan="3">
                                   <!-- Dynamic file input and dropdowns container -->
                                   <div id="dynamicInputsContainer"></div>
-                                  <button class="btn btn-success btn-sm" type="button" id="addEntryBtn">Add Training Details</button>
+                                  <button class="btn btn-gradient-success btn-icon-text btn-sm" type="button" id="addEntryBtn"><i class="mdi mdi-plus-circle"></i> Add Training Details</button>
                                 </td>
                               </tr>
 
@@ -126,7 +126,10 @@
 
                               <tr>
                                 <td colspan="4">
-                                  <div class="d-flex justify-content-center"><button id="btnSubmitData" class='upload-check-required btn btn-primary btn-small'>Submit</button></div>
+                                  <div class="d-flex justify-content-center">
+                                    <button id="btnSubmitData" class='btn btn-gradient-primary'><i class="mdi mdi-check-circle"></i> Start Validation Study</button>
+                                    
+                                </div>
                                 </td>
                               </tr>
                             </table>

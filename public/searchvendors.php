@@ -302,7 +302,7 @@ require_once 'core/config/db.class.php';
 	<h3 class="page-title">Search Vendors</h3>
 	<nav aria-label="breadcrumb">
 	<ol class="breadcrumb">
-	<li class="breadcrumb-item"><a href='managevendordetails.php?m=a' class='btn btn-gradient-info btn-sm btn-rounded' role='button' aria-pressed='true'>+ Add Vendor</a> </li>
+	<li class="breadcrumb-item"><a href='managevendordetails.php?m=a' class='btn btn-gradient-info btn-sm btn-rounded' role='button' aria-pressed='true'><i class="mdi mdi-plus-circle"></i> Add Vendor</a> </li>
 	</ol>
 	</nav>
 	</div>
@@ -362,7 +362,9 @@ require_once 'core/config/db.class.php';
 	</div>
 	</div>
 	
-	<input type="submit" id="searchusers" class="btn btn-gradient-original-success mr-2" />
+	<button type="submit" id="searchusers" class="btn btn-gradient-primary btn-icon-text">
+		<i class="mdi mdi-magnify"></i> Search Vendors
+	</button>
 	</form>
 	</div>
 	</div>
@@ -374,7 +376,10 @@ require_once 'core/config/db.class.php';
 
 	<div class="table-responsive-xl">
 	<div id="displayresults">
-	<p class="card-description">Select the criteria and hit the Submit button.</p>
+	<div class="text-center text-muted py-4">
+                        <i class="mdi mdi-filter-variant icon-lg mb-2"></i>
+                        <p> Use the search filters above to find vendors</p>
+                      </div>
 	</div>
 	</div>
 	</div>

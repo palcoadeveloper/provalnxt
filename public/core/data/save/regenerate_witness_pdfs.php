@@ -214,15 +214,21 @@ function shouldRegeneratePDFs($testWfId) {
             return false;
         }
         
-        error_log("DEBUG: Test conditions - Stage: " . $conditions['test_wf_current_stage'] . 
-                  ", PaperOnGlass: " . ($conditions['paper_on_glass_enabled'] ?? 'NULL') . 
-                  ", DataEntryMode: " . ($conditions['data_entry_mode'] ?? 'NULL'));
-        
-        $result = ($conditions['test_wf_current_stage'] == 2 && 
-                   ($conditions['paper_on_glass_enabled'] ?? 'No') == 'Yes' && 
-                   ($conditions['data_entry_mode'] ?? '') == 'online');
-        
-        error_log("DEBUG: Conditions check result: " . ($result ? 'PASS' : 'FAIL'));
+        // Get the actual data_entry_mode value (keep NULL as is for strict checking)
+        $dataEntryMode = $conditions['data_entry_mode'] ?? null;
+
+        error_log("DEBUG: Test conditions - Stage: " . $conditions['test_wf_current_stage'] .
+                  ", PaperOnGlass: " . ($conditions['paper_on_glass_enabled'] ?? 'NULL') .
+                  ", DataEntryMode: " . ($dataEntryMode !== null ? $dataEntryMode : 'NULL'));
+
+        // STRICT CHECK: Fail if data_entry_mode is NULL (not selected)
+        // This enforces explicit mode selection before PDF regeneration
+        $result = ($conditions['test_wf_current_stage'] == 2 &&
+                   ($conditions['paper_on_glass_enabled'] ?? 'No') == 'Yes' &&
+                   $dataEntryMode === 'online'); // Strict equality - fails on NULL or 'offline'
+
+        error_log("DEBUG: Conditions check result: " . ($result ? 'PASS' : 'FAIL') .
+                  ($dataEntryMode === null ? ' (data_entry_mode is NULL - mode not selected)' : ''));
         return $result;
                 
     } catch (Exception $e) {

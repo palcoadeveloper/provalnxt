@@ -297,7 +297,7 @@ try {
               <h3 class="page-title"> Search ERF Mappings</h3>
               <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                  <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="manageerfmappingdetails.php?m=a">+ Add ERF Mapping</a></li>
+                  <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="manageerfmappingdetails.php?m=a"><i class="mdi mdi-plus-circle"></i> Add ERF Mapping</a></li>
                 </ol>
               </nav>
             </div>
@@ -460,7 +460,9 @@ try {
                       
                       <div class="form-row">
                         <div class="form-group col-md-12">
-                          <input type="submit" id="searchmappings" class="btn btn-gradient-original-success mr-2" value="Search ERF Mappings"/>
+                          <button type="submit" id="searchmappings" class="btn btn-gradient-primary btn-icon-text">
+                            <i class="mdi mdi-magnify"></i> Search ERF Mappings
+                          </button>
                         </div>
                       </div>
                       
@@ -476,7 +478,10 @@ try {
                 <h4 class="card-title">Results</h4>
                     <div class="table-responsive-xl">
 	<div id="displayresults">
-	<p class="card-description">Select the criteria and hit the Search ERF Mappings button.</p>
+	<div class="text-center text-muted py-4">
+                        <i class="mdi mdi-filter-variant icon-lg mb-2"></i>
+                        <p>Use the search filters above to find Equipment-Room-Filter (ERF) mappings</p>
+                      </div>
 	</div>
 	</div>
                 </div>

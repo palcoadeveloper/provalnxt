@@ -345,6 +345,15 @@ e.preventDefault();
             background-color: rgba(255, 193, 7, 0.15) !important;
         }
     }
+
+    /* Fix vertical scrollbar on equipment stats cards */
+    .equipment-stats-tile {
+        overflow: hidden !important;
+    }
+
+    .equipment-stats-tile .card-body {
+        overflow: hidden !important;
+    }
     </style>
 
   </head>
@@ -366,7 +375,7 @@ e.preventDefault();
               <h3 class="page-title"> Search Equipments</h3>
               <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                  <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="manageequipmentdetails.php?m=a">+ Add Equipment</a></li>
+                  <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="manageequipmentdetails.php?m=a"><i class="mdi mdi-plus-circle"></i> Add Equipment</a></li>
                 </ol>
               </nav>
             </div>
@@ -606,7 +615,9 @@ e.preventDefault();
                
                       
                       
-                      <input type="submit" id="searchusers" class="btn btn-gradient-original-success mr-2"/>
+                      <button type="submit" id="searchusers" class="btn btn-gradient-primary btn-icon-text">
+                        <i class="mdi mdi-magnify"></i> Search Equipments
+                      </button>
                       
                     </form>
                   </div>
@@ -620,7 +631,10 @@ e.preventDefault();
                 <h4 class="card-title">Result</h4>
                     <div class="table-responsive-xl">
 	<div id="displayresults">
-	<p class="card-description">Select the criteria and hit the Submit button.</p>
+	<div class="text-center text-muted py-4">
+                        <i class="mdi mdi-filter-variant icon-lg mb-2"></i>
+                        <p> Use the search filters above to find equipments</p>
+                      </div>
 	</div>
 	</div>
                 </div>

@@ -563,7 +563,7 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                                                     echo '?' . http_build_query($back_params);
                                                 }
                                             ?>">
-                                            << Back</a> </span>
+                                            <i class="mdi mdi-arrow-left"></i> Back</a> </span>
                                 </li>
                             </ul>
                         </nav>
@@ -1045,11 +1045,11 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 
                                             if ($_GET['m'] == 'm') {
                                             ?>
-                                                <button type="button" id="modify_equipment" class='btn btn-gradient-primary mr-2'>Modify Equipment</button>
+                                                <button type="button" id="modify_equipment" class='btn btn-gradient-success btn-icon-text'><i class="mdi mdi-content-save"></i> Modify Equipment</button>
                                             <?php
                                             } else if ($_GET['m'] == 'a') {
                                             ?>
-                                                <button type="button" id="add_equipment" class='btn btn-gradient-primary mr-2'>Add Equipment</button>
+                                                <button type="button" id="add_equipment" class='btn btn-gradient-primary btn-icon-text'><i class="mdi mdi-plus-circle"></i> Add Equipment</button>
                                             <?php
                                             }
 

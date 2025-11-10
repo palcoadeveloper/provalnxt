@@ -576,7 +576,7 @@ try {
                         $back_params['restore_search'] = '1';
                         echo '?' . http_build_query($back_params);
                     }
-                ?>"><< Back</a> </span>
+                ?>"><i class="mdi mdi-arrow-left"></i> Back</a> </span>
 								</li>
 							</ul>
 						</nav>
@@ -934,12 +934,12 @@ try {
                   
                   if($_GET['m']=='m'){
                       ?>
-                  <button  id="modify_user"	class='btn btn-gradient-primary mr-2'>Modify User</button>    
+                  <button  id="modify_user"	class='btn btn-gradient-success btn-icon-text'><i class="mdi mdi-content-save"></i> Modify User</button>    
                   <?php     
                   }
                   else if($_GET['m']=='a'){
                       ?>
-                  <button  id="add_user"	class='btn btn-gradient-primary mr-2'>Add User</button>    
+                  <button  id="add_user"	class='btn btn-gradient-primary btn-icon-text'><i class="mdi mdi-account-plus"></i> Add User</button>    
                   <?php  
                   }
                   

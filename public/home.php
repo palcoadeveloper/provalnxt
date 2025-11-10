@@ -343,14 +343,21 @@ if (OptimizedSessionValidation::isEmployee() && OptimizedSessionValidation::hasR
         
         // Get routine test schedule requests count
         $routineScheduleRequests = DB::queryFirstField(
-            "SELECT COUNT(*) FROM tbl_routine_test_wf_schedule_requests WHERE schedule_request_status = '2' AND schedule_year != '0' AND unit_id = %i", 
+            "SELECT COUNT(*) FROM tbl_routine_test_wf_schedule_requests WHERE schedule_request_status = '2' AND schedule_year != '0' AND unit_id = %i",
             $unitId
         );
-        
+
+        // Get termination requests pending QA Head approval (stage 98B)
+        $terminationRequests = DB::queryFirstField(
+            "SELECT COUNT(*) FROM tbl_val_wf_tracking_details WHERE val_wf_current_stage = '98B' AND unit_id = %i",
+            $unitId
+        );
+
         renderDashboardCard('danger', 'QA Head Approval Pending', $qaApprovalPending, 'Pending for QA Head approval', 'mdi-diamond');
         renderDashboardCard('secondary', 'Validation Schedule Requests Pending', $validationScheduleRequests, 'Validation protocol schedule requests pending', 'mdi-calendar-clock');
         renderDashboardCard('primary', 'Routine Test Schedule Requests Pending', $routineScheduleRequests, 'QA approval needed for routine test schedules', 'mdi-calendar-check');
-        
+        renderDashboardCard('warning', 'Pending Termination Requests', $terminationRequests, 'Termination requests awaiting QA Head approval', 'mdi-alert-circle');
+
     } catch (Exception $e) {
         error_log("Dashboard error for QA Head: " . $e->getMessage());
         renderDashboardCard('secondary', 'Dashboard Error', 0, 'Unable to load QA Head data', 'mdi-alert');
@@ -383,13 +390,20 @@ if (OptimizedSessionValidation::isEmployee() && OptimizedSessionValidation::inDe
         
         // Get routine test schedule requests count for Engineering approval
         $routineScheduleRequests = DB::queryFirstField(
-            "SELECT COUNT(*) FROM tbl_routine_test_wf_schedule_requests WHERE schedule_request_status = '1' AND schedule_year != '0' AND unit_id = %i", 
+            "SELECT COUNT(*) FROM tbl_routine_test_wf_schedule_requests WHERE schedule_request_status = '1' AND schedule_year != '0' AND unit_id = %i",
             $unitId
         );
-        
+
+        // Get termination requests pending Engineering Dept Head review (stage 98A)
+        $terminationRequests = DB::queryFirstField(
+            "SELECT COUNT(*) FROM tbl_val_wf_tracking_details WHERE val_wf_current_stage = '98A' AND unit_id = %i",
+            $unitId
+        );
+
         renderDashboardCard('secondary', 'Validation Schedule Requests Pending Approval', $validationScheduleRequests, 'Engineering approval needed for schedule requests', 'mdi-calendar-clock');
         renderDashboardCard('primary', 'Routine Test Schedule Requests Pending', $routineScheduleRequests, 'Engineering approval needed for routine test schedules', 'mdi-calendar-check');
-        
+        renderDashboardCard('warning', 'Pending Termination Requests', $terminationRequests, 'Termination requests awaiting Engineering Dept Head review', 'mdi-alert-circle');
+
     } catch (Exception $e) {
         error_log("Dashboard error for Engineering Head: " . $e->getMessage());
         renderDashboardCard('secondary', 'Dashboard Error', 0, 'Unable to load Engineering Head data', 'mdi-alert');

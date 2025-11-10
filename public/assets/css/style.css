@@ -4371,15 +4371,17 @@ fieldset:disabled a.btn {
 
 .btn-lg, .btn-group-lg > .btn {
   padding: 1rem 3rem;
-  font-size: 0.875rem;
+  font-size: 1.125rem;
   line-height: 1.5;
   border-radius: 0.1875rem; }
 
 .btn-sm, .btn-group-sm > .btn {
-  padding: 0.5rem 0.81rem;
-  font-size: 0.875rem;
+  padding: 6px 12px;
+  font-size: 0.75rem;
   line-height: 1.5;
-  border-radius: 0.1875rem; }
+  border-radius: 0.1875rem;
+  min-height: auto;
+  height: auto; }
 
 .btn-block {
   display: block;

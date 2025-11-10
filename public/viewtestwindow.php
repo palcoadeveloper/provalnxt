@@ -1038,25 +1038,25 @@ function adduserremark(ur, up) {
                       <tr>
 
                         <td class="align-text-top" colspan="4">
-                          <h6 class="text-muted ">Upload
+                          <h6 class="text-muted ">Uploaded
                             Documents</h6>
                           <br />
 
 
 
-
+<!--
                           <div class="d-flex justify-content-center">
                             <div id="prgDocsUpload" class="spinner-grow text-primary" style="width: 3rem; height: 3rem;" role="status" style="display:none;">
                               <span class="sr-only">Loading...</span>
                             </div>
-                          </div>
+                          </div> -->
                           <form id="uploadDocForm" enctype="multipart/form-data">
                             <input type="hidden" name="csrf_token" value="<?php echo $csrf_token_for_upload; ?>">
                             <input type="hidden" id="test_wf_id" name="test_wf_id" value="<?php echo htmlspecialchars($test_val_wf_id, ENT_QUOTES, 'UTF-8'); ?>" <?php echo (!empty(secure_get('mode', 'string'))) ? 'disabled' : ''; ?> /> 
                             <input type="hidden" id="val_wf_id" name="val_wf_id" value="<?php echo htmlspecialchars(secure_get('val_wf_id', 'string'), ENT_QUOTES, 'UTF-8'); ?>" />
 
-                            <div class="text-center">
-                              <table class="table table-bordered">
+                      <!--       <div class="text-center">
+                             <table class="table table-bordered">
 
                                 <tr>
                                   <td><label>Raw Data File</label>
@@ -1094,7 +1094,7 @@ function adduserremark(ur, up) {
                                 </tr>
 
 
-                              </table>
+                              </table> 
 
 
 
@@ -1103,7 +1103,7 @@ function adduserremark(ur, up) {
 
 
                               <br />
-                            </div>
+                            </div> -->
 
 
 
@@ -1172,13 +1172,13 @@ function adduserremark(ur, up) {
                                                                         {
                                                                       ?>
 
-                                <button id="vendorsubmitassign" class='upload-check-required btn btn-primary btn-small'>Submit</button>
+                                <button id="vendorsubmitassign" class='upload-check-required btn btn-gradient-primary btn-icon-text'><i class="mdi mdi-send"></i> Submit</button>
 
                               <?php
                                                                         } else if ($current_wf_stage == '3B' or $current_wf_stage == '4B') // Task is re-assigned
                                                                         {
                               ?>
-                                <button id="vendorsubmitreassign" class='upload-check-required btn btn-primary btn-small'>Submit</button>
+                                <button id="vendorsubmitreassign" class='upload-check-required btn btn-gradient-primary btn-icon-text'><i class="mdi mdi-send"></i> Submit</button>
 
 
                               <?php
@@ -1190,16 +1190,16 @@ function adduserremark(ur, up) {
                                                                           //$text = "<script>document.writeln(document.getElementById('user_remark').innerHTML);</script>";
                                                                           //echo $text;
                               ?>
-                                <button id="enggsubmit" class='upload-check-required btn btn-primary btn-small'>Submit</button>
+                                <button id="enggsubmit" class='upload-check-required btn btn-gradient-primary btn-icon-text'><i class="mdi mdi-send"></i> Submit</button>
 
 
                               <?php
                                                                         } else if ($current_wf_stage == '2') // Task is assigned
                                                                         {
                               ?>
-                                <button id="enggapprove" class='upload-check-required btn btn-primary btn-small'>Approve</button>
+                                <button id="enggapprove" class='upload-check-required btn btn-gradient-success btn-icon-text'><i class="mdi mdi-check-circle"></i> Approve</button>
                                 &nbsp;&nbsp;
-                                <button id="enggreject" class='upload-check-required btn btn-danger btn-small'>Reject</button>
+                                <button id="enggreject" class='upload-check-required btn btn-gradient-danger btn-icon-text'><i class="mdi mdi-close-circle"></i> Reject</button>
 
 
                               <?php
@@ -1213,17 +1213,16 @@ function adduserremark(ur, up) {
                                                                         } else if ($current_wf_stage == '4A') // Task is re-assigned
                                                                         {
                               ?>
-                                <button id="enggapproval1" class='upload-check-required btn btn-primary btn-small'>Submit for
-                                  Approval I</button>
+                                <button id="enggapproval1" class='upload-check-required btn btn-gradient-primary btn-icon-text'><i class="mdi mdi-send"></i> Submit for Approval I</button>
                               <?php
                                                                         }
                                                                       } else if ($_SESSION['logged_in_user'] == "employee" and $_SESSION['department_id'] == 8 and empty(secure_get('mode', 'string'))) // Logged in user is from the QA team
                                                                       {
 
                               ?>
-                              <button id="qaapprove" class='upload-check-required btn btn-primary btn-small'>Approve</button>
+                              <button id="qaapprove" class='upload-check-required btn btn-gradient-success btn-icon-text'><i class="mdi mdi-check-circle"></i> Approve</button>
                               &nbsp;&nbsp;
-                              <button id="qareject" class='upload-check-required btn btn-danger btn-small'>Reject</button>
+                              <button id="qareject" class='upload-check-required btn btn-gradient-danger btn-icon-text'><i class="mdi mdi-close-circle"></i> Reject</button>
                             <?php
                                                                       }
 

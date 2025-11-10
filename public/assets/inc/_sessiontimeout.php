@@ -1,15 +1,15 @@
 <div id="sessionnotifications"
 	class="alert alert-warning alert-dismissible fade show" role="alert"
-	style="display: none">
+	style="display: none; position: relative !important; padding-right: 4rem !important;">
 	Your have been inactive for more than <span id="inactivetime"></span>
 	minute(s). Click
-	<button type="button" class="btn btn-gradient-dark btn-sm"
-		onclick="continueSession()">Continue</button>
+	<button type="button" class="btn btn-sm"
+		onclick="continueSession()" style="background: linear-gradient(to right, #1e88e5, #1565c0) !important; color: white !important; border: none !important;">Continue</button>
 	else the session will timeout in next <span id="remainingtime"></span>
 	minutes.
 	<button type="button" class="close" aria-label="Close"
-		onclick="hideSessionWarning()">
-		<span aria-hidden="true">&times;</span>
+		onclick="hideSessionWarning()" style="background: none !important; border: none !important; background-color: transparent !important; padding: 0.75rem 1.25rem; box-shadow: none !important; color: #856404 !important; font-size: 1.5rem !important; opacity: 1 !important; position: absolute !important; right: 20px !important; top: 50% !important; transform: translateY(-50%) !important;">
+		<span aria-hidden="true" style="color: inherit !important;">&times;</span>
 	</button>
 </div>
 
@@ -531,7 +531,7 @@ class SessionTimeoutManager {
             // Console output
             const prefix = `[SessionTimer ${timestamp}] [${category}]`;
             if (data) {
-                console.log(`${prefix} ${message}`, data);
+               console.log(`${prefix} ${message}`, data);
             } else {
                 console.log(`${prefix} ${message}`);
             }

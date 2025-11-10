@@ -44,8 +44,8 @@ if (session_status() === PHP_SESSION_NONE) {
         </div>
 
         <div class="modal-footer">
-          <button type="button" id="mdlbtnclose" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <button type="submit" id="mdlbtnsubmit" class="btn btn-primary">Proceed</button>
+          <button type="button" id="mdlbtnclose" class="btn btn-gradient-dark btn-icon-text" data-dismiss="modal"><i class="mdi mdi-close"></i> Close</button>
+          <button type="submit" id="mdlbtnsubmit" class="btn btn-gradient-primary btn-icon-text"><i class="mdi mdi-check"></i> Proceed</button>
         </div>
       </form>
 

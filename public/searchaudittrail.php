@@ -176,101 +176,7 @@ require_once 'core/config/db.class.php';
         padding: 16px 24px !important;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
     }
-    
-    /* Form Submit Button Enhancement */
-    .forms-sample .btn-gradient-primary {
-        border-radius: 25px !important;
-        font-size: 0.9rem !important;
-        padding: 12px 24px !important;
-        font-weight: 600 !important;
-        transition: all 0.3s ease !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.8px !important;
-        box-shadow: 0 3px 6px rgba(185, 103, 219, 0.3) !important;
-        border: none !important;
-        background: linear-gradient(135deg, #b967db 0%, #9a55ff 100%) !important;
-        position: relative !important;
-        overflow: hidden !important;
-    }
-    
-    .forms-sample .btn-gradient-primary:before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-        transition: left 0.5s;
-    }
-    
-    .forms-sample .btn-gradient-primary:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 16px rgba(185, 103, 219, 0.4) !important;
-        background: linear-gradient(135deg, #da8cff 0%, #b967db 100%) !important;
-    }
-    
-    .forms-sample .btn-gradient-primary:hover:before {
-        left: 100%;
-    }
-    
-    .forms-sample .btn-gradient-primary:active {
-        transform: translateY(0) !important;
-        box-shadow: 0 2px 4px rgba(185, 103, 219, 0.4) !important;
-    }
-    
-    .forms-sample .btn-gradient-primary:focus {
-        outline: none !important;
-        box-shadow: 0 0 0 3px rgba(185, 103, 219, 0.3) !important;
-    }
-    
-    /* Export Button Enhancement */
-    .forms-sample .btn-gradient-success {
-        border-radius: 25px !important;
-        font-size: 0.9rem !important;
-        padding: 12px 24px !important;
-        font-weight: 600 !important;
-        transition: all 0.3s ease !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.8px !important;
-        box-shadow: 0 3px 6px rgba(40, 167, 69, 0.3) !important;
-        border: none !important;
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
-        position: relative !important;
-        overflow: hidden !important;
-    }
-    
-    .forms-sample .btn-gradient-success:before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-        transition: left 0.5s;
-    }
-    
-    .forms-sample .btn-gradient-success:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4) !important;
-        background: linear-gradient(135deg, #32d667 0%, #28a745 100%) !important;
-    }
-    
-    .forms-sample .btn-gradient-success:hover:before {
-        left: 100%;
-    }
-    
-    .forms-sample .btn-gradient-success:active {
-        transform: translateY(0) !important;
-        box-shadow: 0 2px 4px rgba(40, 167, 69, 0.4) !important;
-    }
-    
-    .forms-sample .btn-gradient-success:focus {
-        outline: none !important;
-        box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.3) !important;
-    }
-    
+
     /* Form Spacing and Layout */
     .forms-sample {
         margin-bottom: 1.5rem !important;
@@ -693,9 +599,13 @@ $("#start_to").datepicker({
   </div>      
                       
                       
-                      <input type="submit" id="generatereport" class="btn btn-gradient-original-success mr-2" value="Generate Report"/>
+                      <button type="submit" id="generatereport" class="btn btn-gradient-primary btn-icon-text mr-2">
+                        <i class="mdi mdi-file-chart"></i> Generate Report
+                      </button>
 
-                      <input type="button" id="downloadreport" class="btn btn-gradient-original-danger mr-2" value="Export Report (PDF)"/>
+                      <button type="button" id="downloadreport" class="btn btn-gradient-danger btn-icon-text mr-2">
+                        <i class="mdi mdi-file-pdf"></i> Export Report (PDF)
+                      </button>
                     </form>
                   </div>
                 </div>
@@ -708,7 +618,10 @@ $("#start_to").datepicker({
                 <h4 class="card-title">Result</h4>
                     
                     <div class="table-responsive-xl">
-                <div id="displayresults"> <p class="card-description"> Select the criteria and hit the Generate Report/Export Report button. </p></div>
+                <div id="displayresults"> <div class="text-center text-muted py-4">
+                        <i class="mdi mdi-filter-variant icon-lg mb-2"></i>
+                        <p> Use the search filters above to generate a report</p>
+                      </div></div>
                 </div>
                     
                     

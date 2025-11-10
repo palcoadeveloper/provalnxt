@@ -128,14 +128,24 @@ try {
         
         // Update workflow stage and deviation in parallel where possible
         DB::query(
-            "UPDATE tbl_val_wf_tracking_details SET 
-             val_wf_current_stage='5', stage_assigned_datetime=%?, actual_wf_end_datetime=%? 
+            "UPDATE tbl_val_wf_tracking_details SET
+             val_wf_current_stage='5', stage_assigned_datetime=%?, actual_wf_end_datetime=%?
              WHERE val_wf_id=%s",
             $currentTime,
             $currentTime,
             $cleanData['val_wf_id']
         );
-        
+
+        // Insert audit trail for validation-level stage transition to 5
+        DB::insert('audit_trail', [
+            'val_wf_id' => $cleanData['val_wf_id'],
+            'test_wf_id' => '', // Empty for validation-level events
+            'user_id' => $_SESSION['user_id'],
+            'user_type' => $_SESSION['logged_in_user'],
+            'time_stamp' => DB::sqleval("NOW()"),
+            'wf_stage' => '5' // Approved/Completed
+        ]);
+
         // Update deviation remarks if provided
         if (!empty($cleanData['deviation_remark'])) {
             DB::query(

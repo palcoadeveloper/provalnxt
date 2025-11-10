@@ -351,6 +351,7 @@ e.preventDefault();
                           <option value='4'>Pending for Level III approval</option>
                           <option value='5'>Workflow Approved</option>
                           <option value='6'>Workflow Not Initiated</option>
+                          <option value='98'>Terminated</option>
                        
                         </select>
                       </div>
@@ -386,7 +387,9 @@ e.preventDefault();
                
                       
                       
-                      <input type="submit" id="generatereport" class="btn btn-gradient-original-success mr-2" value="Generate Report"/>
+                      <button type="submit" id="generatereport" class="btn btn-gradient-primary btn-icon-text">
+                        <i class="mdi mdi-file-chart"></i> Generate Report
+                      </button>
                       
                     </form>
                   </div>
@@ -400,7 +403,10 @@ e.preventDefault();
                 <h4 class="card-title">Result</h4>
                     
                     <div class="table-responsive-xl">
-                <div id="displayresults"> <p class="card-description"> Select the criteria and hit the Submit button. </p></div>
+                <div id="displayresults"> <div class="text-center text-muted py-4">
+                        <i class="mdi mdi-filter-variant icon-lg mb-2"></i>
+                        <p> Use the search filters above to generate a report</p>
+                      </div></div>
                 </div>
                     
                     

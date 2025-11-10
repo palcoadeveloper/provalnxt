@@ -571,6 +571,9 @@ if (!defined('PROVAL_SECURITY_LOADED')) {
     if (!defined('VALIDATION_DEVIATION_THRESHOLD_DAYS')) {
         define('VALIDATION_DEVIATION_THRESHOLD_DAYS', 1);
     }
+    if (!defined('VALIDATION_ADVANCE_START_LIMIT_DAYS')) {
+        define('VALIDATION_ADVANCE_START_LIMIT_DAYS', 30); // Maximum days in advance to start validation
+    }
     
     // Security initialization complete flag
     if (!defined('PROVAL_SECURITY_INITIALIZED')) {

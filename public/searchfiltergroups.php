@@ -264,7 +264,7 @@ e.preventDefault();
               <h3 class="page-title"> Search Filter Groups </h3>
               <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                  <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="managefiltergroups.php?m=a">+ Add Filter Group</a></li>
+                  <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="managefiltergroups.php?m=a"><i class="mdi mdi-plus-circle"></i> Add Filter Group</a></li>
                 </ol>
               </nav>
             </div>
@@ -323,7 +323,9 @@ e.preventDefault();
                         
                          
                       </div>
-                       <input type="submit" id="searchfiltergroups" class="btn btn-gradient-original-success mr-2" value="Search Filter Groups"/>
+                       <button type="submit" id="searchfiltergroups" class="btn btn-gradient-primary btn-icon-text">
+                         <i class="mdi mdi-magnify"></i> Search Filter Groups
+                       </button>
                           
                     </form>
                   </div>

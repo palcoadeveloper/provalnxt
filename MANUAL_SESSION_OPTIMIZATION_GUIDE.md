@@ -85,7 +85,7 @@ Priority files to manually check and update:
 - `generateplannedvsactualrpt.php`
 - `viewtestdetails.php`
 - `viewprotocol.php`
-- `showaudittrail.php`
+- `searchaudittrail.php`
 
 ## Verification Steps
 

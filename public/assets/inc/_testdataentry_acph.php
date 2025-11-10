@@ -1,23 +1,90 @@
 <?php
 /*
  * ACPH Test - Specific Data Entry Sections
- * 
+ *
  * Custom sections for Air Changes Per Hour (ACPH) validation tests
  * Dynamically fetches filters mapped to the AHU via ERF mapping
  * For each filter, allows 5 readings + cell area + flow rate
  * Appears when paper_on_glass_enabled = 'Yes' and test_id = 1
- * 
+ *
  * Required variables in parent scope:
  * - $result (array containing test data)
  * - $test_val_wf_id (string)
  */
 ?>
 
+<style>
+/* ACPH-specific overrides - HIGH PRIORITY */
+.global-instrument-card .card-header,
+.global-instrument-card > .card-header,
+div.global-instrument-card .card-header {
+  padding: 0.5rem 1.25rem !important;
+  background: #f8f9fa !important;
+  background-color: #f8f9fa !important;
+  background-image: none !important;
+  border-bottom: 1px solid #dee2e6 !important;
+}
+
+.global-instrument-card .card-header h6 {
+  font-size: 0.875rem !important;
+  margin-bottom: 0 !important;
+  color: #5a5c69 !important;
+}
+
+/* Calculations Summary - match Global Instrument styling */
+.card .card-header[style*="background-color: #f8f9fa"],
+div.card > .card-header.py-2 {
+  background: #f8f9fa !important;
+  background-color: #f8f9fa !important;
+  background-image: none !important;
+  padding: 0.5rem 1.25rem !important;
+  border-bottom: 1px solid #dee2e6 !important;
+}
+
+/* Fix global instrument dropdown - increase height and padding */
+#global_instrument_select {
+  color: #212529 !important;
+  -webkit-text-fill-color: #212529 !important;
+  height: auto !important;
+  min-height: 38px !important;
+  padding: 0.5rem 0.75rem !important;
+  line-height: 1.5 !important;
+}
+
+#global_instrument_select option {
+  color: #212529 !important;
+  -webkit-text-fill-color: #212529 !important;
+  padding: 0.5rem !important;
+}
+
+#global_instrument_select option[value=""] {
+  color: #6c757d !important;
+  -webkit-text-fill-color: #6c757d !important;
+}
+
+/* Fix for all reading instrument dropdowns as well */
+.reading-instrument-select,
+.filter-instrument-select {
+  color: #212529 !important;
+  -webkit-text-fill-color: #212529 !important;
+  height: auto !important;
+  min-height: 32px !important;
+  padding: 0.375rem 0.75rem !important;
+  line-height: 1.5 !important;
+}
+
+.reading-instrument-select option,
+.filter-instrument-select option {
+  color: #212529 !important;
+  -webkit-text-fill-color: #212529 !important;
+  padding: 0.375rem !important;
+}
+</style>
+
 <div class="row" style="margin-top: 0.25rem;">
   <div class="col-md-12">
-    <div class="card mb-2">
-      <div class="card-body" style="padding-left: 1.25rem;">
-        <h6 class="card-subtitle mb-3 text-muted">
+    <div class="mb-4">
+        <h6 class="mb-3" style="color: #5a5c69; font-weight: 600;">
           <i class="mdi mdi-fan text-info"></i> ACPH (Air Changes Per Hour) Test Data
         </h6>
         
@@ -39,12 +106,12 @@
           
           <!-- Global Instrument Selection Mode -->
           <div class="card mb-3 global-instrument-card">
-            <div class="card-header" style="background-color: #f8f9fa; border-bottom: 1px solid #dee2e6;">
-              <h6 class="mb-0">
-                <i class="mdi mdi-wrench text-warning"></i> Global Instrument Selection Mode
+            <div class="card-header" style="background-color: #f8f9fa; border-bottom: 1px solid #dee2e6; padding: 0.5rem 1.25rem;">
+              <h6 class="mb-0" style="font-size: 0.875rem; line-height: 1.5;">
+                <i class="mdi mdi-wrench" style="color: #6c757d;"></i> Global Instrument Selection Mode
               </h6>
             </div>
-            <div class="card-body py-2">
+            <div class="card-body py-2" style="background-color: white;">
               <div class="row align-items-center">
                 <div class="col-md-7">
                   <div class="d-flex align-items-center">
@@ -65,19 +132,23 @@
                         <span class="label-text"><strong>Per-Filter</strong></span>
                         <small class="text-muted">Individual control</small>
                       </label>
-                    </div> 
+                    </div>
                   </div>
                 </div>
                 <div class="col-md-5" id="global_instrument_container">
                   <div class="row">
                     <div class="col-12">
-                      <select class="form-control form-control-sm" id="global_instrument_select">
-                        <option value="">Select instrument for ALL readings...</option>
+                      <select class="form-control form-control-sm" id="global_instrument_select" style="color: #495057 !important;">
+                        <option value="" style="color: #6c757d;">Select instrument for ALL readings...</option>
                       </select>
                       <div id="global_instrument_status" class="mt-1"></div>
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <!-- Alert container for no instruments configured -->
+              <div id="no_instruments_alert" style="display: none;">
               </div>
             </div>
           </div>
@@ -89,10 +160,10 @@
           
           <!-- Calculations Summary -->
           <div class="card mt-3">
-            <div class="card-header">
-              <h6 class="mb-0"><i class="mdi mdi-calculator"></i> Calculations Summary</h6>
+            <div class="card-header" style="background-color: #f8f9fa; border-bottom: 1px solid #dee2e6; padding: 0.5rem 1.25rem;">
+              <h6 class="mb-0" style="font-size: 0.875rem; line-height: 1.5;"><i class="mdi mdi-calculator"></i> Calculations Summary</h6>
             </div>
-            <div class="card-body">
+            <div class="card-body py-2" style="background-color: white;">
               <!-- Room Volume (from ERF mapping) -->
               <div class="row">
                 <div class="col-md-12">
@@ -139,30 +210,32 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Finalise Test Data Button -->
-          <div class="card mt-3">
-            <div class="card-body text-center py-3">
-              <button type="button" 
-                      id="finalise_test_data_btn" 
-                      class="btn btn-success btn-lg"
-                      disabled>
-                <i class="mdi mdi-check-circle"></i> Finalise Test Data
-              </button>
-              <div id="finalise_status_message" class="mt-2">
-                <small class="text-muted">Complete all filter data entry to enable finalisation</small>
-              </div>
+          <div class="text-center mt-4 py-3">
+            <button type="button"
+                    id="finalise_test_data_btn"
+                    class="btn btn-gradient-success btn-icon-text"
+                    disabled>
+              <i class="mdi mdi-check-circle"></i> Finalise Test Data
+            </button>
+            <div id="finalise_status_message" class="mt-2">
+              <small class="text-muted">Complete all filter data entry to enable finalisation</small>
+            </div>
+            <div class="mt-2">
+              <small style="color: #2c3e50; font-weight: 500;">
+                <i class="mdi mdi-information-outline"></i> Test data can only be finalized after completing all required data entry
+              </small>
             </div>
           </div>
         </div>
-        
+
         <!-- Error Display -->
         <div id="acph-error" class="alert alert-danger" style="display: none;">
           <i class="mdi mdi-alert-circle"></i>
           <span id="acph-error-message">An error occurred while loading filter data.</span>
         </div>
       </div>
-    </div>
   </div>
 </div>
 
@@ -180,7 +253,30 @@ $(document).ready(function() {
   
   // Load ACPH data on page load
   loadACPHFiltersAndData();
-  
+
+  // Listen for instrument changes from parent page
+  $(document).on('testInstrumentsUpdated', function(event, data) {
+    console.log('[ACPH] Received testInstrumentsUpdated event:', data);
+    console.log('[ACPH] Reloading ACPH filters and data after instrument ' + data.action);
+
+    // Show loading state
+    $('#acph-filters-container').hide();
+    $('#acph-loading').show();
+    $('#acph-error').hide();
+
+    // Reload the data
+    loadACPHFiltersAndData();
+  });
+
+  // Also make the loadACPHFiltersAndData function globally accessible for direct calls
+  window.reloadACPHData = function() {
+    console.log('[ACPH] Direct reload triggered');
+    $('#acph-filters-container').hide();
+    $('#acph-loading').show();
+    $('#acph-error').hide();
+    loadACPHFiltersAndData();
+  };
+
   // Add a fallback timer in case loading gets stuck
   setTimeout(function() {
     if ($('#acph-loading').is(':visible')) {
@@ -279,16 +375,32 @@ $(document).ready(function() {
     return (cellArea && cellArea.trim() !== '') || (flowRate && flowRate.trim() !== '');
   }
   
-  // Update filter status on input change
-  $(document).on('input change', '.filter-reading, .filter-cell-area, .filter-flow-rate', function() {
-    const filterId = $(this).attr('data-filter-id');
-    if (filterId) {
-      // Delay status update slightly to allow for multiple rapid changes
-      setTimeout(() => {
-        updateFilterStatus(filterId);
-      }, 300);
+  // Validate reading inputs - only allow NA or numbers
+  $(document).on('input', '.filter-reading', function() {
+    const value = $(this).val().trim().toUpperCase();
+
+    // Allow empty, NA, or numeric values (including decimals)
+    if (value !== '' && value !== 'NA' && !/^-?\d*\.?\d*$/.test(value)) {
+      // Invalid input - show error styling
+      $(this).addClass('is-invalid');
+
+      // Show error message if not already shown
+      if (!$(this).next('.invalid-feedback').length) {
+        $(this).after('<div class="invalid-feedback d-block">Only "NA" or numeric values are allowed</div>');
+      }
+    } else {
+      // Valid input - remove error styling
+      $(this).removeClass('is-invalid');
+      $(this).next('.invalid-feedback').remove();
+
+      // Convert to uppercase for NA
+      if (value === 'NA') {
+        $(this).val('NA');
+      }
     }
   });
+
+  // Note: Status update removed - will only update after successful save
   
   // Update all filter statuses (called after data loading)
   function updateAllFilterStatuses() {
@@ -663,7 +775,7 @@ $(document).ready(function() {
       setTimeout(function() {
         calculateTotals();
         updateFilterGroupCounts();
-        updateFilterStatus(filterId);
+        updateFilterStatus(filterId); // Update status when loading saved data
         console.log('Triggered calculateTotals after data population for filter', filterId);
       }, 100);
       
@@ -808,7 +920,7 @@ $(document).ready(function() {
     if (totalFilters === 0) {
       // No filters loaded yet
       finaliseBtn.prop('disabled', true);
-      statusMessage.html('<small class="text-muted">Loading filter data...</small>');
+      statusMessage.html('');
     } else if (completedFilters === totalFilters) {
       // All filters completed
       finaliseBtn.prop('disabled', false);
@@ -843,11 +955,11 @@ $(document).ready(function() {
       
       html += `
         <div class="card mb-3 filter-group-card" data-group="${groupName}">
-          <div class="card-header bg-light" style="cursor: pointer;" data-toggle="collapse" data-target="#group-${groupName.replace(/[^a-zA-Z0-9]/g, '_')}" aria-expanded="true">
-            <h6 class="mb-0">
-              <i class="mdi mdi-chevron-down text-secondary collapse-icon" id="icon-${groupName.replace(/[^a-zA-Z0-9]/g, '_')}"></i>
-              <i class="mdi mdi-air-filter text-primary ml-1"></i> 
-              Filter Group: ${groupName} 
+          <div class="card-header" style="cursor: pointer; background-color: #f8f9fa; border-bottom: 1px solid #dee2e6; padding: 0.5rem 1.25rem;" data-toggle="collapse" data-target="#group-${groupName.replace(/[^a-zA-Z0-9]/g, '_')}" aria-expanded="false">
+            <h6 class="mb-0" style="font-size: 0.875rem; line-height: 1.5;">
+              <i class="mdi mdi-chevron-right text-secondary collapse-icon" id="icon-${groupName.replace(/[^a-zA-Z0-9]/g, '_')}"></i>
+              <i class="mdi mdi-air-filter text-primary ml-1"></i>
+              Filter Group: ${groupName}
               <span class="badge badge-info ml-1">${groupFilters.length} filter(s)</span>
               <span class="badge badge-success ml-1" id="completed-count-${groupName.replace(/[^a-zA-Z0-9]/g, '_')}" style="display:none;">0 completed</span>
               <span class="badge badge-warning ml-1" id="pending-count-${groupName.replace(/[^a-zA-Z0-9]/g, '_')}" style="display:none;">0 pending</span>
@@ -857,8 +969,8 @@ $(document).ready(function() {
               </span>
             </h6>
           </div>
-          <div class="collapse show" id="group-${groupName.replace(/[^a-zA-Z0-9]/g, '_')}">
-            <div class="card-body">
+          <div class="collapse" id="group-${groupName.replace(/[^a-zA-Z0-9]/g, '_')}">
+            <div class="card-body" style="background-color: white;">
       `;
       
       // Build HTML for each filter in the group
@@ -872,14 +984,14 @@ $(document).ready(function() {
               <div class="col-12">
                 <!-- Collapsible Filter Header -->
                 <div class="filter-header-container">
-                  <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3" 
-                       style="cursor: pointer;" 
-                       data-toggle="collapse" 
-                       data-target="#filter-content-${filterId}" 
-                       aria-expanded="false" 
+                  <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3"
+                       style="cursor: pointer;"
+                       data-toggle="collapse"
+                       data-target="#filter-content-${filterId}"
+                       aria-expanded="true"
                        aria-controls="filter-content-${filterId}">
                     <h6 class="text-info mb-0 filter-header-title">
-                      <i class="mdi mdi-chevron-right collapse-icon" data-filter-id="${filterId}"></i>
+                      <i class="mdi mdi-chevron-down collapse-icon" data-filter-id="${filterId}"></i>
                       <i class="mdi mdi-filter-outline ml-1"></i>
                       Filter: ${filter.filter_code || 'Unknown'}
                     </h6>
@@ -895,7 +1007,7 @@ $(document).ready(function() {
             </div>
             
             <!-- Collapsible Filter Content -->
-            <div class="collapse" id="filter-content-${filterId}">
+            <div class="collapse show" id="filter-content-${filterId}">
               <!-- Per-Filter Instrument Mode Control (Hidden by default) -->
               <div class="filter-instrument-mode-container" data-filter-id="${filterId}" style="display: none;">
               <div class="card card-sm border-secondary mb-2 filter-mode-card">
@@ -1108,8 +1220,8 @@ $(document).ready(function() {
                   <div class="save-status" id="save-status-${filterId}">
                     <!-- Save status will appear here -->
                   </div>
-                  <button type="button" 
-                          class="btn btn-success btn-sm save-filter-btn" 
+                  <button type="button"
+                          class="btn btn-gradient-success btn-icon-text btn-sm save-filter-btn"
                           data-filter-id="${filterId}">
                     <i class="mdi mdi-content-save"></i> Save Filter Data
                   </button>
@@ -1166,29 +1278,9 @@ $(document).ready(function() {
         globalInstrument: globalInstrument
       });
       
-      if (globalMode === 'single') {
-        console.log('🔍 Post-DOM: Single mode - Global instrument value:', `"${globalInstrument}"`);
-        
-        if (!globalInstrument || globalInstrument === '') {
-          // Single Instrument mode with no instrument selected (placeholder selected) - collapse all filters
-          console.log('🔒 Post-DOM: Single mode with no instrument (placeholder) - collapsing all filters');
-          setTimeout(function() {
-            collapseAllFilterContentAreas();
-            updateFilterHeadersState();
-          }, 200);
-        } else {
-          // Single Instrument mode with valid instrument selected - expand all filters
-          console.log('🔓 Post-DOM: Single mode with valid instrument - expanding all filters');
-          setTimeout(function() {
-            expandAllFilterContentAreasNaturally();
-            updateFilterHeadersState();
-          }, 200);
-        }
-      } else {
-        // Per-Filter mode - natural behavior, no forced expansion/collapse
-        console.log('🔍 Post-DOM: Per-Filter mode - natural behavior');
-        updateFilterHeadersState(); // Ensure headers are unlocked in Per-Filter mode
-      }
+      // No automatic collapsing or expanding - let users control filter visibility
+      console.log('🔍 Post-DOM: Allowing natural filter state - users can expand/collapse as needed');
+      updateFilterHeadersState(); // Ensure headers are always unlocked
     }, 100);
   }
   
@@ -1272,17 +1364,8 @@ $(document).ready(function() {
     // Handle individual filter content collapse/expand events
     $(document).on('show.bs.collapse', '[id^="filter-content-"]', function(e) {
       const filterId = $(this).attr('id').replace('filter-content-', '');
-      const globalMode = $('input[name="global_instrument_mode"]:checked').val();
-      const globalInstrument = $('#global_instrument_select').val();
-      
-      // In Single Instrument mode, prevent manual expansion if no instrument is selected
-      if (globalMode === 'single' && (!globalInstrument || globalInstrument === '')) {
-        console.log(`🚫 Preventing expansion of filter ${filterId} - No instrument selected in Single mode`);
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
-      
+
+      // Always allow filter expansion - user should be able to view/edit filter data
       $(`.collapse-icon[data-filter-id="${filterId}"]`)
         .removeClass('mdi-chevron-right')
         .addClass('mdi-chevron-down');
@@ -1297,22 +1380,11 @@ $(document).ready(function() {
       console.log(`Collapsed filter content: ${filterId}`);
     });
     
-    // Prevent filter header clicks when no instrument is selected in Single Instrument mode
+    // Allow filter header clicks - users should always be able to expand/collapse filters
     $(document).on('click', '[data-target^="#filter-content-"]', function(e) {
-      const globalMode = $('input[name="global_instrument_mode"]:checked').val();
-      const globalInstrument = $('#global_instrument_select').val();
       const target = $(this).attr('data-target');
       const filterId = target ? target.replace('#filter-content-', '') : '';
-      
-      // In Single Instrument mode, prevent manual clicks if no instrument is selected
-      if (globalMode === 'single' && (!globalInstrument || globalInstrument === '')) {
-        console.log(`🚫 Preventing manual click on filter ${filterId} header - No instrument selected in Single mode`);
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
-      
-      console.log(`✅ Allowing manual click on filter ${filterId} header`);
+      console.log(`✅ Filter ${filterId} header clicked - allowing expansion/collapse`);
     });
 
     // Handle header clicks for better UX
@@ -1328,6 +1400,7 @@ $(document).ready(function() {
   
   // Load instruments for dropdown selection
   function loadInstrumentsForDropdowns() {
+    console.log('[INSTRUMENTS] Loading instruments for dropdowns, test_val_wf_id:', test_val_wf_id);
     $.ajax({
       url: 'core/data/get/gettestinstruments.php',
       type: 'GET',
@@ -1336,27 +1409,40 @@ $(document).ready(function() {
         format: 'dropdown'
       },
       success: function(response) {
+        console.log('[INSTRUMENTS] Received response:', response);
         try {
           const data = typeof response === 'string' ? JSON.parse(response) : response;
-          
+          console.log('[INSTRUMENTS] Parsed data:', data);
+
           if (data.instruments && Array.isArray(data.instruments) && data.instruments.length > 0) {
+            console.log('[INSTRUMENTS] Found', data.instruments.length, 'instruments, calling populateInstrumentDropdowns');
             populateInstrumentDropdowns(data.instruments);
+
+            // Hide the "No Instruments Configured" alert if it's showing
+            $('#no_instruments_alert').hide().html('');
+
+            // Re-enable the instrument mode radios and global instrument card
+            $('#global_mode_single, #global_mode_individual').prop('disabled', false);
+            $('.global-instrument-card').removeClass('disabled').find('input, select').prop('disabled', false);
+            console.log('[INSTRUMENTS] Enabled instrument mode radio buttons and removed disabled state');
           } else {
-            console.warn('No instruments found for test workflow:', test_val_wf_id);
+            console.warn('[INSTRUMENTS] No instruments found for test workflow:', test_val_wf_id);
             showInstrumentConfigurationError();
           }
         } catch (e) {
-          console.error('Failed to parse instruments response:', e);
+          console.error('[INSTRUMENTS] Failed to parse instruments response:', e);
         }
       },
       error: function(xhr, status, error) {
-        console.error('Failed to load instruments for dropdowns:', error);
+        console.error('[INSTRUMENTS] Failed to load instruments for dropdowns:', error);
       }
     });
   }
   
   // Populate all instrument dropdowns with available instruments
   function populateInstrumentDropdowns(instruments) {
+    console.log('[POPULATE] Populating instrument dropdowns with', instruments.length, 'instruments');
+
     const instrumentOptions = instruments.map(function(instrument) {
       let statusClass = '';
       if (instrument.calibration_status === 'Expired') {
@@ -1364,18 +1450,18 @@ $(document).ready(function() {
       } else if (instrument.calibration_status === 'Due Soon') {
         statusClass = ' (Due Soon)';
       }
-      
-      return `<option value="${instrument.id}" data-status="${instrument.calibration_status}">${instrument.display_name}${statusClass}</option>`;
+
+      return `<option value="${instrument.id}" data-status="${instrument.calibration_status}" style="color: #495057;">${instrument.display_name}${statusClass}</option>`;
     }).join('');
-    
+
     // Update all reading instrument dropdowns
     $('.reading-instrument-select').each(function() {
       const $select = $(this);
       const currentValue = $select.val(); // Preserve current selection
-      
-      // Add instrument options after "Manual Entry"
-      $select.find('option[value="manual"]').after(instrumentOptions);
-      
+
+      // Clear and repopulate
+      $select.html('<option value="">Select instrument...</option><option value="manual" style="color: #495057;">Manual Entry</option>' + instrumentOptions);
+
       // Restore selection if it was set and the option exists
       if (currentValue) {
         $select.val(currentValue);
@@ -1386,12 +1472,15 @@ $(document).ready(function() {
         }
       }
     });
-    
+
     // Populate global instrument dropdown
     const $globalSelect = $('#global_instrument_select');
     const currentGlobalValue = $globalSelect.val();
-    $globalSelect.html('<option value="">Select Instrument for ALL Readings...</option><option value="manual">Manual Entry</option>' + instrumentOptions);
-    
+    console.log('[POPULATE] Updating global instrument dropdown, current value:', currentGlobalValue);
+
+    $globalSelect.html('<option value="" style="color: #6c757d;">Select instrument for ALL readings...</option><option value="manual" style="color: #495057;">Manual Entry</option>' + instrumentOptions);
+    console.log('[POPULATE] Global dropdown now has', $globalSelect.find('option').length, 'options');
+
     // Restore global selection if it was set and option exists
     if (currentGlobalValue) {
       $globalSelect.val(currentGlobalValue);
@@ -1526,26 +1615,19 @@ $(document).ready(function() {
         $('.filter-instrument-select').prop('disabled', true).addClass('bg-light');
         // Disable all filter-level radio buttons
         $('.filter-instrument-mode').prop('disabled', true);
+        // Clear all filter-level radio button selections when switching to Single mode
+        $('input[name^="filter_instrument_mode_"]').prop('checked', false);
+        console.log('🔄 Cleared all filter-level instrument mode selections');
         // Disable all reading dropdowns (R1-R5)
         $('.reading-instrument-select').prop('disabled', true).addClass('bg-light');
-        
-        // Check if global instrument is selected
+
+        // Check if global instrument is selected (for logging only)
         const globalInstrument = $globalSelect.val();
         console.log('🔍 Single Instrument mode - Global instrument value:', `"${globalInstrument}"`);
-        
-        if (!globalInstrument || globalInstrument === '') {
-          // No instrument selected (empty string = "Select Instrument for ALL Readings...") - collapse all filters
-          console.log('🔒 Single Instrument mode: No instrument selected (empty value) - collapsing all filters');
-          collapseAllFilterContentAreas();
-          updateFilterHeadersState();
-        } else {
-          // Instrument selected - expand all filters
-          console.log('🔓 Single Instrument mode: Instrument selected - expanding all filters');
-          setTimeout(function() {
-            expandAllFilterContentAreasNaturally();
-            updateFilterHeadersState();
-          }, 100);
-        }
+
+        // No automatic collapsing or expanding - let users control filter visibility
+        console.log('🔓 Single Instrument mode: Filters remain in current state, users can expand/collapse as needed');
+        updateFilterHeadersState();
         
         // Initialize filter-level modes
         $('.filter-instrument-mode').each(function() {
@@ -1624,14 +1706,8 @@ $(document).ready(function() {
           $('.filter-instrument-select').prop('disabled', true).addClass('bg-light');
         }
         
-        // In Single Instrument mode, expand all filters when instrument is selected
-        if (globalMode === 'single') {
-          console.log('🔓 Valid instrument selected in Single mode - expanding all filters');
-          setTimeout(function() {
-            expandAllFilterContentAreasNaturally();
-            updateFilterHeadersState();
-          }, 100);
-        }
+        // No automatic expansion - let users control filter visibility
+        console.log('🔓 Valid instrument selected in Single mode - filters remain in current state');
       } else {
         // No instrument selected (empty string = "Select Instrument for ALL Readings..." placeholder)
         console.log('❌ No instrument selected (placeholder selected or cleared)');
@@ -1649,12 +1725,8 @@ $(document).ready(function() {
           $('.filter-instrument-select').prop('disabled', true).addClass('bg-light');
         }
         
-        // In Single Instrument mode, collapse all filters when no instrument is selected
-        if (globalMode === 'single') {
-          console.log('🔒 No instrument selected in Single mode (placeholder) - collapsing all filters');
-          collapseAllFilterContentAreas();
-          updateFilterHeadersState();
-        }
+        // No automatic collapsing - let users control filter visibility
+        console.log('🔓 No instrument selected - filters remain in current state');
       }
     });
     
@@ -2529,17 +2601,24 @@ $(document).ready(function() {
       validationErrors.push('Flow Rate is required');
     }
     
-    // Check that ALL readings are provided (not just at least one)
+    // Check that ALL readings are provided and validate format (NA or numbers only)
     let missingReadings = [];
+    let invalidReadings = [];
     for (let i = 1; i <= 5; i++) {
-      const reading = $(`.filter-reading[data-filter-id="${filterId}"][data-reading="${i}"]`).val().trim();
+      const reading = $(`.filter-reading[data-filter-id="${filterId}"][data-reading="${i}"]`).val().trim().toUpperCase();
       if (reading === '') {
         missingReadings.push(`Reading ${i}`);
+      } else if (reading !== 'NA' && !/^-?\d+\.?\d*$/.test(reading)) {
+        invalidReadings.push(`Reading ${i} (only "NA" or numeric values allowed)`);
       }
     }
-    
+
     if (missingReadings.length > 0) {
       validationErrors.push(`All readings must be provided. Missing: ${missingReadings.join(', ')}`);
+    }
+
+    if (invalidReadings.length > 0) {
+      validationErrors.push(`Invalid reading format: ${invalidReadings.join(', ')}`);
     }
     
     // Validate that ALL reading instrument dropdowns have values selected
@@ -3002,21 +3081,19 @@ $(document).ready(function() {
   // Show error when no instruments are configured for the test
   function showInstrumentConfigurationError() {
     const errorMessage = 'No instruments have been configured for this test. Please add instruments to the test configuration before proceeding with ACPH data entry.';
-    
-    // Show error in the filters container
-    $('#filters-data-entry').html(`
-      <div class="alert alert-warning" role="alert">
+
+    // Show error in the no_instruments_alert container within the global instrument card
+    $('#no_instruments_alert').html(`
+      <div class="alert alert-warning mt-3 mb-0" role="alert">
         <i class="mdi mdi-alert-triangle"></i>
         <strong>No Instruments Configured</strong><br>
         ${errorMessage}
-        <br><br>
-        <small class="text-muted">
-          <i class="mdi mdi-information"></i>
-          Contact your administrator to add instruments to this test workflow, or use manual entry mode if instruments are not required.
-        </small>
       </div>
-    `);
-    
+    `).show();
+
+    // Clear the filters container
+    $('#filters-data-entry').html('');
+
     // Also disable the instrument mode selector to prevent confusion
     $('.global-instrument-card').addClass('disabled').find('input, select').prop('disabled', true);
   }
@@ -3100,7 +3177,26 @@ $(document).ready(function() {
     if ($(this).prop('disabled')) {
       return false;
     }
-    
+
+    // Check if data entry mode is selected (only if paper-on-glass is enabled)
+    if (typeof window.isDataEntryModeRequired === 'function' && typeof window.isDataEntryModeSelected === 'function') {
+      if (window.isDataEntryModeRequired() && !window.isDataEntryModeSelected()) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Data Entry Mode Required',
+          text: 'Please select a data entry mode (Online or Offline) before finalizing the test data.',
+          confirmButtonText: 'OK'
+        });
+        // Scroll to the warning message
+        if ($('#mode-selection-warning').length > 0) {
+          $('html, body').animate({
+            scrollTop: $('#mode-selection-warning').offset().top - 100
+          }, 500);
+        }
+        return false;
+      }
+    }
+
     // Check if test conducted date is filled first
     var testDate = $('#test_conducted_date').val();
     console.log('Test conducted date value:', testDate);
@@ -3166,11 +3262,17 @@ $(document).ready(function() {
             console.log('PDF generation response:', response);
             
             if (response.success === true) {
-              // Show success message
+              // Determine message based on offline mode flag from backend
+              let successTitle = 'Test Data Finalized Successfully!';
+              let successText = response.offline_mode
+                ? 'Test data has been finalized for offline processing. Upload the Raw Data, Master Certificate, and Test Certificate PDF files.'
+                : 'Raw Data PDF and Test Certificate have been generated and are now available in the Upload Documents section.';
+
+              // Show success message with correct text based on mode
               Swal.fire({
                 icon: 'success',
-                title: 'Test Data Finalized Successfully!',
-                text: 'Raw Data PDF has been generated and is now available in the Upload Documents section.',
+                title: successTitle,
+                text: successText,
                 confirmButtonText: 'OK',
                 confirmButtonColor: '#28a745'
               }).then(() => {
@@ -3178,10 +3280,16 @@ $(document).ready(function() {
                 setTimeout(function() {
                   refreshUploadedFilesSection();
                 }, 1000); // 1 second delay to ensure database transaction is complete
-                
+
                 // Keep button disabled since test is now finalised
                 $btn.html('<i class="mdi mdi-check-circle"></i> Test Data Finalised');
-                $('#finalise_status_message').html('<small class="text-success"><i class="mdi mdi-check-circle"></i> Test data finalised - PDFs generated</small>');
+
+                // Update status message based on mode
+                let statusMessage = response.offline_mode
+                  ? '<small class="text-success"><i class="mdi mdi-check-circle"></i> Test data finalised - Ready for offline document upload</small>'
+                  : '<small class="text-success"><i class="mdi mdi-check-circle"></i> Test data finalised - PDFs generated</small>';
+
+                $('#finalise_status_message').html(statusMessage);
                 
                 // Update global finalization status
                 if (window.testFinalizationStatus) {
@@ -4057,7 +4165,12 @@ if (typeof userRoleData !== 'undefined' && userRoleData.is_engineering_or_qa) {
 .custom-radio-sm {
   position: absolute;
   opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
   cursor: pointer;
+  pointer-events: none;
 }
 
 .custom-radio-label-sm {

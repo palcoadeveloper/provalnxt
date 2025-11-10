@@ -437,7 +437,7 @@ require_once 'core/config/db.class.php';
               <h3 class="page-title"> Search Instruments</h3>
               <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                  <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="manageinstrumentdetails.php?m=a">+ Add Instrument</a></li>
+                  <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="manageinstrumentdetails.php?m=a"><i class="mdi mdi-plus-circle"></i> Add Instrument</a></li>
                 </ol>
               </nav>
             </div>
@@ -573,7 +573,9 @@ require_once 'core/config/db.class.php';
                       </div>
                       </div>
                       
-                      <input type="submit" value="Search Results" class="btn btn-gradient-original-success mr-2"/>
+                      <button type="submit" class="btn btn-gradient-primary btn-icon-text">
+                        <i class="mdi mdi-magnify"></i> Search Instruments
+                      </button>
                       
                     </form>
                   </div>
@@ -586,7 +588,10 @@ require_once 'core/config/db.class.php';
                 <h4 class="card-title">Search Results</h4>
                     <div class="table-responsive-xl">
 	<div id="displayresults">
-	<p class="card-description">Select the criteria and hit the Search Results button.</p>
+	<div class="text-center text-muted py-4">
+                        <i class="mdi mdi-filter-variant icon-lg mb-2"></i>
+                        <p> Use the search filters above to find instruments</p>
+                      </div>
 	</div>
 	</div>
                 </div>

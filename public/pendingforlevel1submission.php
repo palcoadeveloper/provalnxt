@@ -696,7 +696,9 @@ if (empty($_SESSION['csrf_token'])) {
 									<td><input name="upload_file_other" id="upload_file_other" type="file" class="form-control-file" /></td>
 								</tr>
 								<tr>
-									<td colspan="2"><input id="btnUploadDocs" class="btn btn-success" type="submit" value="Upload Document" /></td>
+									<td colspan="2"><button id="btnUploadDocs" class="btn btn-gradient-success btn-icon-text" type="submit">
+										<i class="mdi mdi-cloud-upload"></i> Upload Document
+									</button></td>
 								</tr>
 							</table>
 							<br />
@@ -783,7 +785,7 @@ if (empty($_SESSION['csrf_token'])) {
 						<nav aria-label="breadcrumb">
 							<ul class="breadcrumb">
 								<li class="breadcrumb-item active" aria-current="page">
-									<span><a class='btn btn-gradient-info btn-sm btn-rounded' href="assignedcases.php"><< Back</a></span>
+									<span><a class='btn btn-gradient-info btn-sm btn-rounded' href="assignedcases.php"><i class="mdi mdi-arrow-left"></i> Back</a></span>
 								</li>
 							</ul>
 						</nav>
@@ -981,7 +983,9 @@ if (empty($_SESSION['csrf_token'])) {
 												<tr>
 													<td colspan="4">
 														<div class="d-flex justify-content-center">
-															<input id="btnSubmit" type="submit" class='btn btn-primary btn-small' />
+															<button id="btnSubmit" type="submit" class='btn btn-gradient-primary btn-icon-text'>
+																<i class="mdi mdi-send"></i> Submit
+															</button>
 														</div>
 													</td>
 												</tr>

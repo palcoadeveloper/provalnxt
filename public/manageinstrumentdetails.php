@@ -104,7 +104,7 @@ $vendor_details = DB::query("SELECT vendor_id, vendor_name FROM vendors WHERE ve
                                             $back_params['restore_search'] = '1';
                                             echo '?' . http_build_query($back_params);
                                         }
-                                    ?>"><< Back</a></span>
+                                    ?>"><i class="mdi mdi-arrow-left"></i> Back</a></span>
                                 </li>
                             </ul>
                         </nav>
@@ -238,11 +238,11 @@ $vendor_details = DB::query("SELECT vendor_id, vendor_name FROM vendors WHERE ve
                                             <?php
                                             if ($mode === 'e') {
                                                 ?>
-                                                <button type="submit" class="btn btn-gradient-primary mr-2" id="modify_instrument">Modify Instrument</button>    
+                                                <button type="submit" class="btn btn-gradient-success btn-icon-text" id="modify_instrument"><i class="mdi mdi-content-save"></i> Modify Instrument</button>    
                                                 <?php     
                                             } else if ($mode === 'a') {
                                                 ?>
-                                                <button type="submit" class="btn btn-gradient-primary mr-2" id="add_instrument">Add Instrument</button>    
+                                                <button type="submit" class="btn btn-gradient-primary btn-icon-text" id="add_instrument"><i class="mdi mdi-plus-circle"></i> Add Instrument</button>    
                                                 <?php  
                                             }
                                             ?>

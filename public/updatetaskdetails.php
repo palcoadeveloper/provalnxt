@@ -7,6 +7,9 @@ require_once('./core/config/config.php');
 require_once('core/security/optimized_session_validation.php');
 OptimizedSessionValidation::validateOnce();
 
+// Include session validation helpers for getUserUnitId() and other utility functions
+require_once('core/security/session_validation.php');
+
 date_default_timezone_set("Asia/Kolkata");
 
 // Security Configuration Constants
@@ -46,6 +49,69 @@ $csrf_token_for_upload = generateCSRFToken();
 // Generate CSRF token if not already set
 if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+// Test dependency validation function
+function checkTestDependencies($test_id, $val_wf_id) {
+    // Get the test details including dependent tests
+    $test_query = "SELECT dependent_tests FROM tests WHERE test_id = %i";
+    $test_result = DB::queryFirstRow($test_query, $test_id);
+
+    if (!$test_result || empty($test_result['dependent_tests'])) {
+        // No dependencies, test can start
+        return ['can_start' => true, 'message' => ''];
+    }
+
+    // Parse dependent test IDs (comma-separated)
+    $dependent_test_ids = array_map('trim', explode(',', $test_result['dependent_tests']));
+    $dependent_test_ids = array_filter($dependent_test_ids, function($id) {
+        return is_numeric($id);
+    });
+
+    if (empty($dependent_test_ids)) {
+        // No valid dependent tests, test can start
+        return ['can_start' => true, 'message' => ''];
+    }
+
+    // Check status of dependent tests within the same validation workflow
+    $dependency_query = "SELECT test_id, test_name, test_wf_current_stage
+                        FROM tbl_test_schedules_tracking t1
+                        INNER JOIN tests t2 ON t1.test_id = t2.test_id
+                        WHERE t1.test_id IN (" . implode(',', array_fill(0, count($dependent_test_ids), '%i')) . ")
+                        AND t1.val_wf_id = %s";
+
+    $params = array_merge($dependent_test_ids, [$val_wf_id]);
+    $dependency_results = DB::query($dependency_query, ...$params);
+
+    $incomplete_tests = [];
+
+    foreach ($dependent_test_ids as $dep_test_id) {
+        $found = false;
+        foreach ($dependency_results as $dep_result) {
+            if ($dep_result['test_id'] == $dep_test_id) {
+                $found = true;
+                if ($dep_result['test_wf_current_stage'] != '5') {
+                    $incomplete_tests[] = $dep_result['test_name'];
+                }
+                break;
+            }
+        }
+
+        if (!$found) {
+            // Dependent test not found in current validation workflow
+            $test_name_query = "SELECT test_name FROM tests WHERE test_id = %i";
+            $test_name_result = DB::queryFirstRow($test_name_query, $dep_test_id);
+            $test_name = $test_name_result ? $test_name_result['test_name'] : "Test ID $dep_test_id";
+            $incomplete_tests[] = $test_name . " (not scheduled)";
+        }
+    }
+
+    if (!empty($incomplete_tests)) {
+        $message = "Cannot start this test. The following dependent tests must be completed first: " . implode(', ', $incomplete_tests);
+        return ['can_start' => false, 'message' => $message];
+    }
+
+    return ['can_start' => true, 'message' => ''];
 }
 
 // Secure input validation for GET parameters
@@ -103,7 +169,7 @@ $show_same_user_error = false;
 // Optimized database queries with performance improvements
 try {
     // Handle different query logic for vendor vs employee users
-    if (isVendor()) {
+    if (OptimizedSessionValidation::isVendor()) {
         // Vendor users: Join without unit_id constraint since vendors may access across units
         $mainDataQuery = "
             SELECT 
@@ -204,22 +270,44 @@ try {
 // Check test finalisation status for conditional UI logic
 $hide_upload_and_submit = false;
 try {
-    // Check if paper-on-glass is enabled AND data entry mode is online OR offline AND test is not finalised
-    if (($result['paper_on_glass_enabled'] ?? 'No') == 'Yes' && 
-        (($result['data_entry_mode'] ?? '') == 'online' || ($result['data_entry_mode'] ?? '') == 'offline')) {
-        $finalisation_check = DB::queryFirstRow("
-            SELECT test_finalised_on, test_finalised_by 
-            FROM tbl_test_finalisation_details 
-            WHERE test_wf_id = %s AND status = 'Active'
-        ", $test_val_wf_id);
-        
-        // Hide upload documents and submit if test is not finalised yet (only for online mode with paper-on-glass)
-        //if (!$finalisation_check || empty($finalisation_check['test_finalised_on']) || empty($finalisation_check['test_finalised_by'])) 
-        if (!$finalisation_check )
-        {
+    // Debug logging
+    error_log("Finalization check - paper_on_glass_enabled: " . ($result['paper_on_glass_enabled'] ?? 'No'));
+    error_log("Finalization check - data_entry_mode: " . ($result['data_entry_mode'] ?? 'NOT SET'));
+    error_log("Finalization check - test_wf_id: " . $test_val_wf_id);
+
+    // Check if paper-on-glass is enabled
+    if (($result['paper_on_glass_enabled'] ?? 'No') == 'Yes') {
+        $data_entry_mode = $result['data_entry_mode'] ?? '';
+
+        // If data entry mode is not set yet, hide the button until it's configured
+        if (empty($data_entry_mode)) {
             $hide_upload_and_submit = true;
+            error_log("Setting hide_upload_and_submit = TRUE (data entry mode not set yet)");
         }
+        // If data entry mode is online or offline, check finalization status
+        else if ($data_entry_mode == 'online' || $data_entry_mode == 'offline') {
+            $finalisation_check = DB::queryFirstRow("
+                SELECT test_finalised_on, test_finalised_by
+                FROM tbl_test_finalisation_details
+                WHERE test_wf_id = %s AND status = 'Active'
+            ", $test_val_wf_id);
+
+            error_log("Finalization check result: " . ($finalisation_check ? 'FOUND' : 'NOT FOUND'));
+
+            // Hide upload documents and submit if test is not finalised yet
+            if (!$finalisation_check)
+            {
+                $hide_upload_and_submit = true;
+                error_log("Setting hide_upload_and_submit = TRUE (test not finalized)");
+            } else {
+                error_log("Setting hide_upload_and_submit = FALSE (test IS finalized)");
+            }
+        }
+    } else {
+        error_log("Skipping finalization check - paper on glass not enabled");
     }
+
+    error_log("Final hide_upload_and_submit value: " . ($hide_upload_and_submit ? 'TRUE' : 'FALSE'));
 } catch (Exception $e) {
     error_log("Database error in updatetaskdetails.php (finalisation_check): " . $e->getMessage());
 }
@@ -267,6 +355,12 @@ $user_role_data = json_encode([
     'is_engineering_or_qa' => ($_SESSION['department_id'] == 1 || $_SESSION['department_id'] == 8)
 ]);
 
+// Prepare test configuration for JavaScript
+$test_config_data = json_encode([
+    'paper_on_glass_enabled' => ($result['paper_on_glass_enabled'] ?? 'No') === 'Yes',
+    'test_id' => $test_id
+]);
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -287,6 +381,7 @@ $user_role_data = json_encode([
     // Global variables for user role and test finalization status
     window.testFinalizationStatus = <?php echo $finalization_js_data; ?>;
     window.userRoleData = <?php echo $user_role_data; ?>;
+    window.testConfig = <?php echo $test_config_data; ?>;
   </script>
   <script>
     $(document).ready(function() {
@@ -466,6 +561,20 @@ function restoreViewedDocumentStates() {
       function convertDateFormat(dateString) {
         var dateParts = dateString.split('.');
         return dateParts[2] + '-' + dateParts[1] + '-' + dateParts[0];
+      }
+
+      // Function to get test conducted date value (handles disabled fields)
+      function getTestConductedDate() {
+        const $dateField = $('#test_conducted_date');
+        let dateValue = $dateField.val();
+
+        // If field is disabled and has auto-set attribute, ensure we get the value
+        if ($dateField.prop('disabled') && $dateField.attr('data-auto-set') === 'true') {
+          dateValue = $dateField.val();
+          console.log('Auto-set date retrieved for online mode at stage 3B/4B:', dateValue);
+        }
+
+        return dateValue;
       }
 
       // Function to format upload error messages into readable bullet points
@@ -842,19 +951,53 @@ function restoreViewedDocumentStates() {
 
 
 
+      // Data Entry Mode selection validation functions (Attached to window for global access)
+      window.isDataEntryModeRequired = function() {
+        // Only require mode selection if paper-on-glass is enabled
+        return window.testConfig && window.testConfig.paper_on_glass_enabled === true;
+      };
 
+      window.isDataEntryModeSelected = function() {
+        return $('input[name="data_entry_mode"]:checked').length > 0;
+      };
 
+      window.updateModeSelectionWarning = function() {
+        const isSelected = window.isDataEntryModeSelected();
+        const $warning = $('#mode-selection-warning');
 
+        if (!isSelected && $warning.length > 0) {
+          $warning.show();
+        } else if ($warning.length > 0) {
+          $warning.hide();
+        }
+      };
 
       $("#vendorsubmitassign").click(function() {
-        console.log('Submit button clicked - checking ACPH validation');
-        
+        console.log('Submit button clicked - checking validations');
+
+        // NEW: Check if data entry mode is selected (only if paper-on-glass is enabled)
+        if (window.isDataEntryModeRequired() && !window.isDataEntryModeSelected()) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Data Entry Mode Required',
+            text: 'Please select a data entry mode (Online or Offline) before submitting the test.',
+            confirmButtonText: 'OK'
+          });
+          // Scroll to the warning message
+          if ($('#mode-selection-warning').length > 0) {
+            $('html, body').animate({
+              scrollTop: $('#mode-selection-warning').offset().top - 100
+            }, 500);
+          }
+          return false;
+        }
+
         // Check ACPH validation first if functions are available
         if (typeof window.validateACPHDataComplete === 'function') {
           console.log('ACPH validation function found, calling it...');
           const validationResult = window.validateACPHDataComplete();
           console.log('ACPH validation result:', validationResult);
-          
+
           if (!validationResult.isComplete && !validationResult.validationSkipped) {
             console.log('ACPH validation failed, showing error');
             window.showACPHValidationError(validationResult);
@@ -884,44 +1027,65 @@ function restoreViewedDocumentStates() {
             text: 'Kindly input the Test Conducted Date.'
           });
         } else {
-          // Add offline mode file validation before showing password modal
-          validateOfflineModeFiles().then(function(validationResult) {
-            if (!validationResult.isValid) {
+          // First validate non-paper-on-glass file uploads
+          validateNonPaperOnGlassFileUploads().then(function(nonPaperValidation) {
+            if (!nonPaperValidation.isValid) {
               Swal.fire({
                 icon: 'error',
                 title: 'Missing Required Files',
-                text: validationResult.message,
+                text: nonPaperValidation.message,
                 confirmButtonText: 'OK'
               });
               return;
             }
-            
-            // If validation passes, configure and show the password modal
-            configureRemarksModal(
-              'assign', // action
-              'core/data/update/updatewfstage.php', // endpoint
-              {
-                test_conducted_date: convertDateFormat($('#test_conducted_date').val()),
-                val_wf_id: val_wf_id,
-                test_val_wf_id: test_val_wf_id,
-                current_wf_stage: current_wf_stage,
-                action: 'assign'
-              },
-              function(response) {
-                // Success callback
+
+            // Then validate offline mode file uploads
+            validateOfflineModeFiles().then(function(offlineValidation) {
+              if (!offlineValidation.isValid) {
                 Swal.fire({
-                  icon: 'success',
-                  title: 'Success',
-                  text: response.message || 'Test submitted successfully'
-                }).then(() => {
-                  window.location.href = 'assignedcases.php';
+                  icon: 'error',
+                  title: 'Missing Required Files',
+                  text: offlineValidation.message,
+                  confirmButtonText: 'OK'
                 });
+                return;
               }
-            );
-            
-            $('#enterPasswordRemark').modal('show');
+
+              // Both validations passed, configure and show the password modal
+              configureRemarksModal(
+                'assign', // action
+                'core/data/update/updatewfstage.php', // endpoint
+                {
+                  test_conducted_date: convertDateFormat($('#test_conducted_date').val()),
+                  val_wf_id: val_wf_id,
+                  test_val_wf_id: test_val_wf_id,
+                  current_wf_stage: current_wf_stage,
+                  action: 'assign'
+                },
+                function(response) {
+                  // Success callback
+                  Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: response.message || 'Test submitted successfully'
+                  }).then(() => {
+                    window.location.href = 'assignedcases.php';
+                  });
+                }
+              );
+
+              $('#enterPasswordRemark').modal('show');
+            }).catch(function(error) {
+              console.error('Offline mode validation failed:', error);
+              Swal.fire({
+                icon: 'error',
+                title: 'Validation Error',
+                text: 'Unable to validate offline mode file uploads. Please try again.',
+                confirmButtonText: 'OK'
+              });
+            });
           }).catch(function(error) {
-            console.error('Validation failed:', error);
+            console.error('Non-paper-on-glass validation failed:', error);
             Swal.fire({
               icon: 'error',
               title: 'Validation Error',
@@ -944,55 +1108,79 @@ function restoreViewedDocumentStates() {
             return false;
           }
         }
-        
-        // Configure modal for the appropriate stage
-        if (current_wf_stage == '<?php echo STAGE_REASSIGNED_B; ?>') {
-          configureRemarksModal(
-            'assign_back_engg_vendor', // action
-            'core/data/update/updatewfstage.php', // endpoint
-            {
-              test_conducted_date: convertDateFormat($('#test_conducted_date').val()),
-              val_wf_id: val_wf_id,
-              test_val_wf_id: test_val_wf_id,
-              current_wf_stage: current_wf_stage,
-              action: 'assign_back_engg_vendor'
-            },
-            function(response) {
-              // Success callback
-              Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: response.message || 'Test resubmitted successfully'
-              }).then(() => {
-                window.location.href = 'assignedcases.php';
-              });
-            }
-          );
-        } else if (current_wf_stage == '<?php echo STAGE_REASSIGNED_4B; ?>') {
-          configureRemarksModal(
-            'assign_back_qa_vendor', // action
-            'core/data/update/updatewfstage.php', // endpoint
-            {
-              test_conducted_date: convertDateFormat($('#test_conducted_date').val()),
-              val_wf_id: val_wf_id,
-              test_val_wf_id: test_val_wf_id,
-              current_wf_stage: current_wf_stage,
-              action: 'assign_back_qa_vendor'
-            },
-            function(response) {
-              // Success callback
-              Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: response.message || 'Test resubmitted successfully'
-              }).then(() => {
-                window.location.href = 'assignedcases.php';
-              });
-            }
-          );
-        }
 
-        $('#enterPasswordRemark').modal('show');
+        // Get test conducted date (handles disabled fields for online mode at 3B/4B)
+        const testConductedDate = getTestConductedDate();
+
+        // Validate file uploads for non-paper-on-glass tests at stage 3B
+        validateNonPaperOnGlassFileUploads().then(function(validationResult) {
+          if (!validationResult.isValid) {
+            Swal.fire({
+              icon: 'error',
+              title: 'Missing Required Files',
+              text: validationResult.message,
+              confirmButtonText: 'OK'
+            });
+            return;
+          }
+
+          // Validation passed, configure modal for the appropriate stage
+          if (current_wf_stage == '<?php echo STAGE_REASSIGNED_B; ?>') {
+            configureRemarksModal(
+              'assign_back_engg_vendor', // action
+              'core/data/update/updatewfstage.php', // endpoint
+              {
+                test_conducted_date: convertDateFormat(testConductedDate),
+                val_wf_id: val_wf_id,
+                test_val_wf_id: test_val_wf_id,
+                current_wf_stage: current_wf_stage,
+                action: 'assign_back_engg_vendor'
+              },
+              function(response) {
+                // Success callback
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Success',
+                  text: response.message || 'Test resubmitted successfully'
+                }).then(() => {
+                  window.location.href = 'assignedcases.php';
+                });
+              }
+            );
+          } else if (current_wf_stage == '<?php echo STAGE_REASSIGNED_4B; ?>') {
+            configureRemarksModal(
+              'assign_back_qa_vendor', // action
+              'core/data/update/updatewfstage.php', // endpoint
+              {
+                test_conducted_date: convertDateFormat(testConductedDate),
+                val_wf_id: val_wf_id,
+                test_val_wf_id: test_val_wf_id,
+                current_wf_stage: current_wf_stage,
+                action: 'assign_back_qa_vendor'
+              },
+              function(response) {
+                // Success callback
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Success',
+                  text: response.message || 'Test resubmitted successfully'
+                }).then(() => {
+                  window.location.href = 'assignedcases.php';
+                });
+              }
+            );
+          }
+
+          $('#enterPasswordRemark').modal('show');
+        }).catch(function(error) {
+          console.error('File upload validation failed:', error);
+          Swal.fire({
+            icon: 'error',
+            title: 'Validation Error',
+            text: 'Unable to validate file uploads. Please try again.',
+            confirmButtonText: 'OK'
+          });
+        });
       });
 
 
@@ -1273,8 +1461,31 @@ function restoreViewedDocumentStates() {
                 
                 // Hide spinner
                 hideQAApprovalSpinner();
-                
-                // Step 2: Proceed with normal approval workflow via modal
+
+                // Step 2: Configure the remarks modal for QA approval
+                configureRemarksModal(
+                  'qa_approve', // action
+                  'core/data/update/updatewfstage.php', // endpoint
+                  {
+                    test_conducted_date: convertDateFormat($('#test_conducted_date').val()),
+                    val_wf_id: val_wf_id,
+                    test_val_wf_id: test_val_wf_id,
+                    current_wf_stage: current_wf_stage,
+                    action: 'qa_approve'
+                  },
+                  function(response) {
+                    // Custom success callback for QA approval
+                    Swal.fire({
+                      icon: 'success',
+                      title: 'Success',
+                      text: response.message || 'Test approved successfully' + pdfMessage
+                    }).then(() => {
+                      window.location.href = 'assignedcases.php';
+                    });
+                  }
+                );
+
+                // Proceed with normal approval workflow via modal
                 $('#enterPasswordRemark').modal('show');
                 
               } catch (error) {
@@ -1292,6 +1503,29 @@ function restoreViewedDocumentStates() {
                   cancelButtonText: 'Cancel'
                 }).then((continueResult) => {
                   if (continueResult.isConfirmed) {
+                    // Configure the remarks modal for QA approval
+                    configureRemarksModal(
+                      'qa_approve', // action
+                      'core/data/update/updatewfstage.php', // endpoint
+                      {
+                        test_conducted_date: convertDateFormat($('#test_conducted_date').val()),
+                        val_wf_id: val_wf_id,
+                        test_val_wf_id: test_val_wf_id,
+                        current_wf_stage: current_wf_stage,
+                        action: 'qa_approve'
+                      },
+                      function(response) {
+                        // Custom success callback for QA approval
+                        Swal.fire({
+                          icon: 'success',
+                          title: 'Success',
+                          text: response.message || 'Test approved successfully'
+                        }).then(() => {
+                          window.location.href = 'assignedcases.php';
+                        });
+                      }
+                    );
+
                     $('#enterPasswordRemark').modal('show');
                   }
                 });
@@ -1299,7 +1533,29 @@ function restoreViewedDocumentStates() {
             }
             
           } else {
-            // For non-3A stages or other conditions, proceed normally
+            // For non-3A stages or other conditions, configure modal and proceed
+            configureRemarksModal(
+              'qa_approve', // action
+              'core/data/update/updatewfstage.php', // endpoint
+              {
+                test_conducted_date: convertDateFormat($('#test_conducted_date').val()),
+                val_wf_id: val_wf_id,
+                test_val_wf_id: test_val_wf_id,
+                current_wf_stage: current_wf_stage,
+                action: 'qa_approve'
+              },
+              function(response) {
+                // Custom success callback for QA approval
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Success',
+                  text: response.message || 'Test approved successfully'
+                }).then(() => {
+                  window.location.href = 'assignedcases.php';
+                });
+              }
+            );
+
             $('#enterPasswordRemark').modal('show');
           }
         }
@@ -1849,9 +2105,12 @@ function adduserremark(ur, up) {
           if ($(this).is(':disabled')) {
             return false;
           }
-          
+
           const selectedMode = $(this).val();
-          
+
+          // Hide warning message when mode is selected
+          window.updateModeSelectionWarning();
+
           // If user selects offline mode, show confirmation dialog
           if (selectedMode === 'offline') {
             Swal.fire({
@@ -1887,9 +2146,21 @@ function adduserremark(ur, up) {
           } else if (selectedMode === 'online') {
             // Save online mode to database (no confirmation needed)
             saveDataEntryMode('online');
+
+            // Set test conducted date to today and make it read-only
+            setTestConductedDateToToday();
           }
         });
-        
+
+        // Check on page load if online mode is already selected
+        if ($('#mode_online').is(':checked') && $('#mode_online').length > 0) {
+          // If online mode is already selected and test conducted date is empty, set it to today
+          const currentDate = $('#test_conducted_date').val();
+          if (!currentDate || currentDate.trim() === '') {
+            setTestConductedDateToToday();
+          }
+        }
+
         // Remove instrument functionality
         $(document).on('click', '.remove-instrument-btn', function() {
           const mappingId = $(this).data('mapping-id');
@@ -1911,7 +2182,38 @@ function adduserremark(ur, up) {
           });
         });
       }
-      
+
+      // Function to set test conducted date to today and make it read-only
+      function setTestConductedDateToToday() {
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const year = today.getFullYear();
+        const formattedDate = `${day}.${month}.${year}`;
+
+        const $dateField = $('#test_conducted_date');
+
+        // Set the date to today
+        $dateField.val(formattedDate);
+
+        // Make it read-only
+        $dateField.prop('readonly', true);
+        $dateField.prop('disabled', true);
+
+        // Destroy datepicker if it exists
+        if ($dateField.hasClass('hasDatepicker')) {
+          $dateField.datepicker('destroy');
+        }
+
+        // Add visual styling to indicate it's locked
+        $dateField.css({
+          'background-color': '#e9ecef',
+          'cursor': 'not-allowed'
+        });
+
+        console.log('Test conducted date set to today and locked:', formattedDate);
+      }
+
       // Function to save data entry mode to database
       function saveDataEntryMode(mode) {
         $.ajax({
@@ -2011,7 +2313,51 @@ function adduserremark(ur, up) {
           };
         });
       }
-      
+
+      // Function to validate non-paper-on-glass external test file uploads
+      function validateNonPaperOnGlassFileUploads() {
+        // Check if paper-on-glass is enabled - if yes, skip this validation
+        const isPaperOnGlass = window.testConfig && window.testConfig.paper_on_glass_enabled === true;
+
+        if (isPaperOnGlass) {
+          return Promise.resolve({
+            isValid: true,
+            message: 'Paper-on-glass enabled - validation not applicable'
+          });
+        }
+
+        // Check if current stage is 1 (New Task) or 3B (Engineering Rejected) - only validate at these stages
+        if (current_wf_stage !== '1' && current_wf_stage !== '3B') {
+          return Promise.resolve({
+            isValid: true,
+            message: 'Not stage 1 or 3B - validation not applicable'
+          });
+        }
+
+        // Make AJAX call to check uploaded files for non-paper-on-glass external tests
+        return $.ajax({
+          url: 'core/data/get/validatenon_paper_on_glass_files.php',
+          type: 'GET',
+          data: {
+            test_val_wf_id: test_val_wf_id
+          },
+          dataType: 'json'
+        }).then(function(response) {
+          console.log('Non-paper-on-glass validation response:', response);
+          return {
+            isValid: response.isValid,
+            message: response.message,
+            missing_files: response.missing_files || []
+          };
+        }).catch(function(xhr, status, error) {
+          console.error('Non-paper-on-glass validation error:', error);
+          return {
+            isValid: false,
+            message: 'Failed to validate file uploads. Please try again.'
+          };
+        });
+      }
+
       // Function to search instruments
       function searchInstruments(searchTerm) {
         
@@ -2337,7 +2683,13 @@ function adduserremark(ur, up) {
           test_val_wf_id: test_val_wf_id
         });
         console.log('[EVENT] Triggered testInstrumentsUpdated event');
-        
+
+        // 6. Directly call ACPH reload function if available
+        if (typeof window.reloadACPHData === 'function') {
+          console.log('[DIRECT] Calling reloadACPHData() directly');
+          window.reloadACPHData();
+        }
+
         console.log('[COMPLETE] Completed test data entry sections reload after instrument ' + action);
       }
       
@@ -2587,17 +2939,27 @@ function adduserremark(ur, up) {
       // Function to show submit buttons after test data finalization
       function showSubmitButtonsAfterFinalization() {
         console.log('Showing submit buttons after test finalization...');
-        
+
         // Show all submit buttons that were hidden due to paper-on-glass + online mode
-        $('#vendorsubmitassign, #vendorsubmitreassign, #enggsubmit').each(function() {
+        // ONLY show buttons that have the data-finalization-hidden attribute
+        $('#vendorsubmitassign[data-finalization-hidden], #vendorsubmitreassign[data-finalization-hidden], #enggsubmit[data-finalization-hidden]').each(function() {
           const $button = $(this);
           if ($button.length > 0) {
-            // Show the button and its parent elements if they exist
+            console.log('Showing button:', $button.attr('id'));
+
+            // Remove the finalization-hidden class and inline style
+            $button.removeClass('finalization-hidden');
+            $button.css('display', '');
             $button.show();
+
+            // Show parent elements if they exist
             $button.closest('.btn-group, .button-container, .text-center').show();
-            
+
             // Also show any wrapper divs or table cells that might be hidden
             $button.parents().filter(':hidden').show();
+
+            // Remove the data attribute so we don't show it again
+            $button.removeAttr('data-finalization-hidden');
           }
         });
         
@@ -2610,7 +2972,7 @@ function adduserremark(ur, up) {
           const warningAlert = $('.alert-warning').filter(':contains("Test data must be finalized")');
           if (warningAlert.length > 0) {
             warningAlert.replaceWith(`
-              <button id="resubmit_to_checker" class='btn btn-primary btn-small'>Submit to Checker</button>
+              <button id="resubmit_to_checker" class='btn btn-gradient-primary btn-icon-text'><i class="mdi mdi-send"></i> Submit to Checker</button>
             `);
             
             // Re-bind the click event for the new button with upload validation
@@ -3030,12 +3392,24 @@ function adduserremark(ur, up) {
     #test_instruments_table {
       font-size: 0.875rem;
     }
-    
+
     #test_instruments_table th {
       background-color: #f8f9fa;
       border-top: 1px solid #dee2e6;
     }
-    
+
+    /* Match uploaded documents table styling to instruments table */
+    #targetDocLayer table.table-hover {
+      font-size: 0.875rem;
+    }
+
+    #targetDocLayer table.table-hover th {
+      background-color: #f8f9fa;
+      border-top: 1px solid #dee2e6;
+      font-weight: normal;
+      color: inherit;
+    }
+
     .badge-success {
       background-color: #28a745;
     }
@@ -3063,6 +3437,12 @@ function adduserremark(ur, up) {
         font-size: 1.05rem;
         margin-right: 0.5rem;
       }
+    }
+
+    /* Force hide buttons until test data is finalized */
+    .finalization-hidden {
+      display: none !important;
+      visibility: hidden !important;
     }
   </style>
 
@@ -3119,8 +3499,8 @@ function adduserremark(ur, up) {
 
           </div>
           <div class="modal-footer">
-            <button id="mdlbtnclose" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            <button id="mdlbtnsubmit" class="btn btn-primary" type="submit">Proceed</button>
+            <button id="mdlbtnclose" type="button" class="btn btn-gradient-dark btn-icon-text" data-dismiss="modal"><i class="mdi mdi-close"></i> Close</button>
+            <button id="mdlbtnsubmit" class="btn btn-gradient-primary btn-icon-text" type="submit"><i class="mdi mdi-check"></i> Proceed</button>
           </div>
         </form>
       </div>
@@ -3152,14 +3532,160 @@ function adduserremark(ur, up) {
             </h3>
             <nav aria-label="breadcrumb">
               <ul class="breadcrumb">
-                <li class="breadcrumb-item active" aria-current="page"><span><a class='btn btn-gradient-info btn-sm btn-rounded' href="assignedcases.php">
-                      << Back</a> </span>
+                <li class="breadcrumb-item active" aria-current="page"><span><a class='btn btn-gradient-info btn-sm btn-rounded' href="assignedcases.php"><i class="mdi mdi-arrow-left"></i> Back</a> </span>
                 </li>
               </ul>
             </nav>
           </div>
 
 
+
+          <!-- Modern UI Styles for Task Details Page -->
+          <style>
+            /* Section heading styles with consistent color */
+            .section-heading {
+              font-weight: 600;
+              font-size: 0.85rem;
+              margin-bottom: 0;
+              color: #5a5c69 !important;
+            }
+
+            /* Table cell styling for labels */
+            .label-cell {
+              background-color: #f8f9fa;
+              vertical-align: middle;
+              width: 25%;
+              padding: 1rem !important;
+            }
+
+            .value-cell {
+              padding: 1rem !important;
+              vertical-align: middle;
+            }
+
+            /* Badge styling for workflow status */
+            .status-badge {
+              display: inline-block;
+              padding: 0.5rem 1rem;
+              border-radius: 20px;
+              font-size: 0.85rem;
+              font-weight: 600;
+            }
+
+            .status-badge.completed {
+              background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+              color: white;
+            }
+
+            .status-badge.pending {
+              background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+              color: white;
+            }
+
+            .status-badge.rejected {
+              background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+              color: white;
+            }
+
+            .status-badge.info {
+              background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+              color: white;
+            }
+
+            /* Timeline styling for audit trail */
+            .timeline-item {
+              position: relative;
+              padding-left: 1.5rem;
+              padding-bottom: 1.5rem;
+              margin-bottom: 0;
+              border-left: 2px solid #3498db;
+            }
+
+            .timeline-item::before {
+              content: '';
+              position: absolute;
+              left: -5px;
+              top: 0.5rem;
+              width: 10px;
+              height: 10px;
+              border-radius: 50%;
+              background-color: #3498db;
+              border: 2px solid white;
+              box-shadow: 0 0 0 2px #3498db;
+            }
+
+            .timeline-item:last-child {
+              /* Keep the line visible but reduce padding after last item */
+              padding-bottom: 0;
+            }
+
+            .timeline-date {
+              color: #7f8c8d;
+              font-size: 0.8rem;
+              font-weight: 600;
+              display: block;
+              margin-bottom: 0.25rem;
+            }
+
+            .timeline-content {
+              color: #2c3e50;
+              font-size: 0.9rem;
+            }
+
+            /* Upload documents section styling */
+            .upload-section-heading {
+              background: linear-gradient(90deg, #667eea 0%, #764ba2 100%) !important;
+              color: white !important;
+              padding: 0.875rem 1.25rem !important;
+              margin-bottom: 0 !important;
+              font-weight: 600 !important;
+              font-size: 1rem !important;
+              display: flex !important;
+              align-items: center !important;
+              border: none !important;
+            }
+
+            .upload-section-heading i {
+              margin-right: 0.5rem;
+              font-size: 1.1rem;
+            }
+
+            /* Ensure card header inherits upload-section-heading styles */
+            .card-header.upload-section-heading {
+              background: linear-gradient(90deg, #667eea 0%, #764ba2 100%) !important;
+              border: none !important;
+            }
+
+            /* File input labels */
+            .file-input-label {
+              color: #5a5c69;
+              font-weight: 600;
+              font-size: 0.9rem;
+              margin-bottom: 0.5rem;
+              display: block;
+            }
+
+            /* Responsive improvements */
+            @media (max-width: 768px) {
+              .label-cell {
+                width: 100%;
+                display: block;
+              }
+
+              .section-heading {
+                font-size: 0.8rem;
+              }
+
+              .timeline-item {
+                padding-left: 1rem;
+              }
+            }
+
+            /* Smooth transitions */
+            .section-heading, .status-badge, .timeline-item {
+              transition: all 0.3s ease;
+            }
+          </style>
 
           <div class="row">
 
@@ -3184,55 +3710,72 @@ function adduserremark(ur, up) {
                     <table class="table table-bordered">
 
                       <tr>
-                        <td>
-                          <h6 class="text-muted">Validation Workflow ID</h6>
+                        <td class="label-cell">
+                          <h6 class="section-heading">Validation Workflow ID</h6>
                         </td>
-                        <td> <?php echo htmlspecialchars(secure_get('val_wf_id', 'string'), ENT_QUOTES, 'UTF-8'); ?> </td>
+                        <td class="value-cell"> <?php echo htmlspecialchars(secure_get('val_wf_id', 'string'), ENT_QUOTES, 'UTF-8'); ?> </td>
 
-                        <td>
-                          <h6 class="text-muted">Test Workflow ID</h6>
+                        <td class="label-cell">
+                          <h6 class="section-heading">Test Workflow ID</h6>
                         </td>
-                        <td> <?php echo htmlspecialchars($test_val_wf_id, ENT_QUOTES, 'UTF-8'); ?> </td>
+                        <td class="value-cell"> <?php echo htmlspecialchars($test_val_wf_id, ENT_QUOTES, 'UTF-8'); ?> </td>
                       </tr>
                       <tr>
-                        <td>
-                          <h6 class="text-muted">Equipment Code</h6>
+                        <td class="label-cell">
+                          <h6 class="section-heading">Equipment Code</h6>
                         </td>
-                        <td colspan="3"><?php echo htmlspecialchars($equipment, ENT_QUOTES, 'UTF-8'); ?></td>
-
-                      </tr>
-
-
-                      <tr>
-                        <td>
-                          <h6 class="text-muted">Workflow Status</h6>
-                        </td>
-                        <td colspan="3"><?php echo htmlspecialchars($workflow_details['wf_stage_description'], ENT_QUOTES, 'UTF-8'); ?></td>
+                        <td class="value-cell" colspan="3"><?php echo htmlspecialchars($equipment, ENT_QUOTES, 'UTF-8'); ?></td>
 
                       </tr>
 
+
                       <tr>
-                        <td>
-                          <h6 class="text-muted">Audit Trail</h6>
+                        <td class="label-cell">
+                          <h6 class="section-heading">Workflow Status</h6>
                         </td>
-                        <td colspan="3"><?php
+                        <td class="value-cell" colspan="3">
+                          <?php
+                          $status = $workflow_details['wf_stage_description'];
+                          $badge_class = 'info';
+                          if (stripos($status, 'completed') !== false || stripos($status, 'approved') !== false) {
+                            $badge_class = 'completed';
+                          } elseif (stripos($status, 'pending') !== false || stripos($status, 'review') !== false) {
+                            $badge_class = 'pending';
+                          } elseif (stripos($status, 'reject') !== false) {
+                            $badge_class = 'rejected';
+                          }
+                          ?>
+                          <span class="status-badge <?php echo $badge_class; ?>">
+                            <?php echo htmlspecialchars($status, ENT_QUOTES, 'UTF-8'); ?>
+                          </span>
+                        </td>
 
-                                        foreach ($audit_trails as $row) {
-                                          echo "[ " . Date('d.m.Y H:i:s', strtotime($row['wf-assignedtimestamp'])) . " ] - " . $row['wf-stages'];
-                                          echo "<br/>";
-                                        }
+                      </tr>
 
-                                        ?></td>
+                      <tr>
+                        <td class="label-cell">
+                          <h6 class="section-heading">Audit Trail</h6>
+                        </td>
+                        <td class="value-cell" colspan="3">
+                          <?php
+                          foreach ($audit_trails as $row) {
+                            echo '<div class="timeline-item">';
+                            echo '<span class="timeline-date"><i class="mdi mdi-clock-outline"></i> ' . Date('d.m.Y H:i:s', strtotime($row['wf-assignedtimestamp'])) . '</span>';
+                            echo '<div class="timeline-content">' . htmlspecialchars($row['wf-stages'], ENT_QUOTES, 'UTF-8') . '</div>';
+                            echo '</div>';
+                          }
+                          ?>
+                        </td>
 
                       </tr>
 
                       <!-- Remarks section shown here when upload/submit are visible -->
-                     
+
                       <tr>
-                        <td>
-                          <h6 class="text-muted">Approver Remarks</h6>
+                        <td class="label-cell">
+                          <h6 class="section-heading">Approver Remarks</h6>
                         </td>
-                        <td colspan="3">
+                        <td class="value-cell" colspan="3">
 
                           <div id="showappremarks"><?php include("core/data/get/getremarks.php") ?></div>
 
@@ -3246,25 +3789,38 @@ function adduserremark(ur, up) {
 
                       <tr>
 
-                        <td>
-                          <h6 class="text-muted">Test Conducted Date </h6>
+                        <td class="label-cell">
+                          <h6 class="section-heading">Test Conducted Date</h6>
                         </td>
-                        <td colspan="3">
+                        <td class="value-cell" colspan="3">
 
                           <?php
-                          // Get the test workflow current stage
+                          // Get the test workflow current stage and data entry mode
                           $test_wf_current_stage = $result['test_wf_current_stage'] ?? null;
+                          $data_entry_mode = $result['data_entry_mode'] ?? null;
                           $is_read_mode = !empty(secure_get('mode', 'string'));
-                          
-                          // Enable editing if test_wf_current_stage is '3B' and not in read mode
-                          $enable_editing_for_3b = ($test_wf_current_stage === '3B' && !$is_read_mode);
-                          
-                          if ((!empty($test_conducted_date) || $is_read_mode) && !$enable_editing_for_3b) {
+
+                          // Check if we should auto-set date to current date and disable editing
+                          // Conditions: Online mode AND (stage 3B OR stage 4B)
+                          $auto_set_current_date = (
+                            $data_entry_mode === 'online' &&
+                            ($test_wf_current_stage === '3B' || $test_wf_current_stage === '4B')
+                          );
+
+                          // Enable editing if test_wf_current_stage is '3B' (but not online mode) and not in read mode
+                          $enable_editing_for_3b = ($test_wf_current_stage === '3B' && !$is_read_mode && !$auto_set_current_date);
+
+                          if ($auto_set_current_date) {
+                            // Auto-set to current date and disable for online mode at 3B/4B
+                            $display_date = date('d.m.Y');
+                            echo '<input type="text" id="test_conducted_date" name="test_conducted_date" class="form-control" value="' . htmlspecialchars($display_date, ENT_QUOTES, 'UTF-8') . '" disabled data-auto-set="true"/>';
+                            echo '<small class="form-text text-muted mt-1"><i class="mdi mdi-information-outline"></i> Date automatically set to current date for online mode resubmission</small></td>';
+                          } elseif ((!empty($test_conducted_date) || $is_read_mode) && !$enable_editing_for_3b) {
                             // Show as disabled field with existing date
                             $display_date = !empty($test_conducted_date) ? date('d.m.Y', strtotime($test_conducted_date)) : '';
                             echo '<input type="text" id="test_conducted_date" name="test_conducted_date" class="form-control" value="' . htmlspecialchars($display_date, ENT_QUOTES, 'UTF-8') . '" disabled/></td>';
                           } else {
-                            // Show as editable field - either no date exists OR stage is 3B
+                            // Show as editable field - either no date exists OR stage is 3B (offline mode)
                             $display_date = !empty($test_conducted_date) ? date('d.m.Y', strtotime($test_conducted_date)) : '';
                             echo '<input type="text" class="form-control" id="test_conducted_date" name="test_conducted_date" value="' . htmlspecialchars($display_date, ENT_QUOTES, 'UTF-8') . '" Required></td>';
                           }
@@ -3279,9 +3835,11 @@ function adduserremark(ur, up) {
                       <tr>
 
                         <td class="align-text-top" colspan="4">
-                          <h6 class="text-muted ">Upload
-                            Documents</h6>
-                          <br />
+                          <div class="card">
+                            <div class="card-header upload-section-heading">
+                              <i class="mdi mdi-cloud-upload"></i> Upload Documents
+                            </div>
+                            <div class="card-body">
 
 
 
@@ -3293,48 +3851,62 @@ function adduserremark(ur, up) {
                           </div>
                           <form id="uploadDocForm" enctype="multipart/form-data">
                             <input type="hidden" name="csrf_token" value="<?php echo $csrf_token_for_upload; ?>">
-                            <input type="hidden" id="test_wf_id" name="test_wf_id" value="<?php echo htmlspecialchars($test_val_wf_id, ENT_QUOTES, 'UTF-8'); ?>" <?php echo (!empty(secure_get('mode', 'string'))) ? 'disabled' : ''; ?> /> 
+                            <input type="hidden" id="test_wf_id" name="test_wf_id" value="<?php echo htmlspecialchars($test_val_wf_id, ENT_QUOTES, 'UTF-8'); ?>" <?php echo (!empty(secure_get('mode', 'string'))) ? 'disabled' : ''; ?> />
                             <input type="hidden" id="val_wf_id" name="val_wf_id" value="<?php echo htmlspecialchars(secure_get('val_wf_id', 'string'), ENT_QUOTES, 'UTF-8'); ?>" />
 
-                            <div class="text-center">
+                            <div>
                               <table class="table table-bordered">
 
                                 <tr>
-                                  <td><label>Raw Data File</label>
-
-                                  <td><input name="upload_file_raw_data" id="upload_file_raw_data" type="file" class="form-control-file" <?php echo (!empty(secure_get('mode', 'string'))) ? 'disabled' : ''; ?> /></td>
-
-                                </tr>
-
-                                <tr>
-                                  <td><label>Master Certificate File</label>
-
-                                  <td><input name="upload_file_master" id="upload_file_master" type="file" class="form-control-file" <?php echo (!empty(secure_get('mode', 'string'))) ? 'disabled' : ''; ?> /></td>
+                                  <td class="label-cell">
+                                    <label class="file-input-label">Raw Data File</label>
+                                  </td>
+                                  <td class="value-cell">
+                                    <input name="upload_file_raw_data" id="upload_file_raw_data" type="file" class="form-control-file" <?php echo (!empty(secure_get('mode', 'string'))) ? 'disabled' : ''; ?> />
+                                  </td>
 
                                 </tr>
 
                                 <tr>
-                                  <td><label>Certificate File</label>
-
-                                  <td><input name="upload_file_certificate" id="upload_file_certificate" type="file" class="form-control-file" <?php echo (!empty(secure_get('mode', 'string'))) ? 'disabled' : ''; ?> /></td>
-
-                                </tr>
-                                <tr>
-                                  <td><label>Other Documents</label>
-
-                                  <td><input name="upload_file_other" id="upload_file_other" type="file" class="form-control-file" <?php echo (!empty(secure_get('mode', 'string'))) ? 'disabled' : ''; ?> /></td>
+                                  <td class="label-cell">
+                                    <label class="file-input-label">Master Certificate File</label>
+                                  </td>
+                                  <td class="value-cell">
+                                    <input name="upload_file_master" id="upload_file_master" type="file" class="form-control-file" <?php echo (!empty(secure_get('mode', 'string'))) ? 'disabled' : ''; ?> />
+                                  </td>
 
                                 </tr>
 
+                                <tr>
+                                  <td class="label-cell">
+                                    <label class="file-input-label">Certificate File</label>
+                                  </td>
+                                  <td class="value-cell">
+                                    <input name="upload_file_certificate" id="upload_file_certificate" type="file" class="form-control-file" <?php echo (!empty(secure_get('mode', 'string'))) ? 'disabled' : ''; ?> />
+                                  </td>
+
+                                </tr>
+                                <tr>
+                                  <td class="label-cell">
+                                    <label class="file-input-label">Other Documents</label>
+                                  </td>
+                                  <td class="value-cell">
+                                    <input name="upload_file_other" id="upload_file_other" type="file" class="form-control-file" <?php echo (!empty(secure_get('mode', 'string'))) ? 'disabled' : ''; ?> />
+                                  </td>
+
+                                </tr>
+
 
                                 <tr>
 
-                                  <td colspan="2"><input id="btnUploadDocs" class="btn btn-success" type="submit" value="Upload Documents" <?php 
+                                  <td colspan="2"><button id="btnUploadDocs" class="btn btn-gradient-success btn-icon-text" type="submit" <?php
                                     $mode = secure_get('mode', 'string');
-                                    echo (($mode && $mode == 'read') || 
-                                          ($_SESSION['logged_in_user'] == "employee" && $_SESSION['department_id'] == 1 && $current_wf_stage != '1') || 
-                                          ($_SESSION['logged_in_user'] == "employee" && $_SESSION['department_id'] == 8)) ? "style='display:none'" : ''; 
-                                  ?> /></td>
+                                    echo (($mode && $mode == 'read') ||
+                                          ($_SESSION['logged_in_user'] == "employee" && $_SESSION['department_id'] == 1 && $current_wf_stage != '1') ||
+                                          ($_SESSION['logged_in_user'] == "employee" && $_SESSION['department_id'] == 8)) ? "style='display:none'" : '';
+                                  ?>>
+                                    <i class="mdi mdi-cloud-upload"></i> Upload Documents
+                                  </button></td>
 
 
                                 </tr>
@@ -3348,14 +3920,16 @@ function adduserremark(ur, up) {
 
 
 
-                              <br />
                             </div>
 
 
 
-                          </form> <br />
+                          </form>
                           <div id="targetDocError"></div>
                           <div id="targetDocLayer"><?php include("core/data/get/getuploadedfiles.php") ?></div>
+
+                            </div>
+                          </div>
                           <?php
 
                           echo "</td>";
@@ -3375,19 +3949,34 @@ function adduserremark(ur, up) {
                       <?php if (($result['paper_on_glass_enabled'] ?? 'No') == 'Yes') { ?>
                       <tr>
                       <td colspan="4" style="text-align: left;">
-  <h6 class="text-muted mb-1">Test Data Entry</h6>
-  
+
   <!-- Test Finalization Status for JavaScript -->
   <script type="text/javascript">
     // Global variable for test finalization status
     window.testFinalizationStatus = <?php echo $finalization_js_data; ?>;
   </script>
-  
-  <!-- Common Sections (Data Entry Mode + Instruments Details) -->
-  <?php include 'assets/inc/_testdataentry_common.php'; ?>
-  
-  <!-- Test-Specific Sections (manually coded per test) -->
-  <?php include 'assets/inc/_testdataentry_specific.php'; ?>
+
+  <!-- Test Data Entry - Common Card -->
+  <div class="card mb-3">
+    <div class="card-header upload-section-heading">
+      <i class="mdi mdi-clipboard-text"></i> Test Data Entry - Common
+    </div>
+    <div class="card-body">
+      <!-- Common Sections (Data Entry Mode + Instruments Details) -->
+      <?php include 'assets/inc/_testdataentry_common.php'; ?>
+    </div>
+  </div>
+
+  <!-- Test Data Entry - Specific Card -->
+  <div class="card">
+    <div class="card-header upload-section-heading">
+      <i class="mdi mdi-flask"></i> Test Data Entry - Specific
+    </div>
+    <div class="card-body">
+      <!-- Test-Specific Sections (manually coded per test) -->
+      <?php include 'assets/inc/_testdataentry_specific.php'; ?>
+    </div>
+  </div>
 </td>
 
 
@@ -3428,14 +4017,15 @@ function adduserremark(ur, up) {
                                                                       ?>
 
                                 <!-- Always render submit button but conditionally hide it -->
-                                <button id="vendorsubmitassign" class='upload-check-required btn btn-primary btn-small' <?php echo $hide_upload_and_submit ? 'style="display: none;" data-finalization-hidden="true"' : ''; ?>>Submit Test Details</button>
+                                <!-- DEBUG: hide_upload_and_submit = <?php echo $hide_upload_and_submit ? 'TRUE' : 'FALSE'; ?> -->
+                                <button id="vendorsubmitassign" class='upload-check-required btn btn-gradient-primary btn-icon-text <?php echo $hide_upload_and_submit ? 'finalization-hidden' : ''; ?>' <?php echo $hide_upload_and_submit ? 'style="display: none !important;" data-finalization-hidden="true"' : ''; ?>><i class="mdi mdi-check-circle"></i> Submit Test Details</button>
 
                               <?php
                                                                         } else if ($current_wf_stage == STAGE_REASSIGNED_B or $current_wf_stage == STAGE_REASSIGNED_4B) // Task is re-assigned
                                                                         {
                               ?>
                                 <!-- Always render submit button but conditionally hide it -->
-                                <button id="vendorsubmitreassign" class='upload-check-required btn btn-primary btn-small' <?php echo $hide_upload_and_submit ? 'style="display: none;" data-finalization-hidden="true"' : ''; ?>>Submit Test Details</button>
+                                <button id="vendorsubmitreassign" class='upload-check-required btn btn-gradient-primary btn-icon-text' <?php echo $hide_upload_and_submit ? 'style="display: none;" data-finalization-hidden="true"' : ''; ?>><i class="mdi mdi-check-circle"></i> Submit Test Details</button>
 
 
                               <?php
@@ -3443,9 +4033,9 @@ function adduserremark(ur, up) {
                                                                         {
                               ?>
                                 <!-- Approve/Reject buttons for offline test review -->
-                                <button id="offline_approve" class='btn btn-success btn-small'>Approve</button>
+                                <button id="offline_approve" class='btn btn-gradient-success btn-icon-text'><i class="mdi mdi-check-circle"></i> Approve</button>
                                 &nbsp;&nbsp;
-                                <button id="offline_reject" class='btn btn-danger btn-small'>Reject</button>
+                                <button id="offline_reject" class='btn btn-gradient-danger btn-icon-text'><i class="mdi mdi-close-circle"></i> Reject</button>
 
                               <?php
                                                                         } else if ($current_wf_stage == STAGE_OFFLINE_REJECTED) // Offline test rejected, ready for resubmission
@@ -3460,7 +4050,7 @@ function adduserremark(ur, up) {
                                                                           if ($finalization_check) {
                               ?>
                                 <!-- Submit to Checker button for rejected offline test (only shown if finalized) -->
-                                <button id="resubmit_to_checker" class='btn btn-primary btn-small'>Submit to Checker</button>
+                                <button id="resubmit_to_checker" class='btn btn-gradient-primary btn-icon-text'><i class="mdi mdi-send"></i> Submit to Checker</button>
 
                               <?php
                                                                           } else {
@@ -3482,30 +4072,34 @@ function adduserremark(ur, up) {
                                                                           //echo $text;
                               ?>
                                 <!-- Always render submit button but conditionally hide it -->
-                                <button id="enggsubmit" class='upload-check-required btn btn-primary btn-small' <?php echo $hide_upload_and_submit ? 'style="display: none;" data-finalization-hidden="true"' : ''; ?>>Submit</button>
+
+                                <button id="enggsubmit" class="btn btn-gradient-primary" <?php echo $hide_upload_and_submit ? 'style="display: none;" data-finalization-hidden="true"' : ''; ?>>
+                                                    <i class="mdi mdi-check-circle"></i> Submit Test Details
+                                                </button>
 
 
                               <?php
                                                                         } else if ($current_wf_stage == STAGE_PENDING_APPROVAL) // Task is assigned
                                                                         {
                               ?>
-                                <button id="enggapprove" class='upload-check-required btn btn-primary btn-small'>Approve</button>
+                                <button id="enggapprove" class='upload-check-required btn btn-gradient-success btn-icon-text'><i class="mdi mdi-check-circle"></i> Approve</button>
                                 &nbsp;&nbsp;
-                                <button id="enggreject" class='upload-check-required btn btn-danger btn-small'>Reject</button>
+                                <button id="enggreject" class='upload-check-required btn btn-gradient-danger btn-icon-text'><i class="mdi mdi-close-circle"></i> Reject</button>
 
 
                               <?php
                                                                         } else if ($current_wf_stage == STAGE_REASSIGNED_4B) // Task is re-assigned
                                                                         {
                               ?>
-                                <button id="enggassign" class='upload-check-required btn btn-primary btn-small'>Assign</button>
+                                <button id="enggassign" class='upload-check-required btn btn-gradient-primary btn-icon-text'><i class="mdi mdi-account-arrow-right"></i> Assign</button>
 
 
                               <?php
                                                                         } else if ($current_wf_stage == STAGE_REASSIGNED_4A) // Task is re-assigned
                                                                         {
                               ?>
-                                <button id="enggapproval1" class='upload-check-required btn btn-primary btn-small'>Submit for
+                              
+                                <button id="enggapproval1" class='upload-check-required btn btn-gradient-primary btn-icon-text'><i class="mdi mdi-send"></i> Submit for
                                   Approval I</button>
                               <?php
                                                                         }
@@ -3513,9 +4107,9 @@ function adduserremark(ur, up) {
                                                                       {
 
                               ?>
-                              <button id="qaapprove" class='upload-check-required btn btn-primary btn-small'>Approve</button>
+                              <button id="qaapprove" class='upload-check-required btn btn-gradient-success btn-icon-text'><i class="mdi mdi-check-circle"></i> Approve</button>
                               &nbsp;&nbsp;
-                              <button id="qareject" class='upload-check-required btn btn-danger btn-small'>Reject</button>
+                              <button id="qareject" class='upload-check-required btn btn-gradient-danger btn-icon-text'><i class="mdi mdi-close-circle"></i> Reject</button>
                             <?php
                                                                       }
 

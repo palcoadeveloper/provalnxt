@@ -328,7 +328,7 @@ e.preventDefault();
               <h3 class="page-title"> Search Filters</h3>
               <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                  <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="managefilterdetails.php?m=a">+ Add Filter</a></li>
+                  <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="managefilterdetails.php?m=a"><i class="mdi mdi-plus-circle"></i> Add Filter</a></li>
                 </ol>
               </nav>
             </div>
@@ -539,7 +539,9 @@ e.preventDefault();
                
                       
                       
-                      <input type="submit" id="searchfilters" class="btn btn-gradient-original-success mr-2"/>
+                      <button type="submit" id="searchfilters" class="btn btn-gradient-primary btn-icon-text">
+                        <i class="mdi mdi-magnify"></i> Search Filters
+                      </button>
                       
                     </form>
                   </div>
@@ -553,7 +555,10 @@ e.preventDefault();
                 <h4 class="card-title">Result</h4>
                     <div class="table-responsive-xl">
 	<div id="displayresults">
-	<p class="card-description">Select the criteria and hit the Submit button.</p>
+	<div class="text-center text-muted py-4">
+                        <i class="mdi mdi-filter-variant icon-lg mb-2"></i>
+                        <p>Use the search filters above to find filters</p>
+                      </div>
 	</div>
 	</div>
                 </div>

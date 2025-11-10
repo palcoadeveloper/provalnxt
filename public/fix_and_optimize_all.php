@@ -52,7 +52,7 @@ $filesToUpdate = [
     'searchequipments.php',
     'searcherfmapping.php',
     'manageunitdetails.php',
-    'showaudittrail.php',
+    'searchaudittrail.php',
     'manageroutinetests.php',
     'searchvendors.php',
     'manageerfmappingdetails.php',

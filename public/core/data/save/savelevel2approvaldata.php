@@ -130,12 +130,22 @@ try {
         
         // Step 3: Advance workflow to stage 4
         DB::query(
-            "UPDATE tbl_val_wf_tracking_details SET val_wf_current_stage='4', stage_assigned_datetime=%? 
+            "UPDATE tbl_val_wf_tracking_details SET val_wf_current_stage='4', stage_assigned_datetime=%?
              WHERE val_wf_id=%s",
             DB::sqleval("NOW()"),
             $cleanData['val_wf_id']
         );
-        
+
+        // Insert audit trail for validation-level stage transition to 4
+        DB::insert('audit_trail', [
+            'val_wf_id' => $cleanData['val_wf_id'],
+            'test_wf_id' => '', // Empty for validation-level events
+            'user_id' => $_SESSION['user_id'],
+            'user_type' => $_SESSION['logged_in_user'],
+            'time_stamp' => DB::sqleval("NOW()"),
+            'wf_stage' => '4' // Pending Level 3 Approval
+        ]);
+
         // Step 4: Insert audit log
         DB::insert('log', [
             'change_type' => 'tran_level2app_uh',

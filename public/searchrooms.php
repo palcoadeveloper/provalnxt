@@ -253,7 +253,7 @@ require_once 'core/config/db.class.php';
               <h3 class="page-title"> Search Rooms/Locations</h3>
               <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                  <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="manageroomdetails.php?m=a">+ Add Room/Location</a></li>
+                  <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="manageroomdetails.php?m=a"><i class="mdi mdi-plus-circle"></i> Add Room/Location</a></li>
                   
                 </ol>
               </nav>
@@ -316,8 +316,10 @@ require_once 'core/config/db.class.php';
                       </div>
 </div>
 <div class="form-row">
-                      <div class="form-group col-md-6 d-flex align-items-end">
-                        <input type="submit" id="searchrooms" class="btn btn-gradient-original-success mr-2" value="Search Rooms"/>
+                      <div class="form-group col-md-12">
+                        <button type="submit" id="searchrooms" class="btn btn-gradient-primary btn-icon-text">
+                          <i class="mdi mdi-magnify"></i> Search Rooms
+                        </button>
                       </div>
                       </div>
                       
@@ -333,7 +335,10 @@ require_once 'core/config/db.class.php';
                 <h4 class="card-title">Results</h4>
                     <div class="table-responsive-xl">
 	<div id="displayresults">
-	<p class="card-description">Select the criteria and hit the Search Rooms button.</p>
+	<div class="text-center text-muted py-4">
+                        <i class="mdi mdi-filter-variant icon-lg mb-2"></i>
+                        <p> Use the search filters above to find rooms</p>
+                      </div>
 	</div>
 	</div>
                 </div>

@@ -399,7 +399,7 @@ function addRoutineTestAfterAuth() {
               <h3 class="page-title">Add Routine Test Request Details</h3>
               <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                 <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="generatescheduleroutinetest.php"><< Back</a></li>
+                 <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="generatescheduleroutinetest.php"><i class="mdi mdi-arrow-left"></i> Back</a></li>
                   
                 </ol>
               </nav>
@@ -518,7 +518,7 @@ function addRoutineTestAfterAuth() {
                       </div>
                       </div>
                     
-                      <input type="button" id="addtest" class="btn btn-gradient-primary mr-2" value='Add Routine Test Request'/>
+                      <button type="button" id="addtest" class='btn btn-gradient-primary btn-icon-text'><i class="mdi mdi-plus-circle"></i> Add Routine Test Request</button>
                       
                     </form>
                   </div>

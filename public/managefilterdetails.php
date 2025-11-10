@@ -280,7 +280,7 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                                                     $back_params['restore_search'] = '1';
                                                     echo '?' . http_build_query($back_params);
                                                 }
-                                            ?>"><< Back</a> </span>
+                                            ?>"><i class="mdi mdi-arrow-left"></i> Back</a> </span>
 								</li>
 							</ul>
 						</nav>
@@ -456,12 +456,16 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
 
                   if($_GET['m']=='m'){
                       ?>
-                  <button type="button" id="modify_filter"	class='btn btn-gradient-primary mr-2'>Modify Filter</button>
+                  <button type="button" id="modify_filter"	class='btn btn-gradient-success btn-icon-text mr-2'>
+                    <i class="mdi mdi-content-save"></i> Modify Filter
+                  </button>
                   <?php
                   }
                   else if($_GET['m']=='a'){
                       ?>
-                  <button type="button" id="add_filter"	class='btn btn-gradient-primary mr-2'>Add Filter</button>
+                  <button type="button" id="add_filter"	class='btn btn-gradient-primary btn-icon-text mr-2'>
+                    <i class="mdi mdi-plus-circle"></i> Add Filter
+                  </button>
                   <?php
                   }
 

@@ -258,7 +258,7 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                                     $back_params['restore_search'] = '1';
                                     echo '?' . http_build_query($back_params);
                                 }
-                            ?>"><< Back</a> </span>
+                            ?>"><i class="mdi mdi-arrow-left"></i> Back</a> </span>
 						</li>
 					</ul>
 				</nav>
@@ -331,12 +331,12 @@ if (isset($_GET['m']) && $_GET['m'] != 'a') {
                   
                   if(isset($_GET['m']) && $_GET['m']=='m'){
                       ?>
-                  <button  id="modify_room"	class='btn btn-gradient-primary mr-2'>Modify Room/Location</button>    
+                  <button  id="modify_room"	class='btn btn-gradient-success btn-icon-text'><i class="mdi mdi-content-save"></i> Modify Room/Location</button>    
                   <?php     
                   }
                   else if(isset($_GET['m']) && $_GET['m']=='a'){
                       ?>
-                  <button  id="add_room"	class='btn btn-gradient-primary mr-2'>Add Room/Location</button>    
+                  <button  id="add_room"	class='btn btn-gradient-primary btn-icon-text'><i class="mdi mdi-plus-circle"></i> Add Room/Location</button>    
                   <?php  
                   }
                   

@@ -346,7 +346,7 @@ try {
                         $back_params['restore_search'] = '1';
                         echo '?' . http_build_query($back_params);
                     }
-                ?>"><< Back</a> </span>
+                ?>"><i class="mdi mdi-arrow-left"></i> Back</a> </span>
 								</li>
 							</ul>
 						</nav>
@@ -524,14 +524,14 @@ try {
                     </div>
                     
                      
-			        <?php 
+			        <?php
 			        if(isset($_GET['m']) && $_GET['m']=='a')
 			        {
-			        	echo '<input type="submit" id="addunit" class="btn btn-gradient-primary mr-2" value="Add Unit"/>';
+			        	echo '<button type="submit" id="addunit" class="btn btn-gradient-primary btn-icon-text mr-2"><i class="mdi mdi-plus-circle"></i> Add Unit</button>';
 			        }
 			        if(isset($_GET['m']) && $_GET['m']=='m')
 			        {
-			        	echo '<input type="submit" id="modifyunit" class="btn btn-gradient-primary mr-2" value="Modify Unit"/>';
+			        	echo '<button type="submit" id="modifyunit" class="btn btn-gradient-success btn-icon-text mr-2"><i class="mdi mdi-content-save"></i> Modify Unit</button>';
 			        }
 			        ?>
 			        

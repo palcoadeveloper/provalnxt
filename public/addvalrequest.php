@@ -355,7 +355,7 @@ $( "#equipmentid" ).autocomplete({
               <h3 class="page-title">Add Validation Request Details</h3>
               <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                 <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="generateschedule.php"><< Back</a></li>
+                 <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="generateschedule.php"><i class="mdi mdi-arrow-left"></i> Back</a></li>
                   
                 </ol>
               </nav>
@@ -450,7 +450,7 @@ $( "#equipmentid" ).autocomplete({
                     
                      
                     
-                      <input type="button" id="addvalrequest" class="btn btn-gradient-primary mr-2" value='Add Validation Request'/>
+                      <button type="button" id="addvalrequest" class='btn btn-gradient-primary btn-icon-text'><i class="mdi mdi-plus-circle"></i> Add Validation Request</button>
                       
                     </form>
                   </div>

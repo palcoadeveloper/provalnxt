@@ -22,6 +22,17 @@ if (!is_numeric($_GET['u']) || !is_numeric($_GET['e']) || !is_numeric($_GET['l']
     die('Error: Invalid parameter types');
 }
 
+// Validate advance start restriction using config parameter
+$plannedDate = new DateTime($_GET['d']);
+$today = new DateTime();
+$maxAdvanceDate = clone $today;
+$maxAdvanceDate->add(new DateInterval('P' . VALIDATION_ADVANCE_START_LIMIT_DAYS . 'D'));
+
+if ($plannedDate > $maxAdvanceDate) {
+    header('HTTP/1.1 400 Bad Request');
+    die('Error: Validation cannot be started more than ' . VALIDATION_ADVANCE_START_LIMIT_DAYS . ' days before planned start date');
+}
+
 try {
     $results = DB::query("CALL start_validation_task(%i,%i,%s,%s,%i)", 
                         intval($_GET['u']), 
@@ -53,6 +64,16 @@ if(empty($results))
 else
 {
     try {
+        // Insert audit trail for validation-level workflow initiation
+        DB::insert('audit_trail', [
+            'val_wf_id' => $_GET['w'],
+            'test_wf_id' => '', // Empty for validation-level events
+            'user_id' => $_SESSION['user_id'],
+            'user_type' => $_SESSION['logged_in_user'],
+            'time_stamp' => DB::sqleval("NOW()"),
+            'wf_stage' => '1' // Workflow Initiated
+        ]);
+
         // Log successful validation start
         DB::insert('log', [
             'change_type' => 'tran_valbgn',
@@ -69,7 +90,7 @@ else
         ]);
         // Continue with redirect even if logging fails
     }
-    
+
     // Fixed redirect path - go up two levels to reach root
     header('Location: ../../manageprotocols.php');
     exit();

@@ -355,6 +355,94 @@ table.dataTable a.btn[href*="m=m"] {
 
 ### Professional Button Styling
 
+#### Button Style Standards
+
+The system uses a consistent button styling approach across all pages with two main button types:
+
+**1. Breadcrumb Navigation Buttons (`.btn-gradient-info.btn-sm.btn-rounded`)**
+- **Usage**: Navigation links in page breadcrumbs (Back, Add New Record)
+- **Style**: Small, rounded info-colored buttons
+- **Classes**: `btn btn-gradient-info btn-sm btn-rounded`
+- **Icons**: Material Design Icons (mdi) for visual clarity
+- **Examples**:
+  - Back navigation: `<i class="mdi mdi-arrow-left"></i> Back`
+  - Add actions: `<i class="mdi mdi-plus-circle"></i> Add Validation Request`
+
+**2. Form Action Buttons (`.btn-gradient-* .btn-icon-text`)**
+- **Usage**: Primary form submission and action buttons
+- **Style**: Full-sized buttons with icons and text
+- **Classes**: `btn btn-gradient-[color] btn-icon-text`
+- **Common Variants**:
+  - Primary actions: `btn-gradient-primary` (purple) - Submit, Add, Create
+  - Success actions: `btn-gradient-success` (green) - Save, Confirm
+  - Danger actions: `btn-gradient-danger` (red) - Delete, Cancel, View Critical Items
+  - Info actions: `btn-gradient-info` (blue) - Generate, View
+
+#### Button Implementation Examples
+
+**Breadcrumb Navigation Pattern:**
+```html
+<!-- Back Button -->
+<a class='btn btn-gradient-info btn-sm btn-rounded' href="generateschedule.php">
+  <i class="mdi mdi-arrow-left"></i> Back
+</a>
+
+<!-- Add New Record Button -->
+<a href='addvalrequest.php' class='btn btn-gradient-info btn-sm btn-rounded' role='button' aria-pressed='true'>
+  <i class="mdi mdi-plus-circle"></i> Add Validation Request
+</a>
+```
+
+**Form Action Button Pattern:**
+```html
+<!-- Primary Submit Button -->
+<button type="submit" class="btn btn-gradient-primary btn-icon-text">
+  <i class="mdi mdi-calendar-check"></i> Generate Annual Schedule
+</button>
+
+<!-- Danger/Alert Action Button -->
+<button type="button" class="btn btn-gradient-danger btn-icon-text">
+  <i class="mdi mdi-file-document-multiple"></i> View Adhoc Validation Requests
+</button>
+
+<!-- Success Action Button -->
+<button type="button" class="btn btn-gradient-primary btn-icon-text">
+  <i class="mdi mdi-plus-circle"></i> Add Validation Request
+</button>
+```
+
+#### Applied Pages with Button Styling
+
+**Schedule Generation Pages:**
+- `generateschedule.php`:
+  - Breadcrumb: Add Validation Request (info, sm, rounded)
+  - Form: Generate Annual Schedule (primary, icon-text)
+  - Form: View Adhoc Validation Requests (danger, icon-text)
+
+- `addvalrequest.php`:
+  - Breadcrumb: Back (info, sm, rounded)
+  - Form: Add Validation Request (primary, icon-text)
+
+**Routine Test Pages:**
+- `generatescheduleroutinetest.php`:
+  - Breadcrumb: Add Routine Test Request (info, sm, rounded)
+  - Form: Generate Annual Schedule (primary, icon-text)
+  - Form: View Routine Test Requests (danger, icon-text)
+
+- `addroutinetest.php`:
+  - Breadcrumb: Back (info, sm, rounded)
+  - Form: Add Routine Test Request (primary, icon-text)
+
+#### Material Design Icon Usage
+
+**Common Icons for Buttons:**
+- `mdi-arrow-left`: Back navigation
+- `mdi-plus-circle`: Add/Create actions
+- `mdi-calendar-check`: Schedule/Calendar actions
+- `mdi-file-document-multiple`: View reports/documents
+- `mdi-content-save`: Save/Modify actions
+- `mdi-magnify`: Search actions
+
 #### Primary Buttons (.btn-gradient-primary)
 **Updated Design:**
 - Square rounded corners: `8px border-radius`

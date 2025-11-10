@@ -4,6 +4,7 @@ ob_start();
 
 require_once('../../config/config.php');
 require_once('../../config/db.class.php');
+require_once('../../security/session_validation.php');
 
 // Start session if not already started
 if (session_status() == PHP_SESSION_NONE) {
@@ -141,15 +142,38 @@ try {
         throw new Exception("Test data has already been finalized on {$finalized_on} by {$finalized_by}. Cannot finalize again.");
     }
     
-    // Get current data entry mode to determine if PDF generation is needed
-    $current_mode_data = DB::queryFirstRow("
-        SELECT data_entry_mode 
-        FROM tbl_test_schedules_tracking 
-        WHERE test_wf_id = %s
+    // Get current data entry mode and test configuration
+    $test_mode_data = DB::queryFirstRow("
+        SELECT ts.data_entry_mode, t.paper_on_glass_enabled
+        FROM tbl_test_schedules_tracking ts
+        JOIN tests t ON ts.test_id = t.test_id
+        WHERE ts.test_wf_id = %s
     ", $test_wf_id);
-    
-    $data_entry_mode = $current_mode_data['data_entry_mode'] ?? 'online';
-    $skip_pdf_generation = ($data_entry_mode === 'offline');
+
+    // Check if paper-on-glass is enabled
+    $paper_on_glass_enabled = ($test_mode_data['paper_on_glass_enabled'] ?? 'No') === 'Yes';
+
+    // STRICT VALIDATION: Data entry mode MUST be selected if paper-on-glass is enabled
+    if ($paper_on_glass_enabled) {
+        if (!isset($test_mode_data['data_entry_mode']) ||
+            $test_mode_data['data_entry_mode'] === null ||
+            $test_mode_data['data_entry_mode'] === '') {
+            throw new Exception('Data entry mode must be selected before finalizing test data. Please select Online or Offline mode on the test details page.');
+        }
+
+        $data_entry_mode = $test_mode_data['data_entry_mode'];
+
+        // Additional validation: must be valid value
+        if (!in_array($data_entry_mode, ['online', 'offline'])) {
+            throw new Exception('Invalid data entry mode. Please select Online or Offline mode.');
+        }
+
+        $skip_pdf_generation = ($data_entry_mode === 'offline');
+    } else {
+        // Paper-on-glass not enabled, default to online mode (no mode selection required)
+        $data_entry_mode = 'online';
+        $skip_pdf_generation = false;
+    }
     
     // Both conditions met - proceed with finalization
     // Start transaction manually
@@ -520,7 +544,32 @@ try {
         ];
         
         $finalisation_id = DB::insert('tbl_test_finalisation_details', $finalisation_data);
-        
+
+        // Add log entry for test finalization
+        $user_id = intval($_SESSION['user_id']);
+        $user_unit_id = getUserUnitId();
+        if ($user_unit_id === '' || $user_unit_id === null) {
+            $user_unit_id = 0;
+        }
+        $user_unit_id = intval($user_unit_id);
+
+        $log_description = sprintf(
+            'Test data finalized for Test: %s, Equipment: %s, Validation WF: %s, Test WF: %s. Mode: %s',
+            $test_info['test_name'] ?? 'N/A',
+            $test_info['equipment_code'] ?? 'N/A',
+            $test_info['val_wf_id'] ?? 'N/A',
+            $test_wf_id,
+            $skip_pdf_generation ? 'OFFLINE (PDFs not generated)' : 'ONLINE (PDFs generated)'
+        );
+
+        DB::insert('log', [
+            'change_type' => 'test_data_finalization',
+            'table_name' => 'tbl_test_finalisation_details',
+            'change_description' => $log_description,
+            'change_by' => $user_id,
+            'unit_id' => $user_unit_id
+        ]);
+
         // Commit transaction
         DB::query("COMMIT");
         

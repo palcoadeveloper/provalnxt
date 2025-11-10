@@ -32,24 +32,65 @@ if (!isset($_SESSION['csrf_token'])) {
 
   <script>
     $(document).ready(function() {
+      // Configuration variables
+      var validationAdvanceLimit = <?php echo VALIDATION_ADVANCE_START_LIMIT_DAYS; ?>;
+
       // Initialize DataTables
       $('#datagrid-upcoming').DataTable({
-        "pagingType": "numbers"
+        "pagingType": "numbers",
+        "pageLength": 25,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "language": {
+            "lengthMenu": "Show _MENU_ entries"
+        }
       });
       $('#datagrid-inprogress').DataTable({
-        "pagingType": "numbers"
+        "pagingType": "numbers",
+        "pageLength": 25,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "language": {
+            "lengthMenu": "Show _MENU_ entries"
+        }
       });
       $('#datagrid-level1submission').DataTable({
-        "pagingType": "numbers"
+        "pagingType": "numbers",
+        "pageLength": 25,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "language": {
+            "lengthMenu": "Show _MENU_ entries"
+        }
       });
       $('#datagrid-level1approval').DataTable({
-        "pagingType": "numbers"
+        "pagingType": "numbers",
+        "pageLength": 25,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "language": {
+            "lengthMenu": "Show _MENU_ entries"
+        }
       });
       $('#datagrid-level2approval').DataTable({
-        "pagingType": "numbers"
+        "pagingType": "numbers",
+        "pageLength": 25,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "language": {
+            "lengthMenu": "Show _MENU_ entries"
+        }
       });
       $('#datagrid-level3approval').DataTable({
-        "pagingType": "numbers"
+        "pagingType": "numbers",
+        "pageLength": 25,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "language": {
+            "lengthMenu": "Show _MENU_ entries"
+        }
+      });
+      $('#datagrid-termination').DataTable({
+        "pagingType": "numbers",
+        "pageLength": 25,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "language": {
+            "lengthMenu": "Show _MENU_ entries"
+        }
       });
 
       // Modal for viewing protocol
@@ -64,8 +105,20 @@ if (!isset($_SESSION['csrf_token'])) {
       }));
 
       // Validation start
-      $("#startvalidation").click(function() {
+      $(".startvalidation").click(function() {
+        console.log('Debug: Start validation button clicked');
         $("#confirmbeginvalidation").attr("href", this.href);
+      });
+
+      // Handle restricted start button clicks
+      $(document).on('click', '.restricted-start-btn', function() {
+        console.log('Debug: Restricted start button clicked');
+        var advanceLimit = $(this).data('advance-limit');
+        Swal.fire({
+          icon: 'error',
+          title: 'Validation Start Restricted',
+          text: 'Validation cannot be started more than ' + advanceLimit + ' days before the planned start date.'
+        });
       });
 
       // Initialize variables
@@ -74,15 +127,37 @@ if (!isset($_SESSION['csrf_token'])) {
       
       // Handle validation modal display
       $('#startValidationModal').on('show.bs.modal', function(event) {
+        console.log('Debug: Modal show event triggered');
         var button = $(event.relatedTarget);
         var recipient = button.data('whatever');
         val_wf_id = recipient;
         var modal = $(this);
 
-        plannedDate = new Date(button.data('planneddate')).setHours(0, 0, 0, 0);
-        today = new Date().setHours(0, 0, 0, 0);
+        var plannedDateObj = new Date(button.data('planneddate'));
+        plannedDateObj.setHours(0, 0, 0, 0);
+        plannedDate = plannedDateObj.getTime();
 
-        if (plannedDate < today) {
+        var todayObj = new Date();
+        todayObj.setHours(0, 0, 0, 0);
+        today = todayObj.getTime();
+
+        maxAdvanceDate = today + (validationAdvanceLimit * 24 * 60 * 60 * 1000);
+
+        console.log('Debug: Planned Date:', new Date(plannedDate));
+        console.log('Debug: Today:', new Date(today));
+        console.log('Debug: Max Advance Date:', new Date(maxAdvanceDate));
+        console.log('Debug: Validation Advance Limit:', validationAdvanceLimit);
+
+        if (plannedDate > maxAdvanceDate) {
+          // Prevent starting more than configured days in advance
+          event.preventDefault();
+          Swal.fire({
+            icon: 'error',
+            title: 'Validation Start Restricted',
+            text: 'Validation cannot be started more than ' + validationAdvanceLimit + ' days before the planned start date.'
+          });
+          return;
+        } else if (plannedDate < today) {
           needdeviationremarks = true;
           $("#deviationremark").prop("disabled", false);
           $('.dev_remarks').show();
@@ -591,7 +666,7 @@ $('#addEntryBtn').click(function() {
     '<select class="form-control" name="employee[]" required>' +
     '<option value="">Select Employee</option>' +
     '</select></div>' +
-    '<div class="col-sm"><button class="delete-btn btn btn-danger btn-sm">Delete</button></div> <hr/></div></div>' +
+    '<div class="col-sm"><button class="btn-remove-row btn btn-outline-danger btn-sm">— Remove</button></div> <hr/></div></div>' +
     '</div>';
 
   // Append the new section to the container
@@ -687,7 +762,7 @@ $('#addEntryBtn').click(function() {
       }
 
       // Event handler when the Delete button inside a table row is clicked
-      $('#dynamicInputsContainer').on('click', '.delete-btn', function() {
+      $('#dynamicInputsContainer').on('click', '.btn-remove-row', function() {
         // Get the entry ID associated with the clicked delete button
         var entryIdToRemove = $(this).closest('.file-input-section').data('entry-id');
         // Remove the specific file input section with the matching entry ID
@@ -810,6 +885,11 @@ $('#addEntryBtn').click(function() {
         
         return true;
       }
+
+      // Function to open terminate validation search page
+      window.openTerminateModal = function() {
+        window.location.href = 'search_validations_to_terminate.php';
+      };
     });
   </script>
 
@@ -836,9 +916,16 @@ $('#addEntryBtn').click(function() {
 
 
           <div class="page-header">
-           
+
             <?php include_once "assets/inc/_beginvalidationmodal.php"; ?>
             <h3 class="page-title"> Validation Protocols </h3>
+            <nav aria-label="breadcrumb">
+              <ul class="breadcrumb">
+                <?php if(isset($_SESSION['department_id']) && (int)$_SESSION['department_id'] === 1): ?>
+                <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="#" onclick="openTerminateModal()">🛑 Terminate Validation Study</a></li>
+                <?php endif; ?>
+              </ul>
+            </nav>
           </div>
 
           <div class="row">
@@ -866,6 +953,15 @@ $('#addEntryBtn').click(function() {
                 <div class="card-body">
                   <h4 class="card-title">Validation Protocols - Pending Team Approval Submission</h4>
                   <?php include "assets/inc/_pendingforlevel1submission.php"; ?>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-12 grid-margin stretch-card" <?php if ((isset($_SESSION['department_id']) && $_SESSION['department_id'] == '1') || (isset($_SESSION['is_qa_head']) && $_SESSION['is_qa_head'] == 'Yes')) echo 'style="display:block;"'; else echo 'style="display:none;"'; ?>>
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title">Validation Protocols - Termination Requests</h4>
+                  <?php include "assets/inc/_terminationrequests.php"; ?>
                 </div>
               </div>
             </div>

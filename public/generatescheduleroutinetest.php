@@ -59,7 +59,12 @@ if (empty($_SESSION['csrf_token'])) {
                 $('#pleasewaitmodal').modal('hide');
                 $("#displayresults").html(data);
                 $('#datagrid-report').DataTable({
-                  "pagingType": "numbers"
+                  "pagingType": "numbers",
+                  "pageLength": 25,
+                  "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+                  "language": {
+                      "lengthMenu": "Show _MENU_ entries"
+                  }
                 });
               });
             } else {
@@ -73,7 +78,12 @@ if (empty($_SESSION['csrf_token'])) {
                 $('#pleasewaitmodal').modal('hide');
                 $("#displayresults").html(data);
                 $('#datagrid-report').DataTable({
-                  "pagingType": "numbers"
+                  "pagingType": "numbers",
+                  "pageLength": 25,
+                  "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+                  "language": {
+                      "lengthMenu": "Show _MENU_ entries"
+                  }
                 });
               });
             }
@@ -346,7 +356,18 @@ function changeAdhocRTStatusAfterAuth() {
       // Handle other response data (likely HTML content)
       $("#displayresults").html(data);
       $('#datagrid-report').DataTable({
-        "pagingType": "numbers"
+        "pagingType": "numbers",
+        "pageLength": 25,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "language": {
+            "lengthMenu": "Show _MENU_ entries",
+            "paginate": {
+                "first": "First",
+                "last": "Last",
+                "next": "Next",
+                "previous": "Previous"
+            }
+        }
       });
       Swal.fire('Status updated successfully!', '', 'success');
       $('#btnViewRTRequests').click(); // Refresh the list
@@ -385,7 +406,7 @@ function changeAdhocRTStatusAfterAuth() {
               
                   <nav aria-label="breadcrumb">
 							<ul class="breadcrumb">
-								<li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="addroutinetest.php">+ Add Routine Test</a></li>
+								<li class="breadcrumb-item"><a href='addroutinetest.php' class='btn btn-gradient-info btn-sm btn-rounded' role='button' aria-pressed='true'><i class="mdi mdi-plus-circle"></i> Add Routine Test Request</a></li>
 
 							</ul>
 						</nav>
@@ -466,8 +487,12 @@ function changeAdhocRTStatusAfterAuth() {
     </div>
   </div>
  
-  <button class="btn btn-gradient-original-success" type="submit">Generate Annual Schedule</button>
- <button id="btnViewRTRequests" class="btn btn-gradient-original-danger">View Routine Test Requests</button>
+  <button type="submit" class="btn btn-gradient-primary btn-icon-text">
+		<i class="mdi mdi-calendar-check"></i> Generate Annual Schedule
+	</button>
+ <button type="button" id="btnViewRTRequests" class="btn btn-gradient-danger btn-icon-text">
+		<i class="mdi mdi-file-document-multiple"></i> View Routine Test Requests
+	</button>
 </form>
       
           
@@ -580,9 +605,14 @@ function changeRoutineTestStatusAfterAuth() {
     $('#pleasewaitmodal').modal('hide');
     $("#displayresults").html(data);
     $('#datagrid-report').DataTable({
-      "pagingType": "numbers"
+      "pagingType": "numbers",
+      "pageLength": 25,
+      "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+      "language": {
+          "lengthMenu": "Show _MENU_ entries"
+      }
     });
-    
+
     if(data == 'success') {
       Swal.fire('Saved!', '', 'success');
     } else if(data == 'failure') {
@@ -629,8 +659,14 @@ function changeRoutineTestStatusAfterAuth() {
                 <div class="card">
                   <div class="card-body">
                 <h4 class="card-title">Result</h4>
-                    <p class="card-description"> Select the criteria and hit the Generate Schedule button. </p>
-                <div id="displayresults"></div>
+                    
+                <div id="displayresults">
+<div class="text-center text-muted py-4">
+                        <i class="mdi mdi-filter-variant icon-lg mb-2"></i>
+                        <p> Use the search filters above to view Routine Test requests</p>
+                      </div>
+
+                </div>
                 </div>
                 </div>
                 </div>

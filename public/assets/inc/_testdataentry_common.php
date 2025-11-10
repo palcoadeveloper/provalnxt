@@ -21,24 +21,24 @@ if (!isset($result) || !isset($test_val_wf_id) || !isset($current_wf_stage)) {
     return;
 }
 
-// Check if data entry mode is already set to offline
-$data_entry_mode = $result['data_entry_mode'] ?? 'online';
+// Check if data entry mode is already set (NULL means not selected yet)
+$data_entry_mode = $result['data_entry_mode'] ?? null;
 $is_offline_mode = ($data_entry_mode === 'offline');
+$mode_not_selected = ($data_entry_mode === null || $data_entry_mode === '');
 
 // Check if offline mode switching is allowed based on workflow stage
-// Only allow offline mode switching when test_wf_current_stage is 1, 3B, or 4B AND currently online
+// Only allow offline mode switching when test_wf_current_stage is 1, 3B, or 4B AND currently online or not selected
 $allowed_offline_stages = ['1', '3B', '4B'];
 $current_stage = $result['test_wf_current_stage'] ?? $current_wf_stage;
-$can_switch_to_offline = in_array($current_stage, $allowed_offline_stages) && ($data_entry_mode === 'online');
+$can_switch_to_offline = in_array($current_stage, $allowed_offline_stages) && ($data_entry_mode === 'online' || $data_entry_mode === null);
 
 // For radio button states: offline mode is "allowed" if currently offline OR can switch to offline
 $offline_mode_allowed = $is_offline_mode || $can_switch_to_offline;
 ?>
 
 <!-- Test Data Entry - Instruments Management -->
-<div class="card mb-2">
-  <div class="card-body py-2">
-    <h6 class="card-subtitle mb-2 text-muted">
+<div class="mb-4">
+    <h6 class="mb-3" style="color: #5a5c69; font-weight: 600;">
       <i class="mdi mdi-flask-outline"></i> Test Instruments Management
     </h6>
     
@@ -104,23 +104,21 @@ $offline_mode_allowed = $is_offline_mode || $can_switch_to_offline;
         </tbody>
       </table>
     </div>
-  </div>
 </div>
 
 <!-- Test Data Entry - Data Entry Mode Selection -->
-<div class="card mb-2">
-  <div class="card-body py-2">
-    <h6 class="card-subtitle mb-2 text-muted">
+<div class="mb-4">
+    <h6 class="mb-3" style="color: #5a5c69; font-weight: 600;">
       <i class="mdi mdi-pencil-box-outline"></i> Data Entry Mode
     </h6>
     
     <div class="row">
       <div class="col-md-6">
         <div class="mode-option">
-          <input type="radio" 
-                 name="data_entry_mode" 
-                 id="mode_online" 
-                 value="online" 
+          <input type="radio"
+                 name="data_entry_mode"
+                 id="mode_online"
+                 value="online"
                  <?php echo ($data_entry_mode === 'online') ? 'checked' : ''; ?>
                  <?php echo $is_offline_mode ? 'disabled' : ''; ?>>
           <label for="mode_online" class="mode-label">
@@ -134,10 +132,10 @@ $offline_mode_allowed = $is_offline_mode || $can_switch_to_offline;
       </div>
       <div class="col-md-6">
         <div class="mode-option">
-          <input type="radio" 
-                 name="data_entry_mode" 
-                 id="mode_offline" 
-                 value="offline" 
+          <input type="radio"
+                 name="data_entry_mode"
+                 id="mode_offline"
+                 value="offline"
                  <?php echo ($data_entry_mode === 'offline') ? 'checked' : ''; ?>
                  <?php echo ($is_offline_mode || !$can_switch_to_offline) ? 'disabled' : ''; ?>>
           <label for="mode_offline" class="mode-label <?php echo !$offline_mode_allowed ? 'text-muted' : ''; ?>">
@@ -157,12 +155,19 @@ $offline_mode_allowed = $is_offline_mode || $can_switch_to_offline;
       </div>
     </div>
     
+    <?php if ($mode_not_selected): ?>
+    <!-- Warning message when mode is not selected -->
+    <div id="mode-selection-warning" class="alert alert-warning mt-2 mb-0 py-2">
+      <i class="mdi mdi-alert"></i>
+      <strong>Action Required:</strong> Please select a data entry mode (Online or Offline) before finalizing test data or submitting the test.
+    </div>
+    <?php endif; ?>
+
     <?php if ($is_offline_mode): ?>
     <div class="alert alert-info mt-2 mb-0 py-2">
       <i class="mdi mdi-information"></i>
       <small>Offline mode is active. Data must be recorded on paper first and then uploaded to the system.</small>
     </div>
     <?php endif; ?>
-  </div>
 </div>
 

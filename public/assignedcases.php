@@ -45,16 +45,26 @@ if (empty($_SESSION['csrf_token'])) {
         <script src="assets/js/jquery.min.js" type="text/javascript"></script> 
     
       <script>
+    // Function to show dependency alert for blocked tests - defined globally
+    function showDependencyAlert(message) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Cannot Start Test',
+            text: message,
+            confirmButtonText: 'OK'
+        });
+    }
+
     $(document).ready(function(){
-    
-     //Required for closing the session timeout warning alert   
+
+     //Required for closing the session timeout warning alert
     $(function(){
     $("[data-hide]").on("click", function(){
         $(this).closest("." + $(this).attr("data-hide")).hide();
     });
 });
-    
-   
+
+
     $('#viewProtocolModal').on('show.bs.modal', function (e) {
     var loadurl = $(e.relatedTarget).data('load-url');
     $(this).find('.modal-body').load(loadurl);
@@ -67,31 +77,71 @@ if (empty($_SESSION['csrf_token'])) {
    
     
      $('#datagrid-newtasks-vendor').DataTable({
-  "pagingType": "numbers"
-} );
+        "pagingType": "numbers",
+        "pageLength": 25,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "language": {
+            "lengthMenu": "Show _MENU_ entries"
+        }
+    });
     $('#datagrid-reassignedtasks-vendor').DataTable({
-  "pagingType": "numbers"
-});
+        "pagingType": "numbers",
+        "pageLength": 25,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "language": {
+            "lengthMenu": "Show _MENU_ entries"
+        }
+    });
     $('#datagrid-offlinetasks-vendor').DataTable({
-  "pagingType": "numbers"
-});
-   $('#datagrid-newtasks-engg').DataTable({
-  "pagingType": "numbers"
-});
+        "pagingType": "numbers",
+        "pageLength": 25,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "language": {
+            "lengthMenu": "Show _MENU_ entries"
+        }
+    });
+    $('#datagrid-newtasks-engg').DataTable({
+        "pagingType": "numbers",
+        "pageLength": 25,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "language": {
+            "lengthMenu": "Show _MENU_ entries"
+        }
+    });
     $('#datagrid-taskapproval-engg').DataTable({
-  "pagingType": "numbers"
-});
+        "pagingType": "numbers",
+        "pageLength": 25,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "language": {
+            "lengthMenu": "Show _MENU_ entries"
+        }
+    });
     $('#datagrid-schapproval-engg').DataTable({
-  "pagingType": "numbers"
-});
+        "pagingType": "numbers",
+        "pageLength": 25,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "language": {
+            "lengthMenu": "Show _MENU_ entries"
+        }
+    });
     $('#datagrid-taskapproval-qa').DataTable({
-  "pagingType": "numbers"
-});
-    
-    
+        "pagingType": "numbers",
+        "pageLength": 25,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "language": {
+            "lengthMenu": "Show _MENU_ entries"
+        }
+    });
+
+
     $('#datagrid-schapproval-qa').DataTable({
-  "pagingType": "numbers"
-});
+        "pagingType": "numbers",
+        "pageLength": 25,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "language": {
+            "lengthMenu": "Show _MENU_ entries"
+        }
+    });
     
     
     

@@ -356,7 +356,7 @@ e.preventDefault();
               <h3 class="page-title"> Search Equipment-Test-Vendor Mapping</h3>
               <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                  <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="managemappingdetails.php?m=a">+ Add ETV Mapping</a></li>
+                  <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="managemappingdetails.php?m=a"><i class="mdi mdi-plus-circle"></i> Add ETV Mapping</a></li>
                 </ol>
               </nav>
             </div>
@@ -571,7 +571,9 @@ e.preventDefault();
                
                       
                       
-                      <input type="submit" id="searchusers" class="btn btn-gradient-original-success mr-2"/>
+                      <button type="submit" id="searchusers" class="btn btn-gradient-primary btn-icon-text">
+                        <i class="mdi mdi-magnify"></i> Search Mapping
+                      </button>
                       
                     </form>
                   </div>
@@ -586,7 +588,13 @@ e.preventDefault();
      
                 
                     <div class="table-responsive-xl">
-                    <div id="displayresults"><p class="card-description"> Select the criteria and hit the Submit button. </p></div>
+                    <div id="displayresults">
+                        <div class="text-center text-muted py-4">
+                        <i class="mdi mdi-filter-variant icon-lg mb-2"></i>
+                        <p>Use the search filters above to find Equipment-Test-Vendor (ETV) mappings</p>
+                      </div>
+                        
+                    </div>
                       </div>
                 
                   </div>

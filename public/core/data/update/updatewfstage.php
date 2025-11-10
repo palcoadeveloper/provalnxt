@@ -110,7 +110,7 @@ class WorkflowStageValidator {
         }
         
         // Validate optional fields
-        $optional_fields = ['action', 'test_type', 'test_conducted_date'];
+        $optional_fields = ['action', 'test_type', 'test_conducted_date', 'user_remark'];
         foreach ($optional_fields as $field) {
             // Check POST data first, then GET data for backward compatibility
             $value = '';
@@ -245,6 +245,17 @@ try {
     
     // Execute secure transaction
     $result = executeSecureTransaction(function() use ($validated_data, $results) {
+        // Insert approver remark if provided (for all workflow actions)
+        if (isset($validated_data['user_remark']) && !empty($validated_data['user_remark'])) {
+            DB::insert('approver_remarks', [
+                'val_wf_id' => $validated_data['val_wf_id'],
+                'test_wf_id' => $validated_data['test_val_wf_id'],
+                'user_id' => $_SESSION['user_id'],
+                'remarks' => $validated_data['user_remark'],
+                'created_date_time' => DB::sqleval("NOW()")
+            ]);
+        }
+
         if (isset($validated_data['test_type'])) { // Internal Test
             // Insert audit trail
             DB::insert('audit_trail', [
@@ -255,7 +266,7 @@ try {
                 'time_stamp' => DB::sqleval("NOW()"),
                 'wf_stage' => 5
             ]);
-            
+
             $unit_id = (isset($_SESSION['unit_id']) && $_SESSION['unit_id'] === "") ? 0 : $_SESSION['unit_id'];
             
             // Log internal test review
@@ -546,8 +557,30 @@ try {
                 // When QA rejects the task, automatically reject all uploaded files
                 rejectAllFilesForWorkflow($validated_data['test_val_wf_id']);
 
-                // Get test conditions for QA rejection special handling
+                // Mark test data records as Inactive for QA rejection
                 $test_wf_id = $validated_data['test_val_wf_id'];
+
+                // 1. Set tbl_test_finalisation_details records to Inactive
+                DB::query("
+                    UPDATE tbl_test_finalisation_details
+                    SET status = 'Inactive'
+                    WHERE test_wf_id = %s AND status = 'Active'
+                ", $test_wf_id);
+                $finalisation_rows = DB::affectedRows();
+
+                // 2. Set test_specific_data records to Inactive
+                DB::query("
+                    UPDATE test_specific_data
+                    SET status = 'Inactive'
+                    WHERE test_val_wf_id = %s AND status = 'Active'
+                ", $test_wf_id);
+                $test_data_rows = DB::affectedRows();
+
+                error_log("QA reject for test_wf_id: {$test_wf_id} by user: {$_SESSION['user_id']}");
+                error_log("- Set {$finalisation_rows} tbl_test_finalisation_details records to Inactive");
+                error_log("- Set {$test_data_rows} test_specific_data records to Inactive");
+
+                // Get test conditions for QA rejection special handling
                 $test_conditions = DB::queryFirstRow("
                     SELECT tst.data_entry_mode, tst.test_wf_current_stage, t.paper_on_glass_enabled
                     FROM tbl_test_schedules_tracking tst
@@ -703,9 +736,28 @@ try {
                                 'change_by' => $_SESSION['user_id'],
                                 'unit_id' => $unit_id
                             ]);
-                            
+
+                            // Mark test data records as Inactive for offline paper-on-glass rejection
+                            // 1. Set tbl_test_finalisation_details records to Inactive
+                            DB::query("
+                                UPDATE tbl_test_finalisation_details
+                                SET status = 'Inactive'
+                                WHERE test_wf_id = %s AND status = 'Active'
+                            ", $test_wf_id);
+                            $finalisation_rows_3bprv = DB::affectedRows();
+
+                            // 2. Set test_specific_data records to Inactive
+                            DB::query("
+                                UPDATE test_specific_data
+                                SET status = 'Inactive'
+                                WHERE test_val_wf_id = %s AND status = 'Active'
+                            ", $test_wf_id);
+                            $test_data_rows_3bprv = DB::affectedRows();
+
                             error_log("Engineering reject - offline paper-on-glass test moved to 3BPRV. test_wf_id: {$test_wf_id} by user: {$_SESSION['user_id']}");
-                            
+                            error_log("- Set {$finalisation_rows_3bprv} tbl_test_finalisation_details records to Inactive");
+                            error_log("- Set {$test_data_rows_3bprv} test_specific_data records to Inactive");
+
                         } else {
                             // Standard engineering rejection: set records to Inactive (for online tests or non-paper-on-glass)
                             

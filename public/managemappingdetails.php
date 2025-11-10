@@ -468,7 +468,7 @@ $("#modify_mapping").click(async function(e) {
                                             $back_params['restore_search'] = '1';
                                             echo '?' . http_build_query($back_params);
                                         }
-                                    ?>"><< Back</a> </span>
+                                    ?>"><i class="mdi mdi-arrow-left"></i> Back</a> </span>
 								</li>
 							</ul>
 						</nav>
@@ -742,12 +742,12 @@ $("#modify_mapping").click(async function(e) {
                   
                   if($_GET['m']=='m'){
                       ?>
-                  <button  id="modify_mapping"	class='btn btn-gradient-primary mr-2'>Modify Mapping</button>    
+                  <button  id="modify_mapping"	class='btn btn-gradient-success btn-icon-text'><i class="mdi mdi-content-save"></i> Modify Mapping</button>    
                   <?php     
                   }
                   else if($_GET['m']=='a'){
                       ?>
-                  <button  id="add_mapping"	class='btn btn-gradient-primary mr-2'>Add Mapping</button>    
+                  <button  id="add_mapping"	class='btn btn-gradient-primary btn-icon-text'><i class="mdi mdi-plus-circle"></i> Add Mapping</button>    
                   <?php  
                   }
                   

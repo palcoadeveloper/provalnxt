@@ -34,11 +34,21 @@ if (!isset($_SESSION['csrf_token'])) {
     
     
      $('#datagrid-upcoming').DataTable({
-  "pagingType": "numbers"
-} );
+        "pagingType": "numbers",
+        "pageLength": 25,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "language": {
+            "lengthMenu": "Show _MENU_ entries"
+        }
+    });
     $('#datagrid-inprogress').DataTable({
-  "pagingType": "numbers"
-});
+        "pagingType": "numbers",
+        "pageLength": 25,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "language": {
+            "lengthMenu": "Show _MENU_ entries"
+        }
+    });
    
     
     

@@ -210,12 +210,22 @@ try {
         if (empty($pendingApprovals)) {
             // All level 1 approvals complete - advance to next stage
             DB::query(
-                "UPDATE tbl_val_wf_tracking_details SET val_wf_current_stage='3', stage_assigned_datetime=%? 
+                "UPDATE tbl_val_wf_tracking_details SET val_wf_current_stage='3', stage_assigned_datetime=%?
                  WHERE val_wf_id=%s",
                 DB::sqleval("NOW()"),
                 $cleanData['val_wf_id']
             );
-            
+
+            // Insert audit trail for validation-level stage transition to 3
+            DB::insert('audit_trail', [
+                'val_wf_id' => $cleanData['val_wf_id'],
+                'test_wf_id' => '', // Empty for validation-level events
+                'user_id' => $_SESSION['user_id'],
+                'user_type' => $_SESSION['logged_in_user'],
+                'time_stamp' => DB::sqleval("NOW()"),
+                'wf_stage' => '3' // Pending Level 2 Approval
+            ]);
+
             $approvalResult['workflow_completed'] = true;
         }
         

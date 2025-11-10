@@ -307,8 +307,10 @@ require_once 'core/config/db.class.php';
               <h3 class="page-title"> Search Users</h3>
               <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                  <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="manageuserdetails.php?m=a&u=c">+ Add Employee</a></li>
-                   <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="manageuserdetails.php?m=a&u=v">+ Add Vendor Employee</a></li>
+                  <?php if (!isset($_SESSION['department_type']) || $_SESSION['department_type'] !== 'engineering'): ?>
+                  <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="manageuserdetails.php?m=a&u=c"><i class="mdi mdi-account-plus"></i> Add Employee</a></li>
+                  <?php endif; ?>
+                   <li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="manageuserdetails.php?m=a&u=v"><i class="mdi mdi-account-plus"></i> Add Vendor Employee</a></li>
                 </ol>
               </nav>
             </div>
@@ -483,7 +485,9 @@ require_once 'core/config/db.class.php';
                 <div class="form-group  col-md-6">
                 <label for="exampleSelectGender">User Type</label>
                 <select class="form-control" id="user_type" name="user_type">
+                          <?php if (!isset($_SESSION['department_type']) || $_SESSION['department_type'] !== 'engineering'): ?>
                           <option value='IE'>Employee</option>
+                          <?php endif; ?>
                           <option value='VE'>Vendor Employee</option>
   </select>
   </div>
@@ -553,7 +557,9 @@ require_once 'core/config/db.class.php';
                       </div>
                       </div>
 
-                      <input type="submit" id="searchusers" class="btn btn-gradient-original-success mr-2"/>
+                      <button type="submit" id="searchusers" class="btn btn-gradient-primary btn-icon-text">
+                        <i class="mdi mdi-magnify"></i> Search Users
+                      </button>
                       
                     </form>
                   </div>
@@ -566,7 +572,10 @@ require_once 'core/config/db.class.php';
                 <h4 class="card-title">Result</h4>
                     
                     <div class="table-responsive-xl">
-                <div id="displayresults"> <p class="card-description"> Select the criteria and hit the Submit button. </p></div>
+                <div id="displayresults"> <div class="text-center text-muted py-4">
+                        <i class="mdi mdi-filter-variant icon-lg mb-2"></i>
+                        <p> Use the search filters above to find users</p>
+                      </div></div>
                 </div>
                     
                     

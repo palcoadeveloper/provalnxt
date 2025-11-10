@@ -379,7 +379,7 @@ try {
                               $back_params['restore_search'] = '1';
                               echo '?' . http_build_query($back_params);
                           }
-                      ?>"><< Back</a> </span>
+                      ?>"><i class="mdi mdi-arrow-left"></i> Back</a> </span>
                   </li>
                 </ul>
               </nav>
@@ -498,7 +498,10 @@ try {
                       <?php if (!isset($_GET['m']) || $_GET['m'] != 'r'): ?>
                       <div class="form-row">
                         <div class="form-group col-md-12">
-                          <input type="submit" class="btn btn-gradient-primary mr-2" value="<?php echo (isset($_GET['m']) && $_GET['m'] == 'm') ? 'Update ERF Mapping' : 'Save ERF Mapping'; ?>"/>
+                          <button type="submit" class="btn <?php echo (isset($_GET['m']) && $_GET['m'] == 'm') ? 'btn-gradient-success' : 'btn-gradient-primary'; ?> btn-icon-text">
+                            <i class="mdi <?php echo (isset($_GET['m']) && $_GET['m'] == 'm') ? 'mdi-content-save' : 'mdi-plus-circle'; ?>"></i>
+                            <?php echo (isset($_GET['m']) && $_GET['m'] == 'm') ? 'Update ERF Mapping' : 'Save ERF Mapping'; ?>
+                          </button>
                           <a href="searcherfmapping.php<?php
     // Build back navigation URL with search parameters
     if (isset($_GET['from_search']) && $_GET['from_search'] == '1') {

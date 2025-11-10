@@ -86,7 +86,7 @@
       </div>
     </li>
     
-        <li class="nav-item" <?php if($_SESSION['logged_in_user']=='employee'){echo 'style="display: block;"';}else{echo 'style="display: none;"';} ?>>
+        <li class="nav-item" <?php if($_SESSION['logged_in_user']=='employee' || $_SESSION['logged_in_user']=='vendor'){echo 'style="display: block;"';}else{echo 'style="display: none;"';} ?>>
       <a class="nav-link" data-toggle="collapse" href="#view-reports" aria-expanded="false" aria-controls="view-reports">
         <span class="menu-title">Reports</span>
         <i class="menu-arrow"></i>
@@ -101,8 +101,10 @@
          <li class="nav-item" <?php if($_SESSION['logged_in_user']=='employee'){echo 'style="display: block;"';}else{echo 'style="display: none;"';} ?>> <a class="nav-link" href="searchrtreport.php">Routine Tests</a></li>
          
          <li class="nav-item" <?php if($_SESSION['logged_in_user']=='employee'){echo 'style="display: block;"';}else{echo 'style="display: none;"';} ?>> <a class="nav-link" href="searchschedule.php">Schedules</a></li>
-         
-         <li class="nav-item" <?php if($_SESSION['is_admin']==='Yes' or $_SESSION['is_super_admin']==='Yes'){echo 'style="display: block;"';}else{echo 'style="display: none;"';} ?>> <a class="nav-link" href="showaudittrail.php">Audit Trail Log</a></li>
+
+         <li class="nav-item" <?php if($_SESSION['logged_in_user']=='employee' || $_SESSION['logged_in_user']=='vendor'){echo 'style="display: block;"';}else{echo 'style="display: none;"';} ?>> <a class="nav-link" href="searcexternaltestallocationreport.php">External Test Allocation</a></li>
+
+         <li class="nav-item" <?php if($_SESSION['is_admin']==='Yes' or $_SESSION['is_super_admin']==='Yes'){echo 'style="display: block;"';}else{echo 'style="display: none;"';} ?>> <a class="nav-link" href="searchaudittrail.php">Audit Trail Log</a></li>
           
         </ul>
       </div>

@@ -185,10 +185,15 @@ $(document).ready(function(){
 					 $('#pleasewaitmodal').modal('hide');
            $("#displayresults").html(data);
                     		$('#datagrid-report').DataTable({
-  "pagingType": "numbers"
-} );
-							
-					   
+                              "pagingType": "numbers",
+                              "pageLength": 25,
+                              "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+                              "language": {
+                                  "lengthMenu": "Show _MENU_ entries"
+                              }
+                          });
+
+
 					  });
           }
 
@@ -223,7 +228,7 @@ $(document).ready(function(){
               <h3 class="page-title">Generate Schedule - Validation </h3>
               <nav aria-label="breadcrumb">
 							<ul class="breadcrumb">
-								<li class="breadcrumb-item"><a class='btn btn-gradient-info btn-sm btn-rounded' href="addvalrequest.php">+ Add Validation Request</a></li>
+								<li class="breadcrumb-item"><a href='addvalrequest.php' class='btn btn-gradient-info btn-sm btn-rounded' role='button' aria-pressed='true'><i class="mdi mdi-plus-circle"></i> Add Validation Request</a></li>
 
 							</ul>
 						</nav>
@@ -285,8 +290,12 @@ $(document).ready(function(){
   </div>
   
  
-  <button class="btn btn-gradient-original-success" type="submit">Generate Annual Schedule</button>
-  <button id="btnadhocrequests" class="btn btn-gradient-original-danger">View Adhoc Validation Requests</button>
+  <button type="submit" class="btn btn-gradient-primary btn-icon-text">
+		<i class="mdi mdi-calendar-check"></i> Generate Annual Schedule
+	</button>
+  <button type="button" id="btnadhocrequests" class="btn btn-gradient-danger btn-icon-text">
+		<i class="mdi mdi-file-document-multiple"></i> View Adhoc Validation Requests
+	</button>
 </form>
       
           
@@ -480,7 +489,12 @@ function changeAdhocStatusAfterAuth() {
     } else if(data == 'success') {
       $("#displayresults").html(data);
       $('#datagrid-report').DataTable({
-        "pagingType": "numbers"
+        "pagingType": "numbers",
+        "pageLength": 25,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "language": {
+            "lengthMenu": "Show _MENU_ entries"
+        }
       });
       Swal.fire('Saved!', '', 'success');
       $('#btnadhocrequests').click();
@@ -490,7 +504,12 @@ function changeAdhocStatusAfterAuth() {
       // Handle other response data (likely HTML content)
       $("#displayresults").html(data);
       $('#datagrid-report').DataTable({
-        "pagingType": "numbers"
+        "pagingType": "numbers",
+        "pageLength": 25,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "language": {
+            "lengthMenu": "Show _MENU_ entries"
+        }
       });
       Swal.fire('Status updated successfully!', '', 'success');
       $('#btnadhocrequests').click();
@@ -537,7 +556,10 @@ function changeAdhocStatusAfterAuth() {
                     
                 <div id="displayresults">
 
-                <p class="card-description"> Select the criteria and hit the Generate Annual Schedule or the View Adhoc Validation Requests button. </p>
+                <div class="text-center text-muted py-4">
+                        <i class="mdi mdi-filter-variant icon-lg mb-2"></i>
+                        <p> Use the search filters above to view ad-hoc validation requests</p>
+                      </div>
                 </div>
                 </div>
                 </div>
